@@ -549,7 +549,8 @@ function BookingContent({ userId, profile }: { userId: string, profile: Business
                       onChange={(e) => setClientName(e.target.value)} 
                       placeholder="Ex: Maria Silva" 
                       required 
-                      className="bg-slate-50 border-slate-200 h-14 rounded-xl focus:ring-[#d4af37]" 
+                      // CORRIGIDO AQUI: !text-slate-900 para garantir texto preto
+                      className="bg-slate-50 border-slate-200 h-14 rounded-xl focus:ring-[#d4af37] !text-slate-900 placeholder:text-slate-400" 
                     />
                   </div>
                   <div>
@@ -559,7 +560,8 @@ function BookingContent({ userId, profile }: { userId: string, profile: Business
                       onChange={(e) => setClientPhone(e.target.value)} 
                       placeholder="(11) 99999-9999" 
                       required 
-                      className="bg-slate-50 border-slate-200 h-14 rounded-xl focus:ring-[#d4af37]" 
+                      // CORRIGIDO AQUI TAMBÉM
+                      className="bg-slate-50 border-slate-200 h-14 rounded-xl focus:ring-[#d4af37] !text-slate-900 placeholder:text-slate-400" 
                     />
                   </div>
                 </div>
@@ -570,7 +572,6 @@ function BookingContent({ userId, profile }: { userId: string, profile: Business
               </form>
             </Card>
           )}
-
           {step === 'success' && (
             <Card className="p-10 text-center animate-fade-in bg-white border-0 shadow-2xl rounded-3xl">
                <div className="w-24 h-24 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6 ring-8 ring-green-50/30">
