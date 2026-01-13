@@ -109,7 +109,7 @@ export default function ReportsView() {
   };
 
   const handleExportCSV = () => {
-    const headers = [t('dashboard.financial.col_date'), 'Hora', t('dashboard.financial.col_client'), t('dashboard.financial.col_service'), 'Profissional', t('dashboard.financial.col_value'), 'Status'];
+    const headers = [t('dashboard.financial.table.date'), t('dashboard.financial.table.time'), t('dashboard.financial.table.client'), t('dashboard.financial.table.service'), t('dashboard.financial.table.professional'), t('dashboard.financial.table.value'), 'Status'];
     const csvContent = [
       headers.join(','),
       ...filteredData.map(item => [ 
@@ -145,37 +145,39 @@ export default function ReportsView() {
       <div className="print:hidden space-y-4">
         <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
           <div>
-            <h2 className="text-2xl font-display font-bold">{t('dashboard.financial.title')}</h2>
-            <p className="text-muted-foreground">{t('dashboard.financial.subtitle')}</p>
+            <h2 className="text-2xl font-display font-bold text-white">{t('dashboard.financial.title')}</h2>
+            <p className="text-gray-400">{t('dashboard.financial.subtitle')}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleExportCSV}>
+            <Button variant="outline" onClick={handleExportCSV} className="border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent">
               <Download className="w-4 h-4 mr-2" />
               CSV
             </Button>
-            <Button variant="outline" onClick={handlePrint}>
+            <Button variant="outline" onClick={handlePrint} className="border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent">
               <Printer className="w-4 h-4 mr-2" />
-              Imprimir
+              {t('dashboard.financial.print', { defaultValue: 'Imprimir' })}
             </Button>
           </div>
         </div>
 
-        <Card className="p-4 bg-white/50 backdrop-blur-sm">
+        {/* --- FILTROS DE DATA (FUNDO ESCURO CORRIGIDO) --- */}
+        <Card className="p-4 bg-[#1e293b] border-white/10">
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div className="flex-1 w-full grid grid-cols-3 gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setFilterDate('today')} className="border">{t('dashboard.filters.today')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => setFilterDate('week')} className="border">{t('dashboard.filters.week')}</Button>
-              <Button variant="ghost" size="sm" onClick={() => setFilterDate('month')} className="border">{t('dashboard.filters.month')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setFilterDate('today')} className="border border-white/20 text-gray-300 hover:text-white hover:bg-white/10">{t('dashboard.filters.today')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setFilterDate('week')} className="border border-white/20 text-gray-300 hover:text-white hover:bg-white/10">{t('dashboard.filters.week')}</Button>
+              <Button variant="ghost" size="sm" onClick={() => setFilterDate('month')} className="border border-white/20 text-gray-300 hover:text-white hover:bg-white/10">{t('dashboard.filters.month')}</Button>
             </div>
             
             <div className="flex gap-2 items-center w-full md:w-auto">
               <div className="grid gap-1.5 flex-1">
-                <span className="text-xs font-medium">{t('dashboard.calendar.from')}</span>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <span className="text-xs font-medium text-gray-400">{t('dashboard.calendar.from')}</span>
+                {/* INPUT CLARO PARA CONTRASTE */}
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-white text-slate-900 border-white/10" />
               </div>
               <div className="grid gap-1.5 flex-1">
-                <span className="text-xs font-medium">{t('dashboard.calendar.to')}</span>
-                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <span className="text-xs font-medium text-gray-400">{t('dashboard.calendar.to')}</span>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-white text-slate-900 border-white/10" />
               </div>
             </div>
           </div>
@@ -183,108 +185,104 @@ export default function ReportsView() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 flex flex-col justify-between border-l-4 border-l-green-500 shadow-sm">
+        {/* CARDS DE RECEITA (TEXTO CORRIGIDO) */}
+        <Card className="p-4 flex flex-col justify-between border-l-4 border-l-green-500 shadow-sm bg-[#1e293b] border-y-0 border-r-0 border-white/5">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{t('dashboard.financial.card_realized')}</p>
-              <h3 className="text-2xl font-bold mt-1 text-green-600">{formatMoney(realizedRevenue)}</h3>
+              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('dashboard.financial.card_realized')}</p>
+              <h3 className="text-2xl font-bold mt-1 text-green-400">{formatMoney(realizedRevenue)}</h3>
             </div>
-            <div className="p-2 bg-green-100 rounded-full">
-              <DollarSign className="w-5 h-5 text-green-600" />
+            <div className="p-2 bg-green-500/20 rounded-full">
+              <DollarSign className="w-5 h-5 text-green-400" />
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-between border-l-4 border-l-blue-500 shadow-sm">
+        <Card className="p-4 flex flex-col justify-between border-l-4 border-l-blue-500 shadow-sm bg-[#1e293b] border-y-0 border-r-0 border-white/5">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{t('dashboard.financial.card_forecast')}</p>
-              <h3 className="text-2xl font-bold mt-1 text-blue-600">{formatMoney(forecastRevenue)}</h3>
+              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('dashboard.financial.card_forecast')}</p>
+              <h3 className="text-2xl font-bold mt-1 text-blue-400">{formatMoney(forecastRevenue)}</h3>
             </div>
-            <div className="p-2 bg-blue-100 rounded-full">
-              <Clock className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-blue-500/20 rounded-full">
+              <Clock className="w-5 h-5 text-blue-400" />
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 flex flex-col justify-between border-l-4 border-l-gray-500 shadow-sm">
+        <Card className="p-4 flex flex-col justify-between border-l-4 border-l-gray-500 shadow-sm bg-[#1e293b] border-y-0 border-r-0 border-white/5">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{t('dashboard.financial.card_volume')}</p>
-              <h3 className="text-2xl font-bold mt-1 text-gray-700">{completedCount}</h3>
+              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t('dashboard.financial.card_volume')}</p>
+              <h3 className="text-2xl font-bold mt-1 text-white">{completedCount}</h3>
             </div>
-            <div className="p-2 bg-gray-100 rounded-full">
-              <CheckCircle className="w-5 h-5 text-gray-600" />
+            <div className="p-2 bg-white/10 rounded-full">
+              <CheckCircle className="w-5 h-5 text-white" />
             </div>
           </div>
         </Card>
       </div>
 
-      <Card className="overflow-hidden print:shadow-none print:border-none">
+      <Card className="overflow-hidden print:shadow-none print:border-none bg-[#1e293b] border-white/10">
         
-        <div className="p-4 border-b bg-muted/30 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
-          <h3 className="font-semibold flex items-center gap-2">
+        <div className="p-4 border-b border-white/10 bg-black/20 flex flex-col sm:flex-row justify-between items-center gap-4 print:hidden">
+          <h3 className="font-semibold flex items-center gap-2 text-white">
             <Filter className="w-4 h-4" />
-            Extrato
+            {t('dashboard.financial.title')}
           </h3>
           
-          <div className="flex p-1 bg-white border rounded-lg">
-            <button onClick={() => setViewMode('all')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'all' ? 'bg-gray-900 text-white shadow' : 'text-gray-500 hover:text-gray-900'}`}>{t('dashboard.financial.filter_all')}</button>
-            <button onClick={() => setViewMode('realized')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'realized' ? 'bg-green-600 text-white shadow' : 'text-gray-500 hover:text-green-600'}`}>{t('dashboard.financial.filter_realized')}</button>
-            <button onClick={() => setViewMode('forecast')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'forecast' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-blue-600'}`}>{t('dashboard.financial.filter_forecast')}</button>
+          <div className="flex p-1 bg-black/40 border border-white/10 rounded-lg">
+            <button onClick={() => setViewMode('all')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'all' ? 'bg-primary text-slate-900 shadow' : 'text-gray-400 hover:text-white'}`}>{t('dashboard.financial.filter_all')}</button>
+            <button onClick={() => setViewMode('realized')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'realized' ? 'bg-green-600 text-white shadow' : 'text-gray-400 hover:text-green-400'}`}>{t('dashboard.financial.filter_realized')}</button>
+            <button onClick={() => setViewMode('forecast')} className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${viewMode === 'forecast' ? 'bg-blue-600 text-white shadow' : 'text-gray-400 hover:text-blue-400'}`}>{t('dashboard.financial.filter_forecast')}</button>
           </div>
         </div>
         
-        <div className="hidden print:block mb-6 text-center pt-4">
-          <h1 className="text-xl font-bold">{t('dashboard.financial.title')}</h1>
-          <p className="text-sm text-gray-500">Período: {format(parseISO(startDate), 'dd/MM/yyyy')} - {format(parseISO(endDate), 'dd/MM/yyyy')}</p>
-        </div>
-
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs text-muted-foreground uppercase bg-muted/50">
+          <table className="w-full text-sm text-left text-gray-300">
+            <thead className="text-xs text-gray-500 uppercase bg-black/40">
               <tr>
-                <th className="px-4 py-3">{t('dashboard.financial.col_date')}</th>
-                <th className="px-4 py-3">Hora</th>
-                <th className="px-4 py-3">{t('dashboard.financial.col_client')}</th>
-                <th className="px-4 py-3">{t('dashboard.financial.col_service')}</th>
-                <th className="px-4 py-3 text-primary">Profissional</th>
-                <th className="px-4 py-3">{t('dashboard.financial.col_value')}</th>
-                <th className="px-4 py-3">{t('dashboard.financial.col_status')}</th>
+                <th className="px-4 py-3">{t('dashboard.financial.table.date')}</th>
+                <th className="px-4 py-3">{t('dashboard.financial.table.time')}</th>
+                <th className="px-4 py-3">{t('dashboard.financial.table.client')}</th>
+                <th className="px-4 py-3">{t('dashboard.financial.table.service')}</th>
+                <th className="px-4 py-3 text-primary">{t('dashboard.financial.table.professional')}</th>
+                <th className="px-4 py-3">{t('dashboard.financial.table.value')}</th>
+                <th className="px-4 py-3">{t('dashboard.financial.table.status')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y">
+            <tbody className="divide-y divide-white/10">
               {filteredData.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                    Nenhum registro.
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
+                    {t('dashboard.financial.empty_list', { defaultValue: 'Nenhum registro.' })}
                   </td>
                 </tr>
               ) : (
                 filteredData.map((item) => (
-                  <tr key={item.id} className="hover:bg-muted/50">
-                    <td className="px-4 py-3 font-medium">
+                  <tr key={item.id} className="hover:bg-white/5">
+                    <td className="px-4 py-3 font-medium text-white">
                       {format(parseISO(item.appointment_date), 'dd/MM/yyyy')}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="px-4 py-3 text-gray-400">
                       {item.appointment_time.slice(0, 5)}
                     </td>
-                    <td className="px-4 py-3">{item.client_name}</td>
-                    <td className="px-4 py-3">{item.service_name}</td>
+                    <td className="px-4 py-3 text-white">{item.client_name}</td>
+                    <td className="px-4 py-3 text-gray-300">{item.service_name}</td>
                     <td className="px-4 py-3 font-medium text-primary">
                         {item.professional_name}
                     </td>
-                    <td className="px-4 py-3 font-bold text-gray-700">
+                    <td className="px-4 py-3 font-bold text-white">
                       {formatMoney(item.price)}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`
                         inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border
-                        ${item.status === 'confirmed' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
-                        ${item.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : ''}
-                        ${item.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                        ${item.status === 'no_show' ? 'bg-red-50 text-red-700 border-red-200' : ''}
-                        ${item.status === 'completed' ? 'bg-green-50 text-green-700 border-green-200' : ''}
+                        ${item.status === 'confirmed' ? 'bg-blue-900/50 text-blue-200 border-blue-800' : ''}
+                        ${item.status === 'pending' ? 'bg-yellow-900/50 text-yellow-200 border-yellow-800' : ''}
+                        ${item.status === 'cancelled' ? 'bg-red-900/50 text-red-200 border-red-800' : ''}
+                        ${item.status === 'no_show' ? 'bg-red-900/50 text-red-200 border-red-800' : ''}
+                        ${item.status === 'completed' ? 'bg-green-900/50 text-green-200 border-green-800' : ''}
                       `}>
                         {item.status}
                       </span>

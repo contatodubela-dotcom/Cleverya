@@ -19,7 +19,6 @@ const resources = {
         no: "Não",
         confirm_delete: "Tem certeza que deseja excluir?",
         search_placeholder: "Buscar...",
-        // DIAS DA SEMANA
         weekdays: {
           0: "Domingo",
           1: "Segunda-feira",
@@ -89,6 +88,18 @@ const resources = {
           financial: "Financeiro",
           settings: "Ajustes"
         },
+        // FILTROS QUE ESTAVAM FALTANDO
+        filters: {
+          today: "Hoje",
+          week: "Esta Semana",
+          month: "Este Mês"
+        },
+        // MÉTRICAS QUE ESTAVAM FALTANDO
+        metrics: {
+          revenue: "Receita Recebida",
+          forecast: "Previsão",
+          services: "Serviços Realizados"
+        },
         overview: {
           today: "Hoje",
           pending: "Pendentes",
@@ -156,17 +167,28 @@ const resources = {
           filter_all: "Todos",
           filter_realized: "Realizados",
           filter_forecast: "A Receber",
-          col_date: "Data",
-          col_client: "Cliente",
-          col_service: "Serviço",
-          col_value: "Valor",
-          col_status: "Status"
+          table: {
+            date: "Data",
+            time: "Hora",
+            client: "Cliente",
+            service: "Serviço",
+            professional: "Profissional",
+            value: "Valor",
+            status: "Status"
+          }
         },
         settings: {
-          title: "Horários de Atendimento",
-          subtitle: "Configure sua disponibilidade semanal e link de agendamento.",
+          title: "Configurações",
+          subtitle: "Gerencie seus horários e perfil",
+          operating_hours: "Disponibilidade Semanal",
+          operating_subtitle: "Defina os dias e horários que você atende.",
+          business_name: "Nome do Estabelecimento",
+          banner_title: "Banner da Página",
+          banner_help: "Recomendado: 1200x400px. Torne sua página única.",
           link_title: "Link Público de Agendamento",
-          link_desc: "Compartilhe este link com seus clientes para que possam agendar online.",
+          link_desc: "Compartilhe este link com seus clientes.",
+          save_btn: "Salvar Alterações",
+          upload_text: "Clique para enviar uma foto",
           label_open: "Abertura",
           label_close: "Fechamento",
           btn_save_time: "Salvar Horário",
@@ -177,11 +199,11 @@ const resources = {
         badge: "Gestão Inteligente & Financeiro",
         hero_title_1: "Sua agenda cheia.",
         hero_title_2: "Seu negócio no azul.",
-        hero_subtitle: "A plataforma completa para salões e clínicas eliminarem o \"no-show\", automatizarem o financeiro e fidelizarem clientes.",
+        hero_subtitle: "A plataforma completa para salões e clínicas.",
         btn_start: "Começar Grátis Agora",
-        disclaimer: "TESTE GRÁTIS DE 7 DIAS • SEM CARTÃO DE CRÉDITO",
+        disclaimer: "TESTE GRÁTIS DE 7 DIAS",
         mockup_new_app: "Novo Agendamento",
-        mockup_confirmed: "Julia Silva confirmou",
+        mockup_confirmed: "Confirmado",
         mockup_revenue: "Receita Hoje",
         features_title: "Feito para o",
         features_title_highlight: "seu sucesso",
@@ -190,7 +212,7 @@ const resources = {
         segment_nails: "Esmalterias",
         segment_clinic: "Clínicas de Estética",
         segment_spa: "Spas & Bem-estar",
-        footer_copy: "© 2025 BeautyBook. Tecnologia para negócios de beleza."
+        footer_copy: "© 2025 BeautyBook."
       }
     }
   },
@@ -210,7 +232,6 @@ const resources = {
         no: "No",
         confirm_delete: "Are you sure you want to delete?",
         search_placeholder: "Search...",
-        // WEEKDAYS
         weekdays: {
           0: "Sunday",
           1: "Monday",
@@ -280,6 +301,16 @@ const resources = {
           financial: "Financial",
           settings: "Settings"
         },
+        filters: {
+          today: "Today",
+          week: "This Week",
+          month: "This Month"
+        },
+        metrics: {
+          revenue: "Revenue Received",
+          forecast: "Forecast",
+          services: "Services Performed"
+        },
         overview: {
           today: "Today",
           pending: "Pending",
@@ -347,17 +378,28 @@ const resources = {
           filter_all: "All",
           filter_realized: "Realized",
           filter_forecast: "Forecast",
-          col_date: "Date",
-          col_client: "Client",
-          col_service: "Service",
-          col_value: "Value",
-          col_status: "Status"
+          table: {
+            date: "Date",
+            time: "Time",
+            client: "Client",
+            service: "Service",
+            professional: "Professional",
+            value: "Value",
+            status: "Status"
+          }
         },
         settings: {
-          title: "Operating Hours",
-          subtitle: "Configure your weekly availability and booking link.",
+          title: "Settings",
+          subtitle: "Configure your profile and availability.",
+          operating_hours: "Operating Hours",
+          operating_subtitle: "Set your weekly schedule.",
+          business_name: "Business Name",
+          banner_title: "Page Banner",
+          banner_help: "Recommended: 1200x400px.",
           link_title: "Public Booking Link",
-          link_desc: "Share this link with your clients so they can book online.",
+          link_desc: "Share this link with your clients.",
+          save_btn: "Save Changes",
+          upload_text: "Click to upload photo",
           label_open: "Opening",
           label_close: "Closing",
           btn_save_time: "Save Hours",
@@ -365,23 +407,23 @@ const resources = {
         }
       },
       landing: {
-        badge: "Smart Management & Finance",
+        badge: "Smart Management",
         hero_title_1: "Your calendar full.",
         hero_title_2: "Your business profitable.",
-        hero_subtitle: "The complete platform for salons and clinics to eliminate no-shows, automate finances, and retain clients.",
-        btn_start: "Start Free Now",
-        disclaimer: "7-DAY FREE TRIAL • NO CREDIT CARD REQUIRED",
+        hero_subtitle: "The complete platform.",
+        btn_start: "Start Free",
+        disclaimer: "7-DAY FREE TRIAL",
         mockup_new_app: "New Booking",
-        mockup_confirmed: "Jane Doe confirmed",
-        mockup_revenue: "Today's Revenue",
+        mockup_confirmed: "Confirmed",
+        mockup_revenue: "Revenue",
         features_title: "Built for",
         features_title_highlight: "your success",
-        features_subtitle: "Tools adapted to scale your business.",
+        features_subtitle: "Tools adapted to scale.",
         segment_salon: "Beauty Salons",
         segment_nails: "Nail Salons",
         segment_clinic: "Aesthetic Clinics",
-        segment_spa: "Spas & Wellness",
-        footer_copy: "© 2025 BeautyBook. Technology for beauty businesses."
+        segment_spa: "Spas",
+        footer_copy: "© 2025 BeautyBook."
       }
     }
   }

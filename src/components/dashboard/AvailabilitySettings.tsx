@@ -21,7 +21,7 @@ export default function AvailabilitySettings() {
   // Estados Locais
   const [uploading, setUploading] = useState(false);
   const [slugValue, setSlugValue] = useState('');
-  const [businessName, setBusinessName] = useState(''); // Novo estado para o nome
+  const [businessName, setBusinessName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const daysOfWeek = [
@@ -47,7 +47,6 @@ export default function AvailabilitySettings() {
     },
   });
 
-  // Atualiza estados quando dados chegam
   useEffect(() => {
     if (profile) {
       setSlugValue(profile.slug || '');
@@ -68,7 +67,6 @@ export default function AvailabilitySettings() {
   });
 
   const baseUrl = window.location.origin;
-  // Use o slug local se o usuário estiver editando, senão o do perfil
   const finalSlug = slugValue || profile?.slug || user?.id; 
   const publicUrl = `${baseUrl}/${finalSlug}`;
 
@@ -77,11 +75,9 @@ export default function AvailabilitySettings() {
     toast.success('Link copiado!');
   };
 
-  // --- ATUALIZAR DADOS DO PERFIL (NOME E SLUG) ---
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
         const cleanSlug = slugValue.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-        
         const { error } = await supabase
             .from('business_profiles')
             .update({ 
@@ -89,17 +85,15 @@ export default function AvailabilitySettings() {
               business_name: businessName
             })
             .eq('user_id', user?.id);
-            
         if (error) throw error;
     },
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['my-profile-settings'] });
-        toast.success('Dados atualizados com sucesso!');
+        toast.success(t('common.save') + '!');
     },
-    onError: () => toast.error('Erro ao atualizar. Tente outro link.')
+    onError: () => toast.error(t('auth.error_generic'))
   });
 
-  // --- UPLOAD DO BANNER ---
   const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -197,14 +191,13 @@ export default function AvailabilitySettings() {
 
       <div className="grid md:grid-cols-2 gap-6">
         
-        {/* --- DADOS DO NEGÓCIO (LINK E NOME) --- */}
+        {/* --- DADOS DO NEGÓCIO --- */}
         <Card className="p-6 bg-[#1e293b] border-white/10 flex flex-col gap-6">
           
-          {/* Campo Nome */}
           <div>
              <div className="flex items-center gap-2 text-primary font-medium mb-2">
                 <Store className="w-5 h-5" />
-                <h3>Nome do Estabelecimento</h3>
+                <h3>{t('dashboard.settings.business_name')}</h3>
              </div>
              <div className="flex gap-2">
                 <input 
@@ -216,7 +209,6 @@ export default function AvailabilitySettings() {
              </div>
           </div>
 
-          {/* Campo Link */}
           <div>
              <div className="flex items-center gap-2 text-primary font-medium mb-2">
                 <LinkIcon className="w-5 h-5" />
@@ -234,7 +226,6 @@ export default function AvailabilitySettings() {
                 />
              </div>
              
-             {/* Link Completo + Copiar */}
              <div className="flex gap-2 items-center p-3 bg-primary/5 border border-primary/10 rounded-lg">
                 <p className="text-xs text-primary flex-1 font-mono truncate">
                     {publicUrl}
@@ -245,24 +236,22 @@ export default function AvailabilitySettings() {
              </div>
           </div>
 
-          {/* Botão de Salvar Geral */}
           <Button 
             onClick={() => updateProfileMutation.mutate()} 
             className="w-full bg-primary hover:bg-primary/90 text-gray-900 font-bold"
           >
-            <Save className="w-4 h-4 mr-2" /> Salvar Alterações
+            <Save className="w-4 h-4 mr-2" /> {t('dashboard.settings.save_btn')}
           </Button>
-
         </Card>
 
-        {/* --- UPLOAD DE BANNER --- */}
+        {/* --- BANNER --- */}
         <Card className="p-6 bg-[#1e293b] border-white/10 overflow-hidden relative">
            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-primary font-medium">
                 <ImageIcon className="w-5 h-5" />
-                <h3>Banner da Página</h3>
+                <h3>{t('dashboard.settings.banner_title')}</h3>
               </div>
-              {uploading && <span className="text-xs text-yellow-500 animate-pulse">Enviando...</span>}
+              {uploading && <span className="text-xs text-yellow-500 animate-pulse">{t('auth.btn_loading')}</span>}
            </div>
 
            <div 
@@ -274,14 +263,14 @@ export default function AvailabilitySettings() {
                   <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" />
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40">
                      <span className="bg-black/70 text-white text-xs px-3 py-1 rounded-full flex items-center gap-2">
-                        <UploadCloud className="w-3 h-3" /> Trocar Imagem
+                        <UploadCloud className="w-3 h-3" /> {t('common.update')}
                      </span>
                   </div>
                 </>
               ) : (
                 <div className="text-center p-4">
                    <UploadCloud className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                   <p className="text-xs text-gray-400">Clique para enviar uma foto</p>
+                   <p className="text-xs text-gray-400">{t('dashboard.settings.upload_text')}</p>
                 </div>
               )}
               
@@ -294,12 +283,16 @@ export default function AvailabilitySettings() {
                 disabled={uploading}
               />
            </div>
-           <p className="text-xs text-gray-500 mt-3 text-center">Recomendado: 1200x400px.</p>
+           <p className="text-xs text-gray-500 mt-3 text-center">{t('dashboard.settings.banner_help')}</p>
         </Card>
       </div>
 
       {/* --- HORÁRIOS --- */}
-      <h3 className="text-lg font-bold text-white mt-8 mb-4">Disponibilidade Semanal</h3>
+      <div className="mt-8 mb-4">
+          <h3 className="text-lg font-bold text-white">{t('dashboard.settings.operating_hours')}</h3>
+          <p className="text-sm text-gray-400">{t('dashboard.settings.operating_subtitle')}</p>
+      </div>
+
       <div className="space-y-3">
         {daysOfWeek.map((day) => {
           const setting = availability?.find(a => a.day_of_week === day.id);
