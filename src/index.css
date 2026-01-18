@@ -53,16 +53,13 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    /* Removemos a fonte serifada para ficar mais "Tech Startup" */
   }
   
-  /* Títulos Fortes */
   h1, h2, h3, h4, h5, h6 {
     @apply font-sans tracking-tight;
     font-weight: 700;
   }
 
-  /* Scrollbar moderna */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -84,12 +81,10 @@
     font-family: 'Inter', sans-serif;
   }
   
-  /* Gradiente Dourado para botões especiais */
   .gradient-primary {
     @apply bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-gray-900 border-none;
   }
   
-  /* Inputs Minimalistas (Estilo Notion/Linear) */
   .input-minimal {
     @apply bg-transparent border-0 border-b-2 border-gray-700 rounded-none px-0 py-3 focus:ring-0 focus:border-primary transition-all placeholder:text-gray-500;
   }
@@ -97,37 +92,95 @@
   .glass-effect {
     @apply bg-[#112240]/80 backdrop-blur-lg border border-white/10;
   }
-  /* --- src/index.css (Adicione isso no final do arquivo) --- */
+  
+  /* Inputs das páginas de Auth */
+  input[type="email"],
+  input[type="password"],
+  input[type="text"] {
+    background-color: transparent !important;
+    color: white !important; 
+  }
 
-/* Forçar estilo minimalista nos inputs das páginas de Auth */
-input[type="email"],
-input[type="password"],
-input[type="text"] {
-  background-color: transparent !important;
-  color: white !important; /* Força o texto branco */
+  input::placeholder {
+    color: #64748b !important; 
+  }
+
+  input {
+    border-color: #334155 !important;
+  }
+  input:focus {
+    border-color: #F6AD55 !important; 
+    outline: none !important;
+  }
+
+  .text-gray-900 {
+    color: #f1f5f9 !important; 
+  }
+
+  .bg-primary .text-gray-900,
+  button.bg-primary {
+    color: #1e293b !important; 
+  }
 }
 
-/* Cor do texto de placeholder (o texto "seu@email.com") */
-input::placeholder {
-  color: #64748b !important; /* Cinza médio */
+/* --- CONFIGURAÇÃO DE IMPRESSÃO --- */
+@media print {
+  nav, aside, header, .sidebar, .no-print, button:not(.print-show) {
+    display: none !important;
+  }
+
+  body, #root, .bg-background {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  .card, .bg-slate-800, .bg-slate-900, .bg-card {
+    background-color: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    color: black !important;
+  }
+
+  .text-white, .text-slate-200, .text-slate-300, .text-foreground {
+    color: black !important;
+  }
+  .text-slate-400, .text-slate-500, .text-muted-foreground {
+    color: #555 !important;
+  }
+
+  .grid {
+    display: block !important;
+  }
+  .grid > * {
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+
+  .recharts-wrapper {
+    margin: 0 auto;
+  }
+  
+  .text-gray-900 {
+    color: #000000 !important;
+  }
 }
 
-/* Ajusta as bordas se estiverem brancas demais */
-input {
-  border-color: #334155 !important;
-}
-input:focus {
-  border-color: #F6AD55 !important; /* Dourado ao clicar */
-  outline: none !important;
+/* --- CORREÇÃO DO ÍCONE DE CALENDÁRIO (DEFINITIVA) --- */
+
+/* 1. Força o navegador a usar o tema ESCURO para este input. 
+      Isso faz o ícone ficar BRANCO nativamente. */
+input[type="date"] {
+    color-scheme: dark;
 }
 
-/* Correção para textos escuros em fundos escuros */
-.text-gray-900 {
-  color: #f1f5f9 !important; /* Transforma preto em branco quase puro */
+/* 2. Removemos o filtro 'invert' que estava causando o conflito 
+      e mantemos apenas a customização de cursor/opacidade */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.2s;
 }
-/* Exceção: Textos dentro de botões primários (Dourados) devem ser pretos */
-.bg-primary .text-gray-900,
-button.bg-primary {
-  color: #1e293b !important; 
-}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1; 
 }

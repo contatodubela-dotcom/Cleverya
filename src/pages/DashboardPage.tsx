@@ -117,18 +117,20 @@ export default function DashboardPage() {
               </div>
               <div className="flex flex-col justify-center">
                 <h1 className="font-bold text-lg leading-tight text-white">Cleverya</h1>
-                {!isMobile && (
-                  <div className="flex items-center gap-2">
-                    <p className="text-[11px] text-gray-400 uppercase tracking-widest font-medium">
-                      {/* CORREÇÃO AQUI: Trocamos username por email */}
-                      {businessData?.name || user?.email || 'Profissional'}
-                    </p>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${planColor} flex items-center gap-1`}>
-                       {displayPlan !== 'FREE' && <Crown className="w-2 h-2" />}
-                       {displayPlan}
-                    </span>
-                  </div>
-                )}
+                
+                {/* --- CORREÇÃO APLICADA AQUI --- */}
+                {/* Removida a verificação !isMobile e adicionados estilos de responsividade */}
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] text-gray-400 uppercase tracking-widest font-medium truncate max-w-[120px] md:max-w-none">
+                    {businessData?.name || user?.email || 'Profissional'}
+                  </p>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${planColor} flex items-center gap-1 shrink-0`}>
+                      {displayPlan !== 'FREE' && <Crown className="w-2 h-2" />}
+                      {displayPlan}
+                  </span>
+                </div>
+                {/* --- FIM DA CORREÇÃO --- */}
+
               </div>
             </div>
 
