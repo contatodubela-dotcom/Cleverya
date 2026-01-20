@@ -394,12 +394,35 @@ function BookingContent({ business }: { business: BusinessInfo }) {
          <button onClick={() => i18n.changeLanguage('en')} className={`text-xs p-2 rounded-full transition ${i18n.language === 'en' ? 'bg-white shadow-md opacity-100' : 'bg-white/50 opacity-60 hover:opacity-100'}`}>🇺🇸</button>
       </div>
 
-      {/* BANNER DINÂMICO */}
+      {/* BANNER DINÂMICO (COM GRADIENTE MAIS FORTE) */}
       <div 
-        className={`w-full h-64 md:h-80 shadow-lg bg-cover bg-center relative transition-all duration-500 ${!bannerUrl ? 'bg-gradient-to-r from-amber-200 to-orange-100' : ''}`}
-        style={bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : undefined}
+        className="w-full h-64 md:h-80 shadow-lg bg-cover bg-center relative transition-all duration-500 overflow-hidden"
+        style={
+          bannerUrl 
+            ? { backgroundImage: `url(${bannerUrl})` } 
+            : { 
+                // SE NÃO TIVER IMAGEM: Gera o padrão Cleverya via CSS (Ajustado para brilhar mais)
+                background: `
+                  radial-gradient(circle at 15% 25%, rgba(251, 191, 36, 0.35) 0%, rgba(15, 23, 42, 0) 45%),
+                  radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0) 50%),
+                  linear-gradient(to bottom right, #020617 0%, #1e293b 100%)
+                `
+              }
+        }
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+        {/* Textura de Grid (Pontinhos) - Deixei um pouco mais visível também */}
+        {!bannerUrl && (
+           <div 
+             className="absolute inset-0 opacity-[0.15]" 
+             style={{ 
+               backgroundImage: 'radial-gradient(#ffffff 1.5px, transparent 1.5px)', 
+               backgroundSize: '24px 24px' 
+             }}
+           ></div>
+        )}
+
+        {/* Gradiente preto na parte de baixo para o texto não sumir, mas mais suave no topo */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
       </div>
 
       <div className="w-full max-w-lg px-4 -mt-32 relative z-10">
