@@ -547,7 +547,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
 
         {currentPlan === 'free' && (
             <div className="mt-12 text-center animate-fade-in pb-8">
-                <a href="https://cleverya.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full border border-white/20 text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-white transition-all shadow-sm">
+                <a href="https://www.cleverya.com/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-sm rounded-full border border-white/20 text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-white transition-all shadow-sm">
                     <Sparkles className="w-3 h-3 text-[#d4af37]" />
                     <span>Powered by <strong>Cleverya</strong></span>
                 </a>

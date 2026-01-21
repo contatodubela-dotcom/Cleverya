@@ -66,7 +66,7 @@ serve(async (req: Request) => {
     const origin = req.headers.get('origin');
     const returnUrl = (origin && origin.startsWith('http')) 
       ? `${origin}/dashboard` 
-      : 'https://cleverya.com/dashboard';
+      : 'https://www.cleverya.com/dashboard';
 
     // 7. Criar Sessão do Portal
     const session = await stripe.billingPortal.sessions.create({
