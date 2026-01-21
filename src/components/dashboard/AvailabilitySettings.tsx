@@ -225,6 +225,11 @@ export default function AvailabilitySettings() {
                 onChange={(e) => setBranding({...branding, banner_url: e.target.value})}
                 className="bg-white text-slate-900 border-slate-200"
               />
+              <p className="text-[11px] text-slate-400 flex items-center gap-1">
+    <span className="text-amber-500 font-bold">Dica:</span> 
+    Use uma imagem de <span className="text-white">1920x600px</span>. 
+    Mantenha o foco no centro.
+  </p>
               <p className="text-xs text-slate-500 mt-2">{t('common.image_url_help')}</p>
             </div>
             {branding.banner_url && (

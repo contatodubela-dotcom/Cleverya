@@ -174,7 +174,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const [existingClient, setExistingClient] = useState<any>(null);
 
   const businessName = business.name || t('booking.default_business_name', { defaultValue: 'Agendamento Online' });
-  const bannerUrl = business.banner_url;
+  const bannerUrl = business.banner_url || 'https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/salon-images/Cleverya.png';
 
   // --- TELA DE BLOQUEIO ---
   if (isLimitReached) {
