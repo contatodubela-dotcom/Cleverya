@@ -248,7 +248,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     },
   });
 
-  const { data: availableSlots, isLoading: isLoadingSlots } = useQuery({
+ const { data: availableSlots, isLoading: isLoadingSlots } = useQuery({
     queryKey: ['available-slots', selectedProfessional?.id, selectedDate],
     queryFn: async () => {
       if (!selectedProfessional?.id || !selectedDate) return [];
@@ -265,7 +265,22 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         return [];
       }
       
-      return (data as { slot: string }[]).map(item => item.slot.slice(0, 5));
+      // --- CORREÇÃO DE HORÁRIO PASSADO ---
+      const now = new Date();
+      const isToday = parseISO(selectedDate).toDateString() === now.toDateString();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      return (data as { slot: string }[])
+        .map(item => item.slot.slice(0, 5))
+        .filter(time => {
+            if (!isToday) return true; // Se não for hoje, mostra tudo
+            
+            const [h, m] = time.split(':').map(Number);
+            const slotMinutes = h * 60 + m;
+            
+            // Bloqueia se o horário do slot for menor que "agora + 30 min de antecedência"
+            return slotMinutes > currentMinutes; 
+        });
     },
     enabled: !!selectedDate && !!selectedProfessional,
   });
