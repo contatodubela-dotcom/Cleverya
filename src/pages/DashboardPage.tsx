@@ -158,9 +158,9 @@ export default function DashboardPage() {
       
       <header className="bg-[#1e293b]/90 border-b border-white/10 sticky top-0 z-50 print:hidden backdrop-blur-md">
         <div className="container max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-2"> {/* Gap-2 garante separação mínima */}
+          <div className="flex items-center justify-between gap-2"> 
             
-            {/* LADO ESQUERDO: LOGO E NOME (Flexível para encolher se necessário) */}
+            {/* LADO ESQUERDO: LOGO E NOME */}
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1"> 
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(246,173,85,0.2)] shrink-0">
                 <Sparkles className="w-5 h-5 text-gray-900" />
@@ -180,10 +180,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* LADO DIREITO: AÇÕES (Não encolhe) */}
+            {/* LADO DIREITO: AÇÕES */}
             <div className="flex items-center gap-1 md:gap-3 shrink-0">
               
-              {/* BOTÃO DE AJUDA (Apenas Desktop) */}
               <Button 
                 onClick={handleOpenTutorial}
                 variant="ghost" 
@@ -194,12 +193,10 @@ export default function DashboardPage() {
                 <HelpCircle className="w-5 h-5" />
               </Button>
 
-              {/* BOTÃO IDIOMA: Visível SEMPRE (Ajustado padding para mobile) */}
               <Button onClick={toggleLanguage} variant="ghost" size="sm" className="px-2 text-xs font-bold text-gray-400 hover:text-white">
                 {i18n.language === 'pt' ? '🇺🇸 EN' : '🇧🇷 PT'}
               </Button>
 
-              {/* BOTÃO LINK DE AGENDAMENTO: Ícone sempre, texto apenas Desktop */}
               <Button 
                 onClick={handleShareUrl} 
                 variant="ghost" 
@@ -213,7 +210,6 @@ export default function DashboardPage() {
                 </span>
               </Button>
 
-              {/* BOTÃO ASSINATURA: Ícone sempre, texto apenas Desktop */}
               <Button 
                 onClick={handleManageSubscription} 
                 variant="outline" 
@@ -270,8 +266,9 @@ export default function DashboardPage() {
                  </p>
                )}
              </div>
-             {/* Wrapper para evitar quebra em tabelas largas */}
-             <div className="w-full overflow-x-auto">
+             
+             {/* CORREÇÃO AQUI: Adicionado 'pt-10' (padding-top) para dar espaço ao balão flutuante */}
+             <div className="w-full overflow-x-auto pb-4">
                 <PricingTable />
              </div>
            </div>
