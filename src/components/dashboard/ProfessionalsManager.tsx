@@ -129,7 +129,6 @@ export default function ProfessionalsManager() {
     setFormData({ name: pro.name, capacity: pro.capacity || 1 });
     setEditingId(pro.id);
     setIsCreating(true);
-    // Rola para o topo suavemente para ver o formulário
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -144,7 +143,7 @@ export default function ProfessionalsManager() {
   if (isLoading || loadingPlan) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-white" /></div>;
 
   return (
-    <div className="space-y-6 pb-20"> {/* pb-20 extra para mobile */}
+    <div className="space-y-6 pb-20">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-white">{t('dashboard.team.title', { defaultValue: 'Equipe' })}</h2>
@@ -155,40 +154,43 @@ export default function ProfessionalsManager() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Card de Adicionar/Editar */}
-        {canAdd || editingId ? (
-           isCreating ? (
-             <Card className="p-4 border-primary/50 bg-slate-800/50 flex flex-col justify-center animate-in fade-in zoom-in-95 col-span-1 md:col-span-2 lg:col-span-1">
-               <form onSubmit={handleSubmit} className="space-y-3">
-                 <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-primary uppercase">{editingId ? 'Editando' : 'Novo Profissional'}</span>
-                    {editingId && <button type="button" onClick={resetForm}><X className="w-4 h-4 text-slate-400 hover:text-white"/></button>}
+      <div className="space-y-4"> {/* MUDANÇA: Grid removido, agora é space-y-4 (lista vertical) */}
+        
+        {/* Formulário de Adicionar/Editar */}
+        {isCreating && (
+             <Card className="p-6 border-primary/50 bg-slate-800 animate-in slide-in-from-top-4">
+               <form onSubmit={handleSubmit} className="space-y-4">
+                 <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-primary uppercase">{editingId ? 'Editando Profissional' : 'Novo Profissional'}</span>
+                    <button type="button" onClick={resetForm}><X className="w-4 h-4 text-slate-400 hover:text-white"/></button>
                  </div>
                  
-                 {/* Nome */}
-                 <Input 
-                   placeholder={t('dashboard.team.name_placeholder', {defaultValue: 'Nome do Profissional'})}
-                   value={formData.name}
-                   onChange={e => setFormData({...formData, name: e.target.value})}
-                   autoFocus
-                   className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
-                 />
-
-                 {/* Capacidade */}
-                 <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                        <Users className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                 <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase">Nome</label>
                         <Input 
-                            type="number" 
-                            min="1" 
-                            max="50"
-                            value={formData.capacity}
-                            onChange={e => setFormData({...formData, capacity: parseInt(e.target.value) || 1})}
-                            className="pl-9 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
+                        placeholder={t('dashboard.team.name_placeholder', {defaultValue: 'Nome do Profissional'})}
+                        value={formData.name}
+                        onChange={e => setFormData({...formData, name: e.target.value})}
+                        autoFocus
+                        className="bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
                         />
                     </div>
-                    <span className="text-xs text-slate-500 whitespace-nowrap">clientes simultâneos</span>
+
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase">Capacidade Simultânea</label>
+                        <div className="relative">
+                            <Users className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+                            <Input 
+                                type="number" 
+                                min="1" 
+                                max="50"
+                                value={formData.capacity}
+                                onChange={e => setFormData({...formData, capacity: parseInt(e.target.value) || 1})}
+                                className="pl-9 bg-slate-900 border-slate-700 text-white placeholder:text-slate-500 focus:border-primary"
+                            />
+                        </div>
+                    </div>
                  </div>
 
                  <div className="flex gap-2 justify-end pt-2">
@@ -199,67 +201,82 @@ export default function ProfessionalsManager() {
                  </div>
                </form>
              </Card>
-           ) : (
-             <button 
-                onClick={() => setIsCreating(true)}
-                className="group h-full min-h-[100px] rounded-xl border-2 border-dashed border-slate-700 hover:border-primary hover:bg-slate-800/50 flex items-center justify-center gap-2 transition-all p-4"
-             >
-                <div className="w-10 h-10 rounded-full bg-slate-800 group-hover:bg-primary flex items-center justify-center transition-colors">
-                   <Plus className="w-5 h-5 text-slate-400 group-hover:text-slate-900" />
-                </div>
-                <span className="text-sm font-medium text-slate-500 group-hover:text-primary">{t('dashboard.team.btn_new', {defaultValue: 'Adicionar Profissional'})}</span>
-             </button>
-           )
-        ) : (
-          <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-4 flex flex-col items-center justify-center text-center gap-2 min-h-[100px]">
-            <Crown className="w-6 h-6 text-amber-500" />
-            <p className="text-sm font-bold text-amber-500">{t('dashboard.team.limit_free', {defaultValue: 'Limite do plano atingido'})}</p>
-            <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white w-full border-none" onClick={() => window.location.hash = '#pricing'}>
-              {t('dashboard.banner.cta', {defaultValue: 'Ver Planos'})}
-            </Button>
-          </div>
         )}
 
-        {/* Lista de Profissionais */}
-        {professionals?.map((pro) => (
-          <Card key={pro.id} className="p-4 bg-slate-800 border-slate-700 relative group hover:border-slate-500 transition-colors flex flex-col justify-between">
-            <div className="flex items-start gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center shrink-0">
-                    <User className="w-5 h-5 text-slate-400" />
+        {/* Botão de Novo Profissional (Modo Lista) */}
+        {!isCreating && (
+            canAdd ? (
+                <button 
+                    onClick={() => setIsCreating(true)}
+                    className="w-full rounded-xl border border-dashed border-slate-700 hover:border-primary hover:bg-slate-800/50 flex items-center justify-center gap-2 transition-all p-4 group"
+                >
+                    <div className="w-8 h-8 rounded-full bg-slate-800 group-hover:bg-primary flex items-center justify-center transition-colors">
+                        <Plus className="w-4 h-4 text-slate-400 group-hover:text-slate-900" />
+                    </div>
+                    <span className="text-sm font-medium text-slate-400 group-hover:text-white">{t('dashboard.team.btn_new', {defaultValue: 'Adicionar Profissional'})}</span>
+                </button>
+            ) : (
+                <div className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-4 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <Crown className="w-5 h-5 text-amber-500" />
+                        <p className="text-sm font-bold text-amber-500">{t('dashboard.team.limit_free', {defaultValue: 'Limite do plano atingido'})}</p>
+                    </div>
+                    <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white border-none h-8" onClick={() => window.location.hash = '#pricing'}>
+                        {t('dashboard.banner.cta', {defaultValue: 'Ver Planos'})}
+                    </Button>
                 </div>
-                <div className="overflow-hidden">
-                    <h3 className="font-bold text-white truncate">{pro.name}</h3>
-                    <div className="flex items-center gap-2 text-xs mt-1 flex-wrap">
-                         <span className="text-green-400 flex items-center gap-1 shrink-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Ativo
-                         </span>
-                         <span className="text-slate-500 flex items-center gap-1 border-l border-slate-600 pl-2 shrink-0">
-                            <Users className="w-3 h-3" /> Cap: {pro.capacity || 1}
-                         </span>
+            )
+        )}
+
+        {/* Lista de Profissionais (Visual padronizado com Serviços) */}
+        <div className="grid gap-3">
+            {professionals?.map((pro) => (
+            <Card key={pro.id} className="p-4 flex items-center justify-between hover:border-primary/30 transition-all group border-white/10 bg-slate-800/50">
+                
+                {/* Lado Esquerdo: Ícone e Info */}
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-slate-700 text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-600 transition-colors">
+                        <User className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-white text-base">{pro.name}</h3>
+                        <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                            <span className="flex items-center gap-1 text-emerald-400 font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></span> 
+                                Ativo
+                            </span>
+                            <span className="w-1 h-1 rounded-full bg-slate-600" />
+                            <span className="flex items-center gap-1" title="Capacidade simultânea">
+                                <Users className="w-3 h-3" /> Cap: {pro.capacity || 1}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 border-t border-slate-700/50 pt-3">
-                 <Button 
-                    size="sm" variant="ghost" 
-                    onClick={() => handleEdit(pro)}
-                    className="h-8 flex-1 text-xs text-slate-400 hover:text-white hover:bg-slate-700"
-                 >
-                    <Pencil className="w-3 h-3 mr-2" /> Editar
-                 </Button>
-                 <Button 
-                    size="sm" variant="ghost" 
-                    onClick={() => {
-                        if(confirm(t('toasts.confirm_delete_pro', {defaultValue: 'Remover este profissional?'}))) deleteMutation.mutate(pro.id)
-                    }}
-                    className="h-8 flex-1 text-xs text-slate-400 hover:text-red-400 hover:bg-red-900/20"
-                 >
-                    <Trash2 className="w-3 h-3 mr-2" /> Remover
-                 </Button>
-            </div>
-          </Card>
-        ))}
+                
+                {/* Lado Direito: Ações */}
+                <div className="flex gap-1">
+                    <Button 
+                        size="icon" variant="ghost" 
+                        onClick={() => handleEdit(pro)}
+                        className="h-9 w-9 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg"
+                        title="Editar"
+                    >
+                        <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                        size="icon" variant="ghost" 
+                        onClick={() => {
+                            if(confirm(t('toasts.confirm_delete_pro', {defaultValue: 'Remover este profissional?'}))) deleteMutation.mutate(pro.id)
+                        }}
+                        className="h-9 w-9 text-slate-400 hover:text-red-400 hover:bg-red-900/20 rounded-lg"
+                        title="Remover"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
+                </div>
+            </Card>
+            ))}
+        </div>
       </div>
     </div>
   );

@@ -12,3 +12,6 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+# Sitemap Location
+Sitemap: https://www.cleverya.com/sitemap.xml
