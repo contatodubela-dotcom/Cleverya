@@ -47,11 +47,11 @@ export function PricingTable() {
       },
       links: {
         monthly: isBRL 
-          ? 'https://buy.stripe.com/test_8x2eVfb7rg1A93E6qa3gk00' 
-          : 'https://buy.stripe.com/test_8x2bJ36RbaHgdjUbKu3gk01',
+          ? 'https://buy.stripe.com/8x2eVfb7rg1A93E6qa3gk00' 
+          : 'https://buy.stripe.com/8x2bJ36RbaHgdjUbKu3gk01',
         yearly: isBRL 
-          ? 'https://buy.stripe.com/test_4gM5kFcbvg1AdjU5m63gk04' 
-          : 'https://buy.stripe.com/test_dRm8wR0sNaHg6Vw15Q3gk05',
+          ? 'https://buy.stripe.com/cNi6oJ4J34iS93EaGq3gk07' 
+          : 'https://buy.stripe.com/eVqaEZdfz8z80x8dSC3gk06',
       },
       features: [
         isBRL ? 'Agendamentos ilimitados' : 'Unlimited appointments',
@@ -74,11 +74,11 @@ export function PricingTable() {
       },
       links: {
         monthly: isBRL 
-          ? 'https://buy.stripe.com/test_dRm6oJ6Rb2aK1Bcg0K3gk03' 
-          : 'https://buy.stripe.com/test_fZueVfejD8z82FgcOy3gk02',
+          ? 'https://buy.stripe.com/fZueVfejD8z82FgcOy3gk02' 
+          : 'https://buy.stripe.com/dRm6oJ6Rb2aK1Bcg0K3gk03',
         yearly: isBRL 
-          ? 'https://buy.stripe.com/test_cNi6oJ4J34iS93EaGq3gk07' 
-          : 'https://buy.stripe.com/test_eVqaEZdfz8z80x8dSC3gk06',
+          ? 'https://buy.stripe.com/dRm8wR0sNaHg6Vw15Q3gk05' 
+          : 'https://buy.stripe.com/4gM5kFcbvg1AdjU5m63gk04',
       },
       features: [
         isBRL ? 'Tudo do Pro' : 'Everything in Pro',
@@ -93,6 +93,26 @@ export function PricingTable() {
     },
   ];
 
+  // Função para lidar com o clique
+  const handlePlanClick = (plan: typeof plans[0], rawLink: string) => {
+    // 1. Se não tiver usuário, redireciona para criar conta
+    if (!user) {
+      window.location.href = `/signup?plan=${plan.id}&cycle=${billingCycle}`;
+      return;
+    }
+
+    // 2. Se for plano Free e já estiver logado, não faz nada (botão estará desabilitado visualmente também)
+    if (plan.id === 'free') {
+      return;
+    }
+
+    // 3. Se for Pago, abre Stripe em NOVA ABA para não deslogar
+    if (rawLink) {
+      const checkoutUrl = `${rawLink}?client_reference_id=${user.id}&prefilled_email=${user.email}`;
+      window.open(checkoutUrl, '_blank');
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
       <div className="flex justify-center mb-8 mt-4">
@@ -100,7 +120,6 @@ export function PricingTable() {
           <button
             onClick={() => setBillingCycle('monthly')}
             className={cn(
-              // AJUSTE MOBILE: px-3 no celular, px-6 no computador
               "px-3 sm:px-6 py-1.5 rounded-md text-sm font-medium transition-all duration-200 relative z-10",
               billingCycle === 'monthly' ? "text-white font-bold" : "text-slate-400 hover:text-white"
             )}
@@ -110,7 +129,6 @@ export function PricingTable() {
           <button
             onClick={() => setBillingCycle('yearly')}
             className={cn(
-              // AJUSTE MOBILE: px-3 no celular, px-6 no computador
               "px-3 sm:px-6 py-1.5 rounded-md text-sm font-medium transition-all duration-200 relative z-10",
               billingCycle === 'yearly' ? "text-white font-bold" : "text-slate-400 hover:text-white"
             )}
@@ -130,7 +148,6 @@ export function PricingTable() {
         </div>
       </div>
 
-      {/* RESPONSIVIDADE: grid-cols-1 (celular) -> md:grid-cols-3 (computador) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {plans.map((plan) => {
           const Icon = plan.icon;
@@ -138,14 +155,6 @@ export function PricingTable() {
           const price = billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly;
           const rawLink = billingCycle === 'monthly' ? plan.links.monthly : plan.links.yearly;
           
-          let actionUrl;
-          if (user?.id) {
-             if (isFree) actionUrl = '/'; 
-             else actionUrl = `${rawLink}?client_reference_id=${user.id}&prefilled_email=${user.email}`;
-          } else {
-             actionUrl = `/signup?plan=${plan.id}&cycle=${billingCycle}`;
-          }
-
           return (
             <div 
               key={plan.name}
@@ -198,13 +207,11 @@ export function PricingTable() {
                 ))}
               </div>
 
-              <a 
-                href={actionUrl}
-                target={(user?.id && !isFree) ? "_blank" : "_self"}
-                rel="noopener noreferrer"
-                className="block w-full mt-auto"
-              >
+              {/* Botão sem tag <a> ao redor */}
+              <div className="mt-auto w-full">
                 <Button 
+                  onClick={() => handlePlanClick(plan, rawLink)}
+                  disabled={!!user && isFree} // Desabilita o botão Free se o usuário já estiver logado
                   className={cn(
                     "w-full font-bold h-12 text-base transition-all rounded-xl shadow-lg",
                     plan.popular 
@@ -216,7 +223,7 @@ export function PricingTable() {
                     ? (isBRL ? 'Plano Atual' : 'Current Plan') 
                     : (isBRL ? 'Começar Agora' : 'Get Started')}
                 </Button>
-              </a>
+              </div>
             </div>
           );
         })}
