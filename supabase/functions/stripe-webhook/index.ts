@@ -12,14 +12,17 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-console.log('✅ Stripe Webhook Loaded (NPM Version - Fixed Date)')
+console.log('✅ Stripe Webhook Loaded (NPM Version - Fixed Date & Logic)')
 
 serve(async (req: Request) => {
   const signature = req.headers.get('Stripe-Signature')
+  
+  // Passo 1: Ler o corpo da requisição como texto
   const body = await req.text()
 
   let event
   try {
+    // Passo 2: Validar se foi a Stripe mesmo que mandou (Assinatura)
     event = await stripe.webhooks.constructEventAsync(
       body,
       signature!,
@@ -27,14 +30,14 @@ serve(async (req: Request) => {
     )
   } catch (err: any) {
     console.error(`❌ Webhook signature failed:`, err.message)
-    return new Response(err.message, { status: 400 })
+    return new Response(`Webhook Error: ${err.message}`, { status: 400 })
   }
 
   console.log(`🔔 Evento recebido: ${event.type}`)
 
   try {
     switch (event.type) {
-      // CENÁRIO 1: Primeira Compra
+      // CENÁRIO 1: Primeira Compra (Checkout)
       case 'checkout.session.completed': {
         const session = event.data.object
         const userId = session.client_reference_id
@@ -43,7 +46,7 @@ serve(async (req: Request) => {
         console.log(`💰 Checkout completado para User: ${userId}, Customer: ${customerId}`)
 
         if (!userId) {
-            console.error("⚠️ checkout.session.completed sem client_reference_id!")
+            console.error("⚠️ checkout.session.completed sem client_reference_id! Ignorando.")
             break;
         }
 
@@ -78,14 +81,14 @@ serve(async (req: Request) => {
              planType = getPlanTypeFromProduct(subscription);
         }
 
-        // --- CORREÇÃO DE DATA (BLINDAGEM) ---
-        // Garante que existe uma data válida. 
-        // Prioridade: Fim do período > Data de Encerramento (se cancelado agora) > Agora
+        // --- CORREÇÃO DE DATA (BLINDAGEM CONTRA O ERRO RangeError) ---
+        // A lógica é: Tenta pegar o fim do período. Se não tiver (cancelou agora), pega a data de encerramento.
+        // Se ainda assim falhar, pega a data de agora do servidor.
         const dateTimestamp = subscription.current_period_end || subscription.ended_at || Math.floor(Date.now() / 1000);
         
         // Converte para ISO String com segurança
         const endDateISO = new Date(dateTimestamp * 1000).toISOString();
-        // ------------------------------------
+        // -------------------------------------------------------------
 
         const { error } = await supabase
           .from('businesses')
@@ -106,10 +109,13 @@ serve(async (req: Request) => {
         console.log(`💸 Fatura paga: ${invoice.amount_paid} por Customer: ${invoice.customer}`);
         break;
       }
+      
+      default:
+        console.log(`🤷‍♂️ Evento não tratado: ${event.type}`);
     }
   } catch (err: any) {
-    console.error('❌ Erro no processamento do Webhook:', err)
-    return new Response('Webhook handler failed', { status: 400 })
+    console.error('❌ Erro CRÍTICO no processamento:', err)
+    return new Response('Webhook handler failed inside logic', { status: 400 })
   }
 
   return new Response(JSON.stringify({ received: true }), {

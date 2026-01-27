@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { format, addDays, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { Helmet } from 'react-helmet-async'; // <--- IMPORTANTE: Adicionado para controlar o link do WhatsApp
 import NotFound from './NotFound';
 
 // --- TIPAGEM INTERNA ---
@@ -122,8 +123,6 @@ export default function BookingPage() {
     );
   }
 
-  // --- CORREÇÃO AQUI ---
-  // Se terminou de carregar e NÃO achou o business, retorna o componente NotFound oficial
   if (!businessData) {
     return <NotFound />;
   }
@@ -137,6 +136,10 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const dateLocale = i18n.language === 'en' ? enUS : ptBR;
   const currencyCode = i18n.language === 'en' ? 'USD' : 'BRL';
   const formatPrice = (price: number) => new Intl.NumberFormat(i18n.language, { style: 'currency', currency: currencyCode }).format(price);
+
+  // Define os dados visuais
+  const businessName = business.name || t('booking.default_business_name', { defaultValue: 'Agendamento Online' });
+  const bannerUrl = business.banner_url || 'https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/salon-images/Cleverya.png';
 
   // --- 1. VERIFICAÇÃO DE PLANO E LIMITES ---
   const { data: usageMetrics } = useQuery({
@@ -173,9 +176,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
   const [existingClient, setExistingClient] = useState<any>(null);
 
-  const businessName = business.name || t('booking.default_business_name', { defaultValue: 'Agendamento Online' });
-  const bannerUrl = business.banner_url || 'https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/salon-images/Cleverya.png';
-
   // --- TELA DE BLOQUEIO ---
   if (isLimitReached) {
     return (
@@ -210,14 +210,10 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const groupedServices = useMemo(() => {
     if (!services) return {};
     return services.reduce((acc, service) => {
-      // 1. Pega a categoria do banco
       let cat = service.category;
-
-      // 2. Lógica de Tradução:
       if (!cat || cat === 'Geral') {
           cat = t('booking.category_general', { defaultValue: 'Geral' });
       }
-
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(service);
       return acc;
@@ -265,7 +261,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         return [];
       }
       
-      // --- CORREÇÃO DE HORÁRIO PASSADO ---
       const now = new Date();
       const isToday = parseISO(selectedDate).toDateString() === now.toDateString();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -273,12 +268,9 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       return (data as { slot: string }[])
         .map(item => item.slot.slice(0, 5))
         .filter(time => {
-            if (!isToday) return true; // Se não for hoje, mostra tudo
-            
+            if (!isToday) return true;
             const [h, m] = time.split(':').map(Number);
             const slotMinutes = h * 60 + m;
-            
-            // Bloqueia se o horário do slot for menor que "agora + 30 min de antecedência"
             return slotMinutes > currentMinutes; 
         });
     },
@@ -341,7 +333,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
          clientId = newClient.id;
       }
 
-      // Verificação de Bloqueio
       const { data: blocked } = await supabase.from('blocked_clients').select('id').eq('client_id', clientId).maybeSingle();
       if (blocked) throw new Error('Blocked');
 
@@ -401,6 +392,27 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fffbf0] via-[#fff5f5] to-[#fff0f0] flex flex-col items-center justify-start pb-12 font-sans text-slate-900">
       
+      {/* --- INJEÇÃO DE METADADOS DINÂMICOS PARA O WHATSAPP --- */}
+      <Helmet>
+        <title>{`${businessName} | Agendamento`}</title>
+        <meta name="description" content={`Agende seu horário com ${businessName} de forma rápida e online.`} />
+        
+        {/* Open Graph / Facebook / WhatsApp */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={`Agendamento | ${businessName}`} />
+        <meta property="og:description" content={`Clique para ver os serviços e horários disponíveis de ${businessName}.`} />
+        <meta property="og:image" content={bannerUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={businessName} />
+        <meta name="twitter:description" content="Agendamento Online" />
+        <meta name="twitter:image" content={bannerUrl} />
+      </Helmet>
+      {/* -------------------------------------------------------- */}
+
       <style>{`input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px white inset !important; -webkit-text-fill-color: black !important; }`}</style>
 
       {/* Seletor de Idioma */}
@@ -409,14 +421,13 @@ function BookingContent({ business }: { business: BusinessInfo }) {
          <button onClick={() => i18n.changeLanguage('en')} className={`text-xs p-2 rounded-full transition ${i18n.language === 'en' ? 'bg-white shadow-md opacity-100' : 'bg-white/50 opacity-60 hover:opacity-100'}`}>🇺🇸</button>
       </div>
 
-      {/* BANNER DINÂMICO (COM GRADIENTE MAIS FORTE) */}
+      {/* BANNER DINÂMICO */}
       <div 
         className="w-full h-64 md:h-80 shadow-lg bg-cover bg-center relative transition-all duration-500 overflow-hidden"
         style={
           bannerUrl 
             ? { backgroundImage: `url(${bannerUrl})` } 
             : { 
-                // SE NÃO TIVER IMAGEM: Gera o padrão Cleverya via CSS (Ajustado para brilhar mais)
                 background: `
                   radial-gradient(circle at 15% 25%, rgba(251, 191, 36, 0.35) 0%, rgba(15, 23, 42, 0) 45%),
                   radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0) 50%),
@@ -425,7 +436,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
               }
         }
       >
-        {/* Textura de Grid (Pontinhos) - Deixei um pouco mais visível também */}
         {!bannerUrl && (
            <div 
              className="absolute inset-0 opacity-[0.15]" 
@@ -435,8 +445,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
              }}
            ></div>
         )}
-
-        {/* Gradiente preto na parte de baixo para o texto não sumir, mas mais suave no topo */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
       </div>
 
@@ -444,6 +452,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         
         <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl p-6 mb-8 text-center border border-white/50 relative overflow-hidden">
           <div className="w-28 h-28 bg-white rounded-full mx-auto -mt-20 flex items-center justify-center shadow-2xl border-4 border-white">
+             {/* SE TIVER BANNER, PODE TENTAR USAR COMO LOGO TBM, SENÃO USA ÍCONE */}
              <div className="w-full h-full rounded-full bg-[#fffbf0] flex items-center justify-center overflow-hidden">
                 <Sparkles className="w-12 h-12 text-[#d4af37]" />
              </div>
