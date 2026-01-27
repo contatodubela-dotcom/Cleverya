@@ -1,20 +1,18 @@
 // deno-lint-ignore-file no-import-prefix no-explicit-any
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-// ATUALIZADO: Usando versão NPM estável para evitar o erro runMicrotasks
 import Stripe from 'npm:stripe@^14.21.0'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
-  apiVersion: '2023-10-16', // API version atualizada
+  apiVersion: '2023-10-16',
   httpClient: Stripe.createFetchHttpClient(),
 })
 
-// cryptoProvider removido pois a versão NPM gerencia isso nativamente agora
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-console.log('✅ Stripe Webhook Loaded (NPM Version)')
+console.log('✅ Stripe Webhook Loaded (NPM Version - Fixed Date)')
 
 serve(async (req: Request) => {
   const signature = req.headers.get('Stripe-Signature')
@@ -22,7 +20,6 @@ serve(async (req: Request) => {
 
   let event
   try {
-    // Validação de assinatura simplificada pela lib nova
     event = await stripe.webhooks.constructEventAsync(
       body,
       signature!,
@@ -66,7 +63,7 @@ serve(async (req: Request) => {
         break
       }
 
-      // CENÁRIO 2: Renovação ou Atualização
+      // CENÁRIO 2: Renovação, Atualização ou Cancelamento
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
         const subscription = event.data.object
@@ -76,16 +73,26 @@ serve(async (req: Request) => {
         console.log(`🔄 Atualização de assinatura para Customer: ${customerId}, Status: ${status}`)
 
         let planType = 'free';
+        // Se estiver ativo ou trialing, calcula o plano. Se cancelado, cai para free.
         if (status === 'active' || status === 'trialing') {
              planType = getPlanTypeFromProduct(subscription);
         }
+
+        // --- CORREÇÃO DE DATA (BLINDAGEM) ---
+        // Garante que existe uma data válida. 
+        // Prioridade: Fim do período > Data de Encerramento (se cancelado agora) > Agora
+        const dateTimestamp = subscription.current_period_end || subscription.ended_at || Math.floor(Date.now() / 1000);
+        
+        // Converte para ISO String com segurança
+        const endDateISO = new Date(dateTimestamp * 1000).toISOString();
+        // ------------------------------------
 
         const { error } = await supabase
           .from('businesses')
           .update({
             subscription_status: status,
             plan_type: planType,
-            subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString(),
+            subscription_end_date: endDateISO,
           })
           .eq('stripe_customer_id', customerId)
 
@@ -110,6 +117,8 @@ serve(async (req: Request) => {
   })
 })
 
+// --- FUNÇÕES AUXILIARES ---
+
 function getPlanTypeFromAmount(amount: number | null): string {
     if (!amount) return 'free';
     if (amount >= 5900) return 'business'; 
@@ -118,6 +127,7 @@ function getPlanTypeFromAmount(amount: number | null): string {
 }
 
 function getPlanTypeFromProduct(subscription: any): string {
+  // Tenta pegar do primeiro item da assinatura
   const priceAmount = subscription.items?.data[0]?.price?.unit_amount || 0
   if (priceAmount >= 5900) return 'business'
   if (priceAmount >= 2900) return 'pro'
