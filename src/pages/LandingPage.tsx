@@ -129,7 +129,7 @@ export default function LandingPage() {
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)} 
                 className="md:hidden text-gray-300 p-1"
-                aria-label={isMenuOpen ? t('common.close_menu', 'Fechar menu') : t('common.open_menu', 'Abrir menu')}
+                aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
               >
                 {isMenuOpen ? <X /> : <Menu />}
               </button>
@@ -254,7 +254,7 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <img 
                   src="/dashboard-print.png" 
-                  alt="Painel Cleverya"
+                  alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
                   width="1200"
                   height="675"
                   // @ts-ignore

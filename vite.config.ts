@@ -45,28 +45,25 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // --- ADIÇÃO CRÍTICA PARA PERFORMANCE ---
   build: {
+    target: 'esnext', // Otimiza para navegadores modernos (mais leve)
+    minify: 'terser',
+    terserOptions: {
+        compress: {
+            drop_console: true, // Remove console.log em produção
+            drop_debugger: true
+        }
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separa o motor do React (carrega apenas uma vez)
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          // Separa a biblioteca de animação (que é pesada)
-          animations: ['framer-motion'],
-          // Separa utilitários e ícones
-          utils: ['date-fns', 'lucide-react', 'clsx', 'tailwind-merge'],
-          // Separa o cliente do banco de dados
-          supabase: ['@supabase/supabase-js']
+          // SEPARAÇÃO INTELIGENTE DE PACOTES
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'animations': ['framer-motion'], // Isola a biblioteca pesada de animação
+          'supabase': ['@supabase/supabase-js'], // Isola o banco de dados
+          'ui-libs': ['lucide-react', 'date-fns', 'clsx', 'tailwind-merge'],
+          'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
         }
-      }
-    },
-    // Minificação agressiva para reduzir tamanho
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.log em produção
-        drop_debugger: true
       }
     }
   }

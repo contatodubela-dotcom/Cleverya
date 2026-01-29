@@ -2,5 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /dashboard
 Disallow: /success
+Disallow: /api/
 
 Sitemap: https://www.cleverya.com/sitemap.xml
