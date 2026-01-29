@@ -251,7 +251,7 @@ export default function LandingPage() {
                   alt="Painel Cleverya" 
                   className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                   onError={(e) => {
-                    e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.webp";
+                    e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.jpg";
                   }}
                 />
              </div>
@@ -393,7 +393,7 @@ export default function LandingPage() {
                     alt="Controle Financeiro Cleverya" 
                     className="w-full h-auto rounded-xl shadow-inner"
                     onError={(e) => {
-                      e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/finance-card.webp";
+                      e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/finance-card.jpg";
                     }}
                   />
                </div>
