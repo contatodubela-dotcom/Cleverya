@@ -97,14 +97,16 @@ export default function LandingPage() {
               {/* SELETOR DE IDIOMA (VISÍVEL SEMPRE) */}
               <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                 <button 
-                  onClick={() => changeLanguage('pt')} 
+                  onClick={() => changeLanguage('pt')}
+                  aria-label="Mudar para Português"
                   className={`text-xs font-bold transition-colors ${i18n.language.includes('pt') ? 'text-primary' : 'text-gray-500 hover:text-white'}`}
                 >
                   PT
                 </button>
                 <span className="text-gray-700 text-xs">|</span>
                 <button 
-                  onClick={() => changeLanguage('en')} 
+                  onClick={() => changeLanguage('en')}
+                  aria-label="Switch to English"
                   className={`text-xs font-bold transition-colors ${i18n.language.includes('en') ? 'text-primary' : 'text-gray-500 hover:text-white'}`}
                 >
                   EN
@@ -124,7 +126,11 @@ export default function LandingPage() {
               </div>
 
               {/* BOTÃO HAMBURGUER (Mobile Only) */}
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-gray-300 p-1">
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                className="md:hidden text-gray-300 p-1"
+                aria-label={isMenuOpen ? t('common.close_menu', 'Fechar menu') : t('common.open_menu', 'Abrir menu')}
+              >
                 {isMenuOpen ? <X /> : <Menu />}
               </button>
             </div>
@@ -243,12 +249,16 @@ export default function LandingPage() {
                 </div>
              </motion.div>
 
-             {/* IMAGEM PRINCIPAL */}
+             {/* IMAGEM PRINCIPAL - OTIMIZADA PARA LCP */}
              <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <img 
                   src="/dashboard-print.png" 
-                  alt="Painel Cleverya" 
+                  alt="Painel Cleverya"
+                  width="1200"
+                  height="675"
+                  fetchPriority="high"
+                  loading="eager"
                   className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                   onError={(e) => {
                     e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.webp";
