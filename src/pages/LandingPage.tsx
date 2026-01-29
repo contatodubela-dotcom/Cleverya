@@ -257,7 +257,8 @@ export default function LandingPage() {
                   alt="Painel Cleverya"
                   width="1200"
                   height="675"
-                  fetchPriority="high"
+                  // @ts-ignore
+                  fetchpriority="high"
                   loading="eager"
                   className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                   onError={(e) => {
