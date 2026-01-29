@@ -1,15 +1,27 @@
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 
 export function SEO() {
   const { t, i18n } = useTranslation();
+  const location = useLocation();
   
-  // BLINDAGEM: Se i18n.language for undefined, usa 'pt' como padrão para não travar
-  const lang = i18n.language || 'pt';
-  
-  const currentLang = lang.startsWith('pt') ? 'pt_BR' : 'en_US';
-  const htmlLang = lang.startsWith('pt') ? 'pt-BR' : 'en';
-  const canonicalUrl = window.location.origin + window.location.pathname;
+  // Detecção segura do idioma
+  const currentLang = i18n.language || 'pt';
+  const htmlLang = currentLang.startsWith('pt') ? 'pt-BR' : 'en';
+  const canonicalUrl = `https://www.cleverya.com${location.pathname}`;
+
+  // Títulos dinâmicos baseados na rota
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path === '/login') return t('auth.login_title', 'Entrar') + ' | Cleverya';
+    if (path === '/signup') return t('auth.signup_title', 'Criar Conta') + ' | Cleverya';
+    if (path.includes('/dashboard')) return 'Dashboard | Cleverya';
+    return t('seo.title', 'Cleverya — Seu tempo, organizado com inteligência');
+  };
+
+  // Se for dashboard, instruímos o Google a NÃO indexar (Melhora a "saúde" do SEO técnico)
+  const isPrivate = location.pathname.includes('/dashboard') || location.pathname.includes('/success');
 
   const schemaData = {
     "@context": "https://schema.org",
@@ -17,38 +29,42 @@ export function SEO() {
     "name": "Cleverya",
     "applicationCategory": "BusinessApplication",
     "url": "https://www.cleverya.com",
-    "description": t('seo.description', { defaultValue: 'Plataforma de agendamento inteligente e gestão de tempo.' }),
+    "description": t('seo.description', 'Plataforma de agendamento inteligente.'),
+    "operatingSystem": "Web",
     "offers": {
       "@type": "Offer",
       "price": "0",
-      "priceCurrency": lang.startsWith('pt') ? "BRL" : "USD"
+      "priceCurrency": currentLang.startsWith('pt') ? "BRL" : "USD"
     }
   };
 
   return (
     <Helmet>
       <html lang={htmlLang} />
+      <title>{getPageTitle()}</title>
+      <meta name="description" content={t('seo.description', 'Agendamento inteligente e gestão simplificada.')} />
       <link rel="canonical" href={canonicalUrl} />
-      <title>{t('seo.title', { defaultValue: 'Cleverya — Seu tempo, organizado com inteligência' })}</title>
-      <meta name="description" content={t('seo.description', { defaultValue: 'Agendamento inteligente e gestão simplificada.' })} />
-      <meta name="keywords" content={t('seo.keywords', { defaultValue: 'agendamento online, gestão de tempo, agenda' })} />
 
+      {/* Se for privado, bloqueia robôs explicitamente (Evita erro de 'falta de dados') */}
+      {isPrivate ? (
+        <meta name="robots" content="noindex, nofollow" />
+      ) : (
+        <meta name="robots" content="index, follow" />
+      )}
+
+      <meta property="og:locale" content={currentLang.startsWith('pt') ? 'pt_BR' : 'en_US'} />
+      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content="website" />
-      <meta property="og:url" content="https://www.cleverya.com" />
-      <meta property="og:title" content={t('seo.title')} />
+      <meta property="og:title" content={getPageTitle()} />
       <meta property="og:description" content={t('seo.description')} />
-      <meta property="og:locale" content={currentLang} />
       <meta property="og:site_name" content="Cleverya" />
-      <meta property="og:image" content="https://www.cleverya.com/og-image.jpg" />
-
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={t('seo.title')} />
-      <meta name="twitter:description" content={t('seo.description')} />
-      <meta name="twitter:image" content="https://www.cleverya.com/og-image.jpg" />
-
-      <script type="application/ld+json">
-        {JSON.stringify(schemaData)}
-      </script>
+      
+      {/* Script JSON-LD apenas na home para não pesar outras páginas */}
+      {location.pathname === '/' && (
+        <script type="application/ld+json">
+          {JSON.stringify(schemaData)}
+        </script>
+      )}
     </Helmet>
   );
 }
