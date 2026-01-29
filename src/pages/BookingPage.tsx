@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { format, addDays, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { Helmet } from 'react-helmet-async'; 
+import { Helmet } from 'react-helmet-async'; // <--- IMPORTANTE: Adicionado para controlar o link do WhatsApp
 import NotFound from './NotFound';
 
 // --- TIPAGEM INTERNA ---
@@ -60,6 +60,7 @@ export default function BookingPage() {
     async function resolveProfile() {
       setLoadingProfile(true);
       try {
+        // 1. Tenta buscar na tabela NOVA (Businesses)
         if (paramSlug) {
           const { data } = await supabase
             .from('businesses')
@@ -81,6 +82,7 @@ export default function BookingPage() {
           }
         }
 
+        // 2. FALLBACK: Tabela Antiga
         let query = supabase.from('businesses').select('*');
         if (paramSlug) query = query.eq('slug', paramSlug.toLowerCase());
         else if (paramId) query = query.eq('user_id', paramId);
@@ -128,16 +130,18 @@ export default function BookingPage() {
   return <BookingContent business={businessData} />;
 }
 
+// --- CONTEÚDO DO AGENDAMENTO ---
 function BookingContent({ business }: { business: BusinessInfo }) {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'en' ? enUS : ptBR;
   const currencyCode = i18n.language === 'en' ? 'USD' : 'BRL';
   const formatPrice = (price: number) => new Intl.NumberFormat(i18n.language, { style: 'currency', currency: currencyCode }).format(price);
 
+  // Define os dados visuais
   const businessName = business.name || t('booking.default_business_name', { defaultValue: 'Agendamento Online' });
-  // Fallback eficiente
-  const bannerUrl = business.banner_url || null; 
+  const bannerUrl = business.banner_url || 'https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/salon-images/Cleverya.png';
 
+  // --- 1. VERIFICAÇÃO DE PLANO E LIMITES ---
   const { data: usageMetrics } = useQuery({
     queryKey: ['public-usage-metrics', business.owner_id],
     queryFn: async () => {
@@ -159,6 +163,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     return false;
   }, [usageMetrics, currentPlan]);
 
+  // ESTADOS
   const [step, setStep] = useState<'service' | 'datetime' | 'identification' | 'confirmation' | 'success'>('service');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
@@ -171,6 +176,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
   const [existingClient, setExistingClient] = useState<any>(null);
 
+  // --- TELA DE BLOQUEIO ---
   if (isLimitReached) {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans">
@@ -187,6 +193,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     );
   }
 
+  // --- QUERIES DE DADOS ---
   const { data: services } = useQuery({
     queryKey: ['public-services', business.id],
     queryFn: async () => {
@@ -270,6 +277,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     enabled: !!selectedDate && !!selectedProfessional,
   });
 
+  // --- HANDLERS ---
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientPhone || clientPhone.length < 8) {
@@ -384,56 +392,67 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fffbf0] via-[#fff5f5] to-[#fff0f0] flex flex-col items-center justify-start pb-12 font-sans text-slate-900">
       
+      {/* --- INJEÇÃO DE METADADOS DINÂMICOS PARA O WHATSAPP --- */}
       <Helmet>
         <title>{`${businessName} | Agendamento`}</title>
         <meta name="description" content={`Agende seu horário com ${businessName} de forma rápida e online.`} />
+        
+        {/* Open Graph / Facebook / WhatsApp */}
+        <meta property="og:type" content="website" />
         <meta property="og:title" content={`Agendamento | ${businessName}`} />
         <meta property="og:description" content={`Clique para ver os serviços e horários disponíveis de ${businessName}.`} />
-        {bannerUrl && <meta property="og:image" content={bannerUrl} />}
+        <meta property="og:image" content={bannerUrl} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={businessName} />
+        <meta name="twitter:description" content="Agendamento Online" />
+        <meta name="twitter:image" content={bannerUrl} />
       </Helmet>
+      {/* -------------------------------------------------------- */}
 
       <style>{`input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px white inset !important; -webkit-text-fill-color: black !important; }`}</style>
 
+      {/* Seletor de Idioma */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">
          <button onClick={() => i18n.changeLanguage('pt')} className={`text-xs p-2 rounded-full transition ${i18n.language === 'pt' ? 'bg-white shadow-md opacity-100' : 'bg-white/50 opacity-60 hover:opacity-100'}`}>🇧🇷</button>
          <button onClick={() => i18n.changeLanguage('en')} className={`text-xs p-2 rounded-full transition ${i18n.language === 'en' ? 'bg-white shadow-md opacity-100' : 'bg-white/50 opacity-60 hover:opacity-100'}`}>🇺🇸</button>
       </div>
 
-      {/* BANNER DINÂMICO OTIMIZADO (LCP) */}
-      <div className="w-full h-64 md:h-80 shadow-lg relative transition-all duration-500 overflow-hidden bg-slate-900">
-        {/* Se tiver banner URL, carregamos como imagem (Melhor performance que background-image) */}
-        {bannerUrl ? (
-          <>
-             <img 
-               src={bannerUrl} 
-               alt="Banner" 
-               className="w-full h-full object-cover"
-               loading="eager" // Prioridade Máxima
-               // @ts-ignore
-               fetchpriority="high"
-             />
-             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-          </>
-        ) : (
-          <div 
-             className="w-full h-full"
-             style={{ 
+      {/* BANNER DINÂMICO */}
+      <div 
+        className="w-full h-64 md:h-80 shadow-lg bg-cover bg-center relative transition-all duration-500 overflow-hidden"
+        style={
+          bannerUrl 
+            ? { backgroundImage: `url(${bannerUrl})` } 
+            : { 
                 background: `
                   radial-gradient(circle at 15% 25%, rgba(251, 191, 36, 0.35) 0%, rgba(15, 23, 42, 0) 45%),
                   radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0) 50%),
                   linear-gradient(to bottom right, #020617 0%, #1e293b 100%)
                 `
+              }
+        }
+      >
+        {!bannerUrl && (
+           <div 
+             className="absolute inset-0 opacity-[0.15]" 
+             style={{ 
+               backgroundImage: 'radial-gradient(#ffffff 1.5px, transparent 1.5px)', 
+               backgroundSize: '24px 24px' 
              }}
-          >
-             <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(#ffffff 1.5px, transparent 1.5px)', backgroundSize: '24px 24px' }}></div>
-          </div>
+           ></div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
       </div>
 
       <div className="w-full max-w-lg px-4 -mt-32 relative z-10">
         
         <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl p-6 mb-8 text-center border border-white/50 relative overflow-hidden">
           <div className="w-28 h-28 bg-white rounded-full mx-auto -mt-20 flex items-center justify-center shadow-2xl border-4 border-white">
+             {/* SE TIVER BANNER, PODE TENTAR USAR COMO LOGO TBM, SENÃO USA ÍCONE */}
              <div className="w-full h-full rounded-full bg-[#fffbf0] flex items-center justify-center overflow-hidden">
                 <Sparkles className="w-12 h-12 text-[#d4af37]" />
              </div>
@@ -482,8 +501,8 @@ function BookingContent({ business }: { business: BusinessInfo }) {
               ))}
             </div>
           )}
-          {/* ... (Resto do código igual) ... */}
-           {step === 'datetime' && (
+
+          {step === 'datetime' && (
              <div className="bg-white rounded-3xl border border-[#f5f0e6] shadow-xl p-6 animate-fade-in space-y-6">
                 <h2 className="text-lg font-bold text-center text-slate-800 mb-4">{t('booking.step_date', { defaultValue: 'Data & Hora' })}</h2>
                 <div className="grid gap-2">

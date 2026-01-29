@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Cleverya',
+        name: 'Cleverya - Gestão Inteligente',
         short_name: 'Cleverya',
-        description: 'Gestão Inteligente',
+        description: 'Seu tempo, organizado com inteligência.',
         theme_color: '#0f172a',
         background_color: '#0f172a',
         display: 'standalone',
@@ -29,6 +29,12 @@ export default defineConfig({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png'
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
@@ -39,44 +45,36 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // --- OTIMIZAÇÃO DE BUILD ---
   build: {
-    target: 'esnext', // Otimização para navegadores modernos (mais rápido)
-    minify: 'esbuild',
-    cssCodeSplit: true,
+    // Aumenta o limite de aviso de tamanho de chunk (opcional, para limpar o terminal)
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // 1. ISOLAR O MONSTRO: Recharts (Gráficos) pesa muito. Só deve carregar no Dashboard.
-          if (id.includes('recharts')) {
-            return 'vendor-charts';
+          // 1. Separa o React e Router (Bibliotecas Core)
+          if (id.includes('node_modules/react') || 
+              id.includes('node_modules/react-dom') || 
+              id.includes('node_modules/react-router-dom')) {
+            return 'vendor-react';
           }
-
-          // 2. ISOLAR ANIMAÇÕES: Framer Motion é pesado.
-          if (id.includes('framer-motion')) {
-            return 'vendor-animation';
+          // 2. Separa o Supabase (Pesado)
+          if (id.includes('@supabase')) {
+            return 'vendor-supabase';
           }
-
-          // 3. ISOLAR UI KITS: Radix e componentes visuais complexos
-          if (id.includes('@radix-ui') || id.includes('clsx') || id.includes('tailwind-merge')) {
-            return 'vendor-ui-libs';
+          // 3. Separa bibliotecas de UI (Lucide, Recharts, Radix)
+          if (id.includes('lucide') || id.includes('recharts') || id.includes('@radix-ui')) {
+            return 'vendor-ui';
           }
-
-          // 4. ÍCONES LEVES: Lucide é leve, pode ficar separado para carregar rápido no Login
-          if (id.includes('lucide')) {
-            return 'vendor-icons';
-          }
-
-          // 5. CORE DO REACT: O motor principal
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('react-router-dom')) {
-            return 'vendor-react-core';
-          }
-          
-          // 6. BACKEND: Supabase e TanStack Query
-          if (id.includes('@supabase') || id.includes('@tanstack')) {
-            return 'vendor-backend';
+          // 4. Todo o resto da node_modules vai para um pacote genérico
+          if (id.includes('node_modules')) {
+            return 'vendor-libs';
           }
         },
       },
     },
+    // Minimiza CSS e remove duplicidades
+    cssCodeSplit: true,
+    minify: 'esbuild', 
   },
 });
