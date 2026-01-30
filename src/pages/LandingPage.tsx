@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { 
-  Calendar, CheckCircle, Clock, DollarSign, 
+  CheckCircle, Clock, DollarSign, 
   Menu, X, Star, AlertCircle, Smartphone,
   Briefcase, Brain, Scissors, Dumbbell,
   TrendingUp, Bell, Share2, MousePointerClick,
@@ -70,7 +70,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             
-            {/* LADO ESQUERDO: LOGO */}
+            {/* LOGO */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-[0_0_10px_rgba(250,204,21,0.3)]">
                 <Star className="w-5 h-5 text-slate-950 fill-slate-950" />
@@ -78,10 +78,8 @@ export default function LandingPage() {
               <span className="font-bold text-xl tracking-tight">Cleverya</span>
             </div>
             
-            {/* LADO DIREITO: LINKS (Desktop) + IDIOMA (Todos) + MENU (Mobile) */}
+            {/* MENU DESKTOP */}
             <div className="flex items-center gap-4 md:gap-8">
-              
-              {/* LINKS DESKTOP (Escondidos no Mobile) */}
               <div className="hidden md:flex items-center gap-8">
                 <button onClick={() => scrollToSection('como-funciona')} className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
                   {t('landing.nav.how')}
@@ -94,7 +92,7 @@ export default function LandingPage() {
                 </button>
               </div>
 
-              {/* SELETOR DE IDIOMA (VISÍVEL SEMPRE) */}
+              {/* IDIOMA */}
               <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                 <button 
                   onClick={() => changeLanguage('pt')}
@@ -113,7 +111,7 @@ export default function LandingPage() {
                 </button>
               </div>
 
-              {/* BOTÕES DE AÇÃO (Desktop Only) */}
+              {/* AÇÕES */}
               <div className="hidden md:flex items-center gap-4">
                 <Link to="/login" className="text-sm font-medium text-white hover:text-primary transition-colors">
                   {t('landing.nav.login')}
@@ -125,7 +123,7 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              {/* BOTÃO HAMBURGUER (Mobile Only) */}
+              {/* HAMBURGUER MOBILE */}
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)} 
                 className="md:hidden text-gray-300 p-1"
@@ -137,7 +135,7 @@ export default function LandingPage() {
           </div>
         </div>
         
-        {/* MOBILE MENU DROPDOWN */}
+        {/* MOBILE MENU */}
         {isMenuOpen && (
           <div className="md:hidden bg-slate-900 border-b border-white/10 shadow-2xl absolute w-full left-0 z-40">
             <div className="px-4 pt-4 pb-6 space-y-3">
@@ -219,7 +217,7 @@ export default function LandingPage() {
             transition={{ duration: 0.7, delay: 0.5 }}
             className="mt-16 relative mx-auto max-w-5xl"
           >
-             {/* CARD FLUTUANTE 1: Novo Agendamento */}
+             {/* CARDS FLUTUANTES (Animações) */}
              <motion.div 
                animate={{ y: [0, -10, 0] }}
                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
@@ -234,7 +232,6 @@ export default function LandingPage() {
                 </div>
              </motion.div>
 
-             {/* CARD FLUTUANTE 2: Receita Semana */}
              <motion.div 
                animate={{ y: [0, 10, 0] }}
                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
@@ -249,31 +246,44 @@ export default function LandingPage() {
                 </div>
              </motion.div>
 
-             {/* IMAGEM PRINCIPAL - OTIMIZADA PARA LCP */}
+             {/* IMAGEM PRINCIPAL (HERO) - LCP CRÍTICO 
+                Correção: Uso de <picture> para servir imagem menor no celular
+             */}
              <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
-                <img 
-                  src="/dashboard-print.png" 
-                  alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
-                  width="1200"
-                  height="675"
-                  // @ts-ignore
-                  fetchpriority="high"
-                  loading="eager"
-                  className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.webp";
-                  }}
-                />
+                
+                <picture>
+                  {/* Tenta carregar imagem pequena para telas até 640px */}
+                  <source 
+                    media="(max-width: 640px)" 
+                    srcSet="https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print-mobile.webp" 
+                  />
+                  {/* Fallback para imagem grande */}
+                  <img 
+                    src="/dashboard-print.png" 
+                    alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
+                    width="1200"
+                    height="675"
+                    // @ts-ignore
+                    fetchpriority="high"
+                    loading="eager"
+                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+                    onError={(e) => {
+                      // Se falhar o load, tenta a versão webp padrão
+                      e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.webp";
+                    }}
+                  />
+                </picture>
              </div>
           </motion.div>
         </div>
       </section>
 
-      {/* --- SEÇÃO DE NICHOS --- */}
+      {/* --- SEÇÃO NICHOS E DOR (Mantido igual) --- */}
       <section className="py-20 bg-slate-950 border-y border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+            {/* ... Conteúdo Nichos ... */}
+            <div className="text-center mb-16">
             <span className="text-primary font-bold uppercase tracking-wider text-sm">{t('landing.versatility.badge')}</span>
             <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">
               {t('landing.versatility.title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">{t('landing.versatility.title_highlight')}</span>
@@ -282,17 +292,10 @@ export default function LandingPage() {
               {t('landing.versatility.subtitle')}
             </p>
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {nichesCards.map((niche, index) => (
-              <motion.div 
-                key={index}
-                whileHover={{ y: -10 }}
-                className={`p-8 rounded-3xl border transition-all ${niche.bg} ${niche.border} hover:bg-opacity-20 flex flex-col items-center text-center`}
-              >
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-slate-950 shadow-inner`}>
-                   <niche.icon className={`w-8 h-8 ${niche.color}`} />
-                </div>
+              <motion.div key={index} whileHover={{ y: -10 }} className={`p-8 rounded-3xl border transition-all ${niche.bg} ${niche.border} hover:bg-opacity-20 flex flex-col items-center text-center`}>
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-slate-950 shadow-inner`}><niche.icon className={`w-8 h-8 ${niche.color}`} /></div>
                 <h3 className="font-bold text-xl text-white mb-3">{niche.title}</h3>
                 <p className="text-gray-400 text-sm leading-relaxed">{niche.desc}</p>
               </motion.div>
@@ -301,95 +304,66 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- SEÇÃO DE DOR --- */}
       <section className="py-20 bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-red-400 font-bold uppercase tracking-wider text-sm">{t('landing.pain.badge')}</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">
-              {t('landing.pain.title')}
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Smartphone, text: t('landing.pain.item_1'), color: "text-red-400" }, 
-              { icon: AlertCircle, text: t('landing.pain.item_2'), color: "text-orange-400" }, 
-              { icon: Clock, text: t('landing.pain.item_3'), color: "text-yellow-400" }, 
-              { icon: DollarSign, text: t('landing.pain.item_4'), color: "text-rose-400" }, 
-            ].map((item, index) => (
-              <motion.div 
-                key={index}
-                whileHover={{ y: -5 }}
-                className="bg-slate-950 p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all"
-              >
-                <item.icon className={`w-10 h-10 ${item.color} mb-4`} />
-                <p className="font-medium text-gray-300 text-lg">{item.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <span className="text-red-400 font-bold uppercase tracking-wider text-sm">{t('landing.pain.badge')}</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">{t('landing.pain.title')}</h2>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { icon: Smartphone, text: t('landing.pain.item_1'), color: "text-red-400" }, 
+                { icon: AlertCircle, text: t('landing.pain.item_2'), color: "text-orange-400" }, 
+                { icon: Clock, text: t('landing.pain.item_3'), color: "text-yellow-400" }, 
+                { icon: DollarSign, text: t('landing.pain.item_4'), color: "text-rose-400" }, 
+              ].map((item, index) => (
+                <motion.div key={index} whileHover={{ y: -5 }} className="bg-slate-950 p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+                  <item.icon className={`w-10 h-10 ${item.color} mb-4`} />
+                  <p className="font-medium text-gray-300 text-lg">{item.text}</p>
+                </motion.div>
+              ))}
+            </div>
+         </div>
       </section>
 
-      {/* --- SEÇÃO COMO FUNCIONA (RESTAURADA) --- */}
+      {/* --- COMO FUNCIONA --- */}
       <section id="como-funciona" className="py-20 bg-slate-950 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white">{t('landing.how.title')}</h2>
-            <p className="text-gray-400 mt-2">{t('landing.how.subtitle')}</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Linha conectora (Desktop) */}
-            <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -z-10" />
-
-            {/* Passo 1 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10">
-                <span className="text-4xl font-bold text-primary">1</span>
+           <div className="text-center mb-16">
+             <h2 className="text-3xl font-bold text-white">{t('landing.how.title')}</h2>
+             <p className="text-gray-400 mt-2">{t('landing.how.subtitle')}</p>
+           </div>
+           <div className="grid md:grid-cols-3 gap-8 relative">
+              <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -z-10" />
+              <div className="flex flex-col items-center text-center">
+                <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10"><span className="text-4xl font-bold text-primary">1</span></div>
+                <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_1_title')}</h3>
+                <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_1_desc')}</p>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_1_title')}</h3>
-              <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_1_desc')}</p>
-            </div>
-
-            {/* Passo 2 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10">
-                <Share2 className="w-10 h-10 text-primary" />
+              <div className="flex flex-col items-center text-center">
+                <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10"><Share2 className="w-10 h-10 text-primary" /></div>
+                <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_2_title')}</h3>
+                <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_2_desc')}</p>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_2_title')}</h3>
-              <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_2_desc')}</p>
-            </div>
-
-            {/* Passo 3 */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10">
-                <MousePointerClick className="w-10 h-10 text-primary" />
+              <div className="flex flex-col items-center text-center">
+                <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10"><MousePointerClick className="w-10 h-10 text-primary" /></div>
+                <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_3_title')}</h3>
+                <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_3_desc')}</p>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_3_title')}</h3>
-              <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_3_desc')}</p>
-            </div>
-          </div>
+           </div>
         </div>
       </section>
 
-      {/* --- BENEFÍCIOS --- */}
+      {/* --- BENEFÍCIOS (Imagem Secundária Otimizada) --- */}
       <section id="beneficios" className="py-20 bg-slate-950 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl font-bold text-white mb-6">{t('landing.benefits.title_1')} <span className="text-primary">{t('landing.benefits.title_highlight')}</span></h2>
               <div className="space-y-4">
-                {[
-                  t('landing.benefits.item_1'),
-                  t('landing.benefits.item_2'),
-                  t('landing.benefits.item_3'),
-                  t('landing.benefits.item_4')
-                ].map((item, i) => (
+                {[t('landing.benefits.item_1'), t('landing.benefits.item_2'), t('landing.benefits.item_3'), t('landing.benefits.item_4')].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <div className="min-w-[24px] min-h-[24px] rounded-full bg-primary/20 flex items-center justify-center">
-                      <CheckCircle className="w-4 h-4 text-primary" />
-                    </div>
+                    <div className="min-w-[24px] min-h-[24px] rounded-full bg-primary/20 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-primary" /></div>
                     <span className="text-gray-300">{item}</span>
                   </div>
                 ))}
@@ -399,9 +373,13 @@ export default function LandingPage() {
             <div className="relative">
                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-2xl blur-3xl opacity-20" />
                <div className="bg-slate-900 border border-white/10 rounded-2xl p-2 relative shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
+                  {/* IMAGEM SECUNDÁRIA - OTIMIZADA PARA NÃO BLOQUEAR A REDE */}
                   <img 
                     src="/finance-card.png" 
                     alt="Controle Financeiro Cleverya" 
+                    width="600"  // Largura explícita
+                    height="400" // Altura explícita
+                    loading="lazy" // Carregamento lento (importante!)
                     className="w-full h-auto rounded-xl shadow-inner"
                     onError={(e) => {
                       e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/finance-card.webp";
@@ -409,195 +387,98 @@ export default function LandingPage() {
                   />
                </div>
 
-               {/* CARD FLUTUANTE 1: Novo Agendamento (Para ter 2 por imagem) */}
-               <motion.div 
-                 animate={{ y: [0, -10, 0] }}
-                 transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                 className="absolute -top-6 -left-4 md:-left-12 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4 max-w-[200px] md:max-w-none"
-               >
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                     <Bell className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div className="text-left">
-                     <p className="text-xs text-gray-400 font-bold">{t('landing.floating.new_app')}</p>
-                     <p className="text-sm text-white font-bold">{t('landing.floating.confirmed')} ✅</p>
-                  </div>
+               {/* Widgets Flutuantes Benefits */}
+               <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="absolute -top-6 -left-4 md:-left-12 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4 max-w-[200px] md:max-w-none">
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><Bell className="w-5 h-5 text-green-500" /></div>
+                  <div className="text-left"><p className="text-xs text-gray-400 font-bold">{t('landing.floating.new_app')}</p><p className="text-sm text-white font-bold">{t('landing.floating.confirmed')} ✅</p></div>
                </motion.div>
-
-               {/* CARD FLUTUANTE 2: Receita Hoje */}
-               <motion.div 
-                 animate={{ y: [0, 10, 0] }}
-                 transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-                 className="absolute -bottom-6 -right-4 md:-right-8 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4"
-               >
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                     <TrendingUp className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div className="text-left">
-                     <p className="text-xs text-gray-400 font-bold">{t('landing.floating.revenue_today')}</p>
-                     <p className="text-lg font-bold text-green-400">+ R$ 450,00</p>
-                  </div>
+               <motion.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }} className="absolute -bottom-6 -right-4 md:-right-8 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-green-500" /></div>
+                  <div className="text-left"><p className="text-xs text-gray-400 font-bold">{t('landing.floating.revenue_today')}</p><p className="text-lg font-bold text-green-400">+ R$ 450,00</p></div>
                </motion.div>
             </div>
-
           </div>
         </div>
       </section>
 
-      {/* --- PLANOS --- */}
+      {/* --- PLANOS, CTA e FOOTER (Conteúdo padrão mantido) --- */}
       <section id="planos" className="py-20 bg-slate-900 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white">{t('landing.plans.title')}</h2>
-            <p className="text-gray-400 mt-2 max-w-2xl mx-auto">
-              {t('landing.plans.subtitle')}
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
-            
-            {/* Plano Grátis */}
-            <div className="bg-slate-950 p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-500 to-white/20" />
-              <h3 className="text-xl font-bold text-white">{t('landing.plans.free.title')}</h3>
-              <div className="mt-4 mb-2">
-                <span className="text-4xl font-bold text-white">R$ 0</span>
-                <span className="text-gray-400">{t('landing.plans.per_month')}</span>
-              </div>
-              <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.free.desc')}</p>
-              
-              <ul className="space-y-3 mb-8 flex-1">
-                <li className="flex items-center gap-2 text-sm text-gray-300 font-medium">
-                  <CheckCircle className="w-4 h-4 text-green-500" /> {t('landing.plans.free.item_1')}
-                </li>
-              </ul>
-              <Link to="/signup">
-                <button className="w-full py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">
-                  {t('landing.plans.free.cta')}
-                </button>
-              </Link>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white">{t('landing.plans.title')}</h2>
+              <p className="text-gray-400 mt-2 max-w-2xl mx-auto">{t('landing.plans.subtitle')}</p>
             </div>
-
-            {/* Plano PRO */}
-            <div className="bg-slate-800 p-8 rounded-2xl border-2 border-primary relative transform md:-translate-y-4 shadow-[0_0_30px_rgba(250,204,21,0.15)] flex flex-col">
-              <div className="absolute top-0 right-0 bg-primary text-slate-950 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">
-                {t('landing.plans.pro.badge')}
+            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
+              {/* Grátis */}
+              <div className="bg-slate-950 p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col relative overflow-hidden group">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-500 to-white/20" />
+                <h3 className="text-xl font-bold text-white">{t('landing.plans.free.title')}</h3>
+                <div className="mt-4 mb-2"><span className="text-4xl font-bold text-white">R$ 0</span><span className="text-gray-400">{t('landing.plans.per_month')}</span></div>
+                <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.free.desc')}</p>
+                <ul className="space-y-3 mb-8 flex-1">
+                  <li className="flex items-center gap-2 text-sm text-gray-300 font-medium"><CheckCircle className="w-4 h-4 text-green-500" /> {t('landing.plans.free.item_1')}</li>
+                </ul>
+                <Link to="/signup"><button className="w-full py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">{t('landing.plans.free.cta')}</button></Link>
               </div>
-              <h3 className="text-xl font-bold text-white">{t('landing.plans.pro.title')}</h3>
-              <div className="mt-4 mb-2">
-                <span className="text-4xl font-bold text-white">R$ 29,90</span>
-                <span className="text-gray-400">{t('landing.plans.per_month')}</span>
+              {/* Pro */}
+              <div className="bg-slate-800 p-8 rounded-2xl border-2 border-primary relative transform md:-translate-y-4 shadow-[0_0_30px_rgba(250,204,21,0.15)] flex flex-col">
+                <div className="absolute top-0 right-0 bg-primary text-slate-950 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">{t('landing.plans.pro.badge')}</div>
+                <h3 className="text-xl font-bold text-white">{t('landing.plans.pro.title')}</h3>
+                <div className="mt-4 mb-2"><span className="text-4xl font-bold text-white">R$ 29,90</span><span className="text-gray-400">{t('landing.plans.per_month')}</span></div>
+                <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.pro.desc')}</p>
+                <Link to="/signup?plan=pro&cycle=monthly"><button className="w-full mt-auto py-3 rounded-xl bg-primary text-slate-950 font-bold hover:bg-primary/90 transition-all shadow-lg">{t('landing.plans.pro.cta')}</button></Link>
               </div>
-              <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.pro.desc')}</p>
-
-              {/* ATUALIZADO: LINK DO PLANO PRO COM PARÂMETROS */}
-              <Link to="/signup?plan=pro&cycle=monthly">
-                <button className="w-full mt-auto py-3 rounded-xl bg-primary text-slate-950 font-bold hover:bg-primary/90 transition-all shadow-lg">
-                  {t('landing.plans.pro.cta')}
-                </button>
-              </Link>
+              {/* Business */}
+              <div className="bg-slate-950 p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col">
+                <h3 className="text-xl font-bold text-white">{t('landing.plans.business.title')}</h3>
+                <div className="mt-4 mb-2"><span className="text-4xl font-bold text-white">R$ 59,90</span><span className="text-gray-400">{t('landing.plans.per_month')}</span></div>
+                <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.business.desc')}</p>
+                <Link to="/signup?plan=business&cycle=monthly"><button className="w-full mt-auto py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">{t('landing.plans.business.cta')}</button></Link>
+              </div>
             </div>
-
-            {/* Plano Business */}
-            <div className="bg-slate-950 p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col">
-              <h3 className="text-xl font-bold text-white">{t('landing.plans.business.title')}</h3>
-              <div className="mt-4 mb-2">
-                <span className="text-4xl font-bold text-white">R$ 59,90</span>
-                <span className="text-gray-400">{t('landing.plans.per_month')}</span>
+            {/* Comparativo */}
+            <div className="max-w-3xl mx-auto bg-slate-950 rounded-xl border border-white/10 p-6">
+              <h4 className="text-center font-bold text-white mb-6">{t('landing.plans.compare.title')}</h4>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="col-span-1 text-gray-400 font-medium flex items-center">{t('landing.plans.compare.feature')}</div>
+                <div className="col-span-1 text-center font-bold text-primary">Cleverya ({t('landing.plans.compare.all')})</div>
+                <div className="col-span-1 text-center text-gray-500">{t('landing.plans.compare.others')}</div>
+                <div className="col-span-3 h-px bg-white/5 my-1" />
+                <div className="col-span-1 text-gray-300">Link 24h</div>
+                <div className="col-span-1 text-center text-primary"><CheckCircle className="w-4 h-4 mx-auto" /></div>
+                <div className="col-span-1 text-center text-gray-600"><XCircle className="w-4 h-4 mx-auto" /></div>
+                <div className="col-span-3 h-px bg-white/5 my-1" />
+                <div className="col-span-1 text-gray-300">{t('landing.benefits.item_2')}</div>
+                <div className="col-span-1 text-center text-primary"><CheckCircle className="w-4 h-4 mx-auto" /></div>
+                <div className="col-span-1 text-center text-gray-600 text-xs md:text-sm">{t('landing.plans.compare.charged_separately')}</div>
               </div>
-              <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.business.desc')}</p>
-              
-              {/* ATUALIZADO: LINK DO PLANO BUSINESS COM PARÂMETROS */}
-              <Link to="/signup?plan=business&cycle=monthly">
-                <button className="w-full mt-auto py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">
-                  {t('landing.plans.business.cta')}
-                </button>
-              </Link>
             </div>
           </div>
-
-          {/* Comparativo Rápido */}
-          <div className="max-w-3xl mx-auto bg-slate-950 rounded-xl border border-white/10 p-6">
-            <h4 className="text-center font-bold text-white mb-6">{t('landing.plans.compare.title')}</h4>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div className="col-span-1 text-gray-400 font-medium flex items-center">{t('landing.plans.compare.feature')}</div>
-              {/* ATUALIZADO: TRADUÇÃO DE (TODOS) */}
-              <div className="col-span-1 text-center font-bold text-primary">Cleverya ({t('landing.plans.compare.all')})</div>
-              <div className="col-span-1 text-center text-gray-500">{t('landing.plans.compare.others')}</div>
-
-              <div className="col-span-3 h-px bg-white/5 my-1" />
-              
-              <div className="col-span-1 text-gray-300">Link 24h</div>
-              <div className="col-span-1 text-center text-primary"><CheckCircle className="w-4 h-4 mx-auto" /></div>
-              <div className="col-span-1 text-center text-gray-600"><XCircle className="w-4 h-4 mx-auto" /></div>
-
-              <div className="col-span-3 h-px bg-white/5 my-1" />
-
-              <div className="col-span-1 text-gray-300">{t('landing.benefits.item_2')}</div>
-              <div className="col-span-1 text-center text-primary"><CheckCircle className="w-4 h-4 mx-auto" /></div>
-              <div className="col-span-1 text-center text-gray-600 text-xs md:text-sm">{t('landing.plans.compare.charged_separately')}</div>
-            </div>
-          </div>
-
-        </div>
       </section>
 
-      {/* --- CTA FINAL --- */}
       <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/10 -z-10" />
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            {t('landing.cta_final.title')}
-          </h2>
-          <Link to="/signup">
-            <button className="bg-primary hover:bg-primary/90 text-slate-950 text-xl px-10 py-5 rounded-full font-bold transition-all shadow-[0_0_30px_rgba(250,204,21,0.5)] hover:scale-105 transform duration-200">
-              👉 {t('landing.cta_final.btn')}
-            </button>
-          </Link>
-          <p className="mt-6 text-gray-400">
-            {t('landing.cta_final.subtitle')}
-          </p>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">{t('landing.cta_final.title')}</h2>
+          <Link to="/signup"><button className="bg-primary hover:bg-primary/90 text-slate-950 text-xl px-10 py-5 rounded-full font-bold transition-all shadow-[0_0_30px_rgba(250,204,21,0.5)] hover:scale-105 transform duration-200">👉 {t('landing.cta_final.btn')}</button></Link>
+          <p className="mt-6 text-gray-400">{t('landing.cta_final.subtitle')}</p>
         </div>
       </section>
 
-      {/* --- FOOTER (RODAPÉ) --- */}
       <footer className="bg-slate-950 py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          
-          {/* Logo e Copyright */}
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-                <Star className="w-3 h-3 text-slate-950 fill-slate-950" />
-              </div>
+              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center"><Star className="w-3 h-3 text-slate-950 fill-slate-950" /></div>
               <span className="font-bold text-lg">Cleverya</span>
             </div>
             <div className="text-gray-500 text-sm hidden md:block">|</div>
-            <div className="text-gray-500 text-sm">
-              {t('landing.footer.copy')}
-            </div>
+            <div className="text-gray-500 text-sm">{t('landing.footer.copy')}</div>
           </div>
-
           <div className="flex gap-6">
-            {/* Link para Termos */}
-            <Link to="/terms" className="text-gray-500 hover:text-white transition-colors text-sm">
-              {t('landing.footer.terms')}
-            </Link>
-            
-            {/* Link para Privacidade */}
-            <Link to="/privacy" className="text-gray-500 hover:text-white transition-colors text-sm">
-              {t('landing.footer.privacy')}
-            </Link>
-            
-            {/* Link para Instagram */}
-            <a 
-              href="https://www.instagram.com/cleverya.app" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-gray-500 hover:text-white transition-colors text-sm"
-            >
-              {t('landing.footer.instagram')}
-            </a>
+            <Link to="/terms" className="text-gray-500 hover:text-white transition-colors text-sm">{t('landing.footer.terms')}</Link>
+            <Link to="/privacy" className="text-gray-500 hover:text-white transition-colors text-sm">{t('landing.footer.privacy')}</Link>
+            <a href="https://www.instagram.com/cleverya.app" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors text-sm">{t('landing.footer.instagram')}</a>
           </div>
         </div>
       </footer>
