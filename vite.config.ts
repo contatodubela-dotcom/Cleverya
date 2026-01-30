@@ -56,6 +56,12 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        // --- CACHE BUSTING (O SEGREDO) ---
+        // Adiciona um timestamp único ao nome dos arquivos para forçar o Cloudflare a atualizar
+        entryFileNames: `assets/[name].[hash]-${Date.now()}.js`,
+        chunkFileNames: `assets/[name].[hash]-${Date.now()}.js`,
+        assetFileNames: `assets/[name].[hash]-${Date.now()}.[ext]`,
+
         manualChunks: {
           // SEPARAÇÃO INTELIGENTE DE PACOTES
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
