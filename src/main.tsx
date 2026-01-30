@@ -7,22 +7,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
+import ReactGA from "react-ga4"; // Voltamos ao import estático para corrigir o erro
 
-// Componente para carregar Analytics sem travar a thread principal
-const AnalyticsWrapper = () => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-       import("react-ga4").then(module => {
-          const ReactGA = module.default;
-          ReactGA.initialize("G-8ZJYEN9K17");
-       });
-    }, 4000); // Carrega 4 segundos após a renderização inicial
-    return () => clearTimeout(timer);
-  }, []);
-  return null;
-};
+// Inicialização direta do GA4 para evitar conflito com GoogleAnalyticsTracker.tsx
+ReactGA.initialize("G-8ZJYEN9K17");
 
-// --- POSTHOG OTIMIZADO (LAZY LOAD REAL) ---
+// --- POSTHOG OTIMIZADO (LAZY LOAD REAL MANTIDO) ---
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     import('posthog-js').then(({ default: posthog }) => {
@@ -54,7 +44,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <AnalyticsWrapper />
           <App />
           <Toaster richColors position="top-center" closeButton />
         </AuthProvider>

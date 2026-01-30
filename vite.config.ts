@@ -56,13 +56,14 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        entryFileNames: `assets/[name].[hash]-${Date.now()}.js`,
-        chunkFileNames: `assets/[name].[hash]-${Date.now()}.js`,
-        assetFileNames: `assets/[name].[hash]-${Date.now()}.[ext]`,
+        entryFileNames: `assets/[name].[hash].js`,
+        chunkFileNames: `assets/[name].[hash].js`,
+        assetFileNames: `assets/[name].[hash].[ext]`,
 
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'framer-motion': ['framer-motion'],
+          // Removemos 'framer-motion' daqui para deixar o Vite decidir melhor, 
+          // já que agora estamos usando LazyMotion no componente.
           'supabase': ['@supabase/supabase-js'],
           'ui-libs': ['lucide-react', 'date-fns', 'clsx', 'tailwind-merge', 'sonner'],
           'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']

@@ -1,1 +1,6 @@
-/* /index.html 200
+# Forçar HTTPS
+# Permitir que arquivos reais na pasta assets carreguem (evita o loop)
+/assets/* /assets/:splat  200
+
+# Regra SPA - Envia qualquer outra rota para o index.html
+/* /index.html  200
