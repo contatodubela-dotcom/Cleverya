@@ -210,11 +210,9 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          {/* VISUAL MOCKUP HERO - OTIMIZADO PARA LCP */}
-          {/* AQUI A MUDANÇA: Virou DIV normal, sem 'initial', sem 'animate' */}
+          {/* VISUAL MOCKUP HERO - VERSÃO LOCAL (ZERO LATÊNCIA) */}
           <div className="mt-16 relative mx-auto max-w-5xl">
              
-             {/* CARDS FLUTUANTES (Mantemos a animação deles, pois não bloqueiam a página) */}
              <motion.div 
                initial={{ opacity: 0, scale: 0.8 }}
                animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
@@ -251,26 +249,26 @@ export default function LandingPage() {
                 </div>
              </motion.div>
 
-             {/* IMAGEM PRINCIPAL (HERO) - SEM ATRASO (motion removido) */}
+             {/* IMAGEM PRINCIPAL (HERO) - TUDO LOCAL E WEBP */}
              <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
                 <picture>
+                  {/* Aponta para a imagem leve NA PASTA PUBLIC (WEBP) */}
                   <source 
                     media="(max-width: 640px)" 
-                    srcSet="https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print-mobile.webp" 
+                    srcSet="/dashboard-mobile.webp" 
                   />
+                  {/* Fallback Desktop também na pasta public (WEBP) */}
                   <img 
-                    src="/dashboard-print.png" 
+                    src="/dashboard-print.webp" 
                     alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
                     width="1200"
                     height="675"
+                    // Correção do erro TypeScript: use fetchPriority
                     // @ts-ignore
-                    fetchpriority="high"
+                    fetchPriority="high"
                     loading="eager"
                     className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.webp";
-                    }}
                   />
                 </picture>
              </div>
@@ -371,17 +369,14 @@ export default function LandingPage() {
             <div className="relative">
                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-2xl blur-3xl opacity-20" />
                <div className="bg-slate-900 border border-white/10 rounded-2xl p-2 relative shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
-                  {/* IMAGEM SECUNDÁRIA */}
+                  {/* IMAGEM SECUNDÁRIA - LOCAL WEBP */}
                   <img 
-                    src="/finance-card.png" 
+                    src="/finance-card.webp" 
                     alt="Controle Financeiro Cleverya" 
                     width="600"  
                     height="400" 
                     loading="lazy" 
                     className="w-full h-auto rounded-xl shadow-inner"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/finance-card.webp";
-                    }}
                   />
                </div>
 
