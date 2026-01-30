@@ -7,7 +7,6 @@ import {
   XCircle 
 } from 'lucide-react';
 import { useState } from 'react';
-// OTIMIZAÇÃO: Importando LazyMotion e 'm' em vez de 'motion' padrão
 import { m, LazyMotion, domAnimation } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 
@@ -64,7 +63,6 @@ export default function LandingPage() {
   ];
 
   return (
-    // OTIMIZAÇÃO: Envolvendo tudo com LazyMotion para carregar animações sob demanda
     <LazyMotion features={domAnimation}>
       <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-primary selection:text-slate-950 overflow-x-hidden">
         
@@ -95,7 +93,6 @@ export default function LandingPage() {
                   </button>
                 </div>
 
-                {/* IDIOMA - CORREÇÃO DE CONTRASTE (text-gray-400) */}
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
                   <button 
                     onClick={() => changeLanguage('pt')}
@@ -114,7 +111,6 @@ export default function LandingPage() {
                   </button>
                 </div>
 
-                {/* AÇÕES */}
                 <div className="hidden md:flex items-center gap-4">
                   <Link to="/login" className="text-sm font-medium text-white hover:text-primary transition-colors">
                     {t('landing.nav.login')}
@@ -126,7 +122,6 @@ export default function LandingPage() {
                   </Link>
                 </div>
 
-                {/* HAMBURGUER MOBILE */}
                 <button 
                   onClick={() => setIsMenuOpen(!isMenuOpen)} 
                   className="md:hidden text-gray-300 p-1"
@@ -138,15 +133,12 @@ export default function LandingPage() {
             </div>
           </div>
           
-          {/* MOBILE MENU */}
           {isMenuOpen && (
             <div className="md:hidden bg-slate-900 border-b border-white/10 shadow-2xl absolute w-full left-0 z-40">
               <div className="px-4 pt-4 pb-6 space-y-3">
                 <button onClick={() => scrollToSection('como-funciona')} className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg font-medium">{t('landing.nav.how')}</button>
                 <button onClick={() => scrollToSection('planos')} className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg font-medium">{t('landing.nav.plans')}</button>
-                
                 <div className="border-t border-white/10 my-2 pt-2"></div>
-
                 <Link to="/login" className="block w-full px-4 py-3 text-gray-300 hover:text-white text-center font-medium">{t('landing.nav.login')}</Link>
                 <Link to="/signup" className="block w-full">
                   <button className="w-full bg-primary text-slate-900 py-3 rounded-xl font-bold text-center">
@@ -163,61 +155,42 @@ export default function LandingPage() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-10 opacity-50" />
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            {/* OTIMIZAÇÃO: Trocado 'motion' por 'm' */}
-            <m.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-primary mb-6"
-            >
+            {/* LCP FIX: Removido animação de entrada (initial/animate) para renderizar IMEDIATAMENTE */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-primary mb-6">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
               {t('landing.hero.badge')}
-            </m.div>
+            </div>
 
-            <m.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight"
-            >
+            {/* LCP FIX: Título renderiza sem esperar JS */}
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight">
               {t('landing.hero.title_1')} <br className="hidden md:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-yellow-200">
                 {t('landing.hero.title_highlight')}
               </span> {t('landing.hero.title_2')}
-            </m.h1>
+            </h1>
 
-            <m.p 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10"
-            >
+            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
               {t('landing.hero.subtitle')}
-            </m.p>
+            </p>
 
-            <m.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex flex-col items-center gap-4"
-            >
+            <div className="flex flex-col items-center gap-4">
               <Link to="/signup">
                 <button className="bg-primary hover:bg-primary/90 text-slate-950 text-lg px-8 py-4 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:shadow-[0_0_30px_rgba(250,204,21,0.6)] flex items-center gap-2">
                   👉 {t('landing.hero.cta')}
                 </button>
               </Link>
-              {/* CORREÇÃO CONTRASTE: text-gray-400 */}
               <p className="text-sm text-gray-400 flex items-center gap-2">
                 <Clock className="w-4 h-4" /> {t('landing.hero.micro')}
               </p>
-            </m.div>
+            </div>
 
             {/* VISUAL MOCKUP HERO */}
             <div className="mt-16 relative mx-auto max-w-5xl">
               
+              {/* Elementos flutuantes animados mantidos (não são LCP crítico) */}
               <m.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
@@ -254,7 +227,7 @@ export default function LandingPage() {
                   </div>
               </m.div>
 
-              {/* IMAGEM PRINCIPAL (HERO) */}
+              {/* IMAGEM PRINCIPAL (HERO) - Sem Animação de Opacidade */}
               <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
                   <picture>
@@ -278,7 +251,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* --- SEÇÃO NICHOS E DOR --- */}
+        {/* --- DEMAIS SEÇÕES MANTÉM ANIMAÇÃO (não afetam LCP inicial) --- */}
         <section className="py-20 bg-slate-950 border-y border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-16">
@@ -371,7 +344,6 @@ export default function LandingPage() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-2xl blur-3xl opacity-20" />
                 <div className="bg-slate-900 border border-white/10 rounded-2xl p-2 relative shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
-                    {/* IMAGEM SECUNDÁRIA */}
                     <img 
                       src="/finance-card.webp" 
                       alt="Controle Financeiro Cleverya" 
@@ -382,7 +354,6 @@ export default function LandingPage() {
                     />
                 </div>
 
-                {/* Widgets Flutuantes Benefits */}
                 <m.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="absolute -top-6 -left-4 md:-left-12 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4 max-w-[200px] md:max-w-none">
                     <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><Bell className="w-5 h-5 text-green-500" /></div>
                     <div className="text-left"><p className="text-xs text-gray-400 font-bold">{t('landing.floating.new_app')}</p><p className="text-sm text-white font-bold">{t('landing.floating.confirmed')} ✅</p></div>
@@ -431,7 +402,6 @@ export default function LandingPage() {
                   <Link to="/signup?plan=business&cycle=monthly"><button className="w-full mt-auto py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">{t('landing.plans.business.cta')}</button></Link>
                 </div>
               </div>
-              {/* Comparativo */}
               <div className="max-w-3xl mx-auto bg-slate-950 rounded-xl border border-white/10 p-6">
                 <h4 className="text-center font-bold text-white mb-6">{t('landing.plans.compare.title')}</h4>
                 <div className="grid grid-cols-3 gap-4 text-sm">
@@ -451,7 +421,6 @@ export default function LandingPage() {
             </div>
         </section>
 
-        {/* --- CTA FINAL --- */}
         <section className="py-20 relative overflow-hidden">
           <div className="absolute inset-0 bg-primary/10 -z-10" />
           <div className="max-w-4xl mx-auto px-4 text-center">
@@ -469,11 +438,9 @@ export default function LandingPage() {
                 <span className="font-bold text-lg">Cleverya</span>
               </div>
               <div className="text-gray-500 text-sm hidden md:block">|</div>
-              {/* CORREÇÃO DE CONTRASTE */}
               <div className="text-gray-400 text-sm">{t('landing.footer.copy')}</div>
             </div>
             <div className="flex gap-6">
-              {/* CORREÇÃO DE CONTRASTE */}
               <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.terms')}</Link>
               <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.privacy')}</Link>
               <a href="https://www.instagram.com/cleverya.app" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.instagram')}</a>
