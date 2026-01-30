@@ -210,17 +210,18 @@ export default function LandingPage() {
             </p>
           </motion.div>
 
-          {/* VISUAL MOCKUP HERO */}
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.5 }}
-            className="mt-16 relative mx-auto max-w-5xl"
-          >
-             {/* CARDS FLUTUANTES (Animações) */}
+          {/* VISUAL MOCKUP HERO - OTIMIZADO PARA LCP */}
+          {/* Removemos motion.div do container principal para evitar delay no carregamento da imagem */}
+          <div className="mt-16 relative mx-auto max-w-5xl">
+             
+             {/* CARDS FLUTUANTES (Animações mantidas apenas nos elementos decorativos) */}
              <motion.div 
-               animate={{ y: [0, -10, 0] }}
-               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+               initial={{ opacity: 0, scale: 0.8 }}
+               animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
+               transition={{ 
+                 opacity: { duration: 0.5, delay: 0.5 }, 
+                 y: { repeat: Infinity, duration: 4, ease: "easeInOut" } 
+               }}
                className="absolute -top-6 -left-4 md:-left-12 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4 max-w-[200px] md:max-w-none"
              >
                 <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
@@ -233,8 +234,12 @@ export default function LandingPage() {
              </motion.div>
 
              <motion.div 
-               animate={{ y: [0, 10, 0] }}
-               transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
+               initial={{ opacity: 0, scale: 0.8 }}
+               animate={{ opacity: 1, scale: 1, y: [0, 10, 0] }}
+               transition={{ 
+                 opacity: { duration: 0.5, delay: 0.7 },
+                 y: { repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 } 
+               }}
                className="absolute -bottom-6 -right-4 md:-right-8 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4"
              >
                 <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -275,14 +280,13 @@ export default function LandingPage() {
                   />
                 </picture>
              </div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* --- SEÇÃO NICHOS E DOR (Mantido igual) --- */}
+      {/* --- SEÇÃO NICHOS E DOR --- */}
       <section className="py-20 bg-slate-950 border-y border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* ... Conteúdo Nichos ... */}
             <div className="text-center mb-16">
             <span className="text-primary font-bold uppercase tracking-wider text-sm">{t('landing.versatility.badge')}</span>
             <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">
@@ -354,7 +358,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- BENEFÍCIOS (Imagem Secundária Otimizada) --- */}
+      {/* --- BENEFÍCIOS --- */}
       <section id="beneficios" className="py-20 bg-slate-950 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-12 items-center">

@@ -6,29 +6,30 @@ import './lib/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
-import posthog from 'posthog-js';
+// REMOVIDO: import posthog from 'posthog-js'; (Isso causava o download imediato)
 import { HelmetProvider } from 'react-helmet-async';
 import ReactGA from "react-ga4";
 
 // --- GOOGLE ANALYTICS ---
 ReactGA.initialize("G-8ZJYEN9K17"); 
 
-// --- POSTHOG OTIMIZADO (SUPER DELAY) ---
+// --- POSTHOG OTIMIZADO (LAZY LOAD REAL) ---
 if (typeof window !== 'undefined') {
-  // Aumentamos para 8000ms (8 segundos) para garantir performance total no LCP
   setTimeout(() => {
-    // CORREÇÃO AQUI: Usamos (window as any) para o TypeScript não reclamar
-    if (!(window as any).posthog) { 
-        posthog.init('phc_xZtmAqykzTZZPmzIGL7ODp3nLbhsgKcwLIolcowrOb8', {
-          api_host: 'https://us.i.posthog.com',
-          person_profiles: 'identified_only', 
-          capture_pageview: false,
-          mask_all_text: true, 
-          mask_all_element_attributes: true,
-          persistence: 'localStorage' 
-        });
-    }
-  }, 8000); 
+    // Importação Dinâmica: O navegador só baixa o arquivo AGORA
+    import('posthog-js').then(({ default: posthog }) => {
+        if (!(window as any).posthog) { 
+            posthog.init('phc_xZtmAqykzTZZPmzIGL7ODp3nLbhsgKcwLIolcowrOb8', {
+              api_host: 'https://us.i.posthog.com',
+              person_profiles: 'identified_only', 
+              capture_pageview: false,
+              mask_all_text: true, 
+              mask_all_element_attributes: true,
+              persistence: 'localStorage' 
+            });
+        }
+    }).catch(err => console.log('PostHog load blocked', err));
+  }, 5000); // Reduzi para 5s, é suficiente se for lazy load
 }
 
 const queryClient = new QueryClient({
