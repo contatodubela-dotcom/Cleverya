@@ -211,10 +211,10 @@ export default function LandingPage() {
           </motion.div>
 
           {/* VISUAL MOCKUP HERO - OTIMIZADO PARA LCP */}
-          {/* Removemos motion.div do container principal para evitar delay no carregamento da imagem */}
+          {/* AQUI A MUDANÇA: Virou DIV normal, sem 'initial', sem 'animate' */}
           <div className="mt-16 relative mx-auto max-w-5xl">
              
-             {/* CARDS FLUTUANTES (Animações mantidas apenas nos elementos decorativos) */}
+             {/* CARDS FLUTUANTES (Mantemos a animação deles, pois não bloqueiam a página) */}
              <motion.div 
                initial={{ opacity: 0, scale: 0.8 }}
                animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
@@ -251,19 +251,14 @@ export default function LandingPage() {
                 </div>
              </motion.div>
 
-             {/* IMAGEM PRINCIPAL (HERO) - LCP CRÍTICO 
-                Correção: Uso de <picture> para servir imagem menor no celular
-             */}
+             {/* IMAGEM PRINCIPAL (HERO) - SEM ATRASO (motion removido) */}
              <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
-                
                 <picture>
-                  {/* Tenta carregar imagem pequena para telas até 640px */}
                   <source 
                     media="(max-width: 640px)" 
                     srcSet="https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print-mobile.webp" 
                   />
-                  {/* Fallback para imagem grande */}
                   <img 
                     src="/dashboard-print.png" 
                     alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
@@ -274,7 +269,6 @@ export default function LandingPage() {
                     loading="eager"
                     className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                     onError={(e) => {
-                      // Se falhar o load, tenta a versão webp padrão
                       e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/dashboard-print.webp";
                     }}
                   />
@@ -377,13 +371,13 @@ export default function LandingPage() {
             <div className="relative">
                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-2xl blur-3xl opacity-20" />
                <div className="bg-slate-900 border border-white/10 rounded-2xl p-2 relative shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
-                  {/* IMAGEM SECUNDÁRIA - OTIMIZADA PARA NÃO BLOQUEAR A REDE */}
+                  {/* IMAGEM SECUNDÁRIA */}
                   <img 
                     src="/finance-card.png" 
                     alt="Controle Financeiro Cleverya" 
-                    width="600"  // Largura explícita
-                    height="400" // Altura explícita
-                    loading="lazy" // Carregamento lento (importante!)
+                    width="600"  
+                    height="400" 
+                    loading="lazy" 
                     className="w-full h-auto rounded-xl shadow-inner"
                     onError={(e) => {
                       e.currentTarget.src = "https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/public-assets/finance-card.webp";
@@ -405,7 +399,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- PLANOS, CTA e FOOTER (Conteúdo padrão mantido) --- */}
+      {/* --- PLANOS --- */}
       <section id="planos" className="py-20 bg-slate-900 border-t border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
@@ -460,6 +454,7 @@ export default function LandingPage() {
           </div>
       </section>
 
+      {/* --- CTA FINAL --- */}
       <section className="py-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/10 -z-10" />
         <div className="max-w-4xl mx-auto px-4 text-center">
