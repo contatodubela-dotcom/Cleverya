@@ -13,19 +13,22 @@ import ReactGA from "react-ga4";
 // --- GOOGLE ANALYTICS ---
 ReactGA.initialize("G-8ZJYEN9K17"); 
 
-// --- POSTHOG OTIMIZADO (DELAY) ---
-// Carrega o gravador apenas 3 segundos APÓS o site abrir para não travar o mobile
+// --- POSTHOG OTIMIZADO (SUPER DELAY) ---
 if (typeof window !== 'undefined') {
+  // Aumentamos para 8000ms (8 segundos) para garantir performance total no LCP
   setTimeout(() => {
-    posthog.init('phc_xZtmAqykzTZZPmzIGL7ODp3nLbhsgKcwLIolcowrOb8', {
-      api_host: 'https://us.i.posthog.com',
-      person_profiles: 'identified_only', 
-      capture_pageview: false,
-      // Desativa gravação automática de texto para economizar processamento
-      mask_all_text: true, 
-      mask_all_element_attributes: true
-    });
-  }, 3000); // Espera 3000ms (3 segundos)
+    // CORREÇÃO AQUI: Usamos (window as any) para o TypeScript não reclamar
+    if (!(window as any).posthog) { 
+        posthog.init('phc_xZtmAqykzTZZPmzIGL7ODp3nLbhsgKcwLIolcowrOb8', {
+          api_host: 'https://us.i.posthog.com',
+          person_profiles: 'identified_only', 
+          capture_pageview: false,
+          mask_all_text: true, 
+          mask_all_element_attributes: true,
+          persistence: 'localStorage' 
+        });
+    }
+  }, 8000); 
 }
 
 const queryClient = new QueryClient({
