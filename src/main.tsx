@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
@@ -6,17 +6,25 @@ import './lib/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
-// REMOVIDO: import posthog from 'posthog-js'; (Isso causava o download imediato)
 import { HelmetProvider } from 'react-helmet-async';
-import ReactGA from "react-ga4";
 
-// --- GOOGLE ANALYTICS ---
-ReactGA.initialize("G-8ZJYEN9K17"); 
+// Componente para carregar Analytics sem travar a thread principal
+const AnalyticsWrapper = () => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+       import("react-ga4").then(module => {
+          const ReactGA = module.default;
+          ReactGA.initialize("G-8ZJYEN9K17");
+       });
+    }, 4000); // Carrega 4 segundos após a renderização inicial
+    return () => clearTimeout(timer);
+  }, []);
+  return null;
+};
 
 // --- POSTHOG OTIMIZADO (LAZY LOAD REAL) ---
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    // Importação Dinâmica: O navegador só baixa o arquivo AGORA
     import('posthog-js').then(({ default: posthog }) => {
         if (!(window as any).posthog) { 
             posthog.init('phc_xZtmAqykzTZZPmzIGL7ODp3nLbhsgKcwLIolcowrOb8', {
@@ -29,7 +37,7 @@ if (typeof window !== 'undefined') {
             });
         }
     }).catch(err => console.log('PostHog load blocked', err));
-  }, 5000); // Reduzi para 5s, é suficiente se for lazy load
+  }, 5000);
 }
 
 const queryClient = new QueryClient({
@@ -46,6 +54,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <AnalyticsWrapper />
           <App />
           <Toaster richColors position="top-center" closeButton />
         </AuthProvider>

@@ -46,28 +46,25 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'esnext', // Otimiza para navegadores modernos (mais leve)
+    target: 'esnext',
     minify: 'terser',
     terserOptions: {
         compress: {
-            drop_console: true, // Remove console.log em produção
+            drop_console: true,
             drop_debugger: true
         }
     },
     rollupOptions: {
       output: {
-        // --- CACHE BUSTING (O SEGREDO) ---
-        // Adiciona um timestamp único ao nome dos arquivos para forçar o Cloudflare a atualizar
         entryFileNames: `assets/[name].[hash]-${Date.now()}.js`,
         chunkFileNames: `assets/[name].[hash]-${Date.now()}.js`,
         assetFileNames: `assets/[name].[hash]-${Date.now()}.[ext]`,
 
         manualChunks: {
-          // SEPARAÇÃO INTELIGENTE DE PACOTES
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'animations': ['framer-motion'], // Isola a biblioteca pesada de animação
-          'supabase': ['@supabase/supabase-js'], // Isola o banco de dados
-          'ui-libs': ['lucide-react', 'date-fns', 'clsx', 'tailwind-merge'],
+          'framer-motion': ['framer-motion'],
+          'supabase': ['@supabase/supabase-js'],
+          'ui-libs': ['lucide-react', 'date-fns', 'clsx', 'tailwind-merge', 'sonner'],
           'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
         }
       }
