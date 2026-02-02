@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
@@ -7,12 +7,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
-import ReactGA from "react-ga4"; // Voltamos ao import estático para corrigir o erro
+import ReactGA from "react-ga4";
 
-// Inicialização direta do GA4 para evitar conflito com GoogleAnalyticsTracker.tsx
-ReactGA.initialize("G-8ZJYEN9K17");
+// Inicialização com opção de não enviar pageview automático (já feito no App.tsx)
+ReactGA.initialize("G-8ZJYEN9K17", {
+  gtagOptions: {
+    send_page_view: false
+  }
+});
 
-// --- POSTHOG OTIMIZADO (LAZY LOAD REAL MANTIDO) ---
+// --- POSTHOG OTIMIZADO ---
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     import('posthog-js').then(({ default: posthog }) => {

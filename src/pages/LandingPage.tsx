@@ -155,7 +155,6 @@ export default function LandingPage() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-10 opacity-50" />
           
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            {/* LCP FIX: Removido animação de entrada (initial/animate) para renderizar IMEDIATAMENTE */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-primary mb-6">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
@@ -164,7 +163,6 @@ export default function LandingPage() {
               {t('landing.hero.badge')}
             </div>
 
-            {/* LCP FIX: Título renderiza sem esperar JS */}
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight">
               {t('landing.hero.title_1')} <br className="hidden md:block"/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-yellow-200">
@@ -190,7 +188,6 @@ export default function LandingPage() {
             {/* VISUAL MOCKUP HERO */}
             <div className="mt-16 relative mx-auto max-w-5xl">
               
-              {/* Elementos flutuantes animados mantidos (não são LCP crítico) */}
               <m.div 
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
@@ -227,31 +224,28 @@ export default function LandingPage() {
                   </div>
               </m.div>
 
-              {/* IMAGEM PRINCIPAL (HERO) - Sem Animação de Opacidade */}
+              {/* IMAGEM PRINCIPAL (HERO) - LCP OTIMIZADO */}
               <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
-                  <picture>
-                    <source 
-                      media="(max-width: 640px)" 
-                      srcSet="/dashboard-mobile.webp" 
-                    />
-                    <img 
-                      src="/dashboard-print.webp" 
-                      alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
-                      width="1200"
-                      height="675"
-                      // @ts-ignore
-                      fetchPriority="high"
-                      loading="eager"
-                      className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
-                    />
-                  </picture>
+                  {/* CORREÇÃO: Usar img direta com srcSet para o navegador decidir a melhor versão instantaneamente */}
+                  <img 
+                    src="/dashboard-print.webp" 
+                    srcSet="/dashboard-mobile.webp 640w, /dashboard-print.webp 1200w"
+                    sizes="(max-width: 640px) 100vw, 1200px"
+                    alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
+                    width="1200"
+                    height="675"
+                    // @ts-ignore
+                    fetchPriority="high"
+                    loading="eager"
+                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+                  />
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- DEMAIS SEÇÕES MANTÉM ANIMAÇÃO (não afetam LCP inicial) --- */}
+        {/* --- DEMAIS SEÇÕES --- */}
         <section className="py-20 bg-slate-950 border-y border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-16">
@@ -421,6 +415,7 @@ export default function LandingPage() {
             </div>
         </section>
 
+        {/* --- CTA FINAL --- */}
         <section className="py-20 relative overflow-hidden">
           <div className="absolute inset-0 bg-primary/10 -z-10" />
           <div className="max-w-4xl mx-auto px-4 text-center">
