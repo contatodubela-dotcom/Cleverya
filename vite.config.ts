@@ -60,16 +60,12 @@ export default defineConfig({
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
 
-        // ESTRATÉGIA DE CHUNKS AGRASIVA
-        // Isso garante que mesmo carregando a Home estática, 
-        // o navegador baixe os pedaços em paralelo.
+        // SIMPLIFICADO: Deixamos o Vite otimizar a maioria dos pacotes automaticamente.
+        // Isso reduz o número de requisições HTTP iniciais.
         manualChunks: {
-          'react-core': ['react', 'react-dom', 'react-router-dom'],
-          'animations': ['framer-motion'],
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'supabase': ['@supabase/supabase-js'],
-          'icons': ['lucide-react'], // Separa os ícones (pesado)
-          'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
-          'utils': ['date-fns', 'clsx', 'tailwind-merge', 'sonner']
+          'animations': ['framer-motion'],
         }
       }
     }

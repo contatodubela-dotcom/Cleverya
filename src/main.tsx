@@ -8,10 +8,12 @@ import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
 
-// REMOVIDO: ReactGA e imports do Analytics. 
-// O rastreamento agora será feito EXCLUSIVAMENTE no App.tsx com atraso.
+// --- OTIMIZAÇÃO DE PERFORMANCE (PRE-FETCH) ---
+// Inicia o download da Landing Page em paralelo com a inicialização do React.
+// Isso elimina o "gap" de tempo do Lazy Loading.
+import('./pages/LandingPage');
 
-// --- POSTHOG OTIMIZADO (MANTIDO) ---
+// --- POSTHOG OTIMIZADO ---
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     import('posthog-js').then(({ default: posthog }) => {
