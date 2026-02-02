@@ -236,7 +236,7 @@ export default function LandingPage() {
                     width="1200"
                     height="675"
                     // @ts-ignore
-                    fetchPriority="high"
+                    fetchpriority="high"
                     loading="eager"
                     className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                   />
