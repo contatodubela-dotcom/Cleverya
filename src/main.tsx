@@ -7,16 +7,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
-import ReactGA from "react-ga4";
 
-// Inicialização com opção de não enviar pageview automático (já feito no App.tsx)
-ReactGA.initialize("G-8ZJYEN9K17", {
-  gtagOptions: {
-    send_page_view: false
-  }
-});
+// REMOVIDO: ReactGA e imports do Analytics. 
+// O rastreamento agora será feito EXCLUSIVAMENTE no App.tsx com atraso.
 
-// --- POSTHOG OTIMIZADO ---
+// --- POSTHOG OTIMIZADO (MANTIDO) ---
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     import('posthog-js').then(({ default: posthog }) => {

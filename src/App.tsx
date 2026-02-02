@@ -1,8 +1,8 @@
-import { Suspense, lazy, useEffect } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { SEO } from './components/SEO';
-import ReactGA from "react-ga4"; // Importação direta e leve
+import ReactGA from "react-ga4"; 
 
 // --- LAZY IMPORTS ---
 const PaymentSuccessPage = lazy(() => import('./pages/PaymentSuccessPage'));
@@ -15,7 +15,6 @@ const BookingPage = lazy(() => import('./pages/BookingPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
-// TELA DE CARREGAMENTO (MANTIDA)
 function LoadingScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -24,7 +23,6 @@ function LoadingScreen() {
   );
 }
 
-// ROTA PROTEGIDA (MANTIDA)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
@@ -32,27 +30,39 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// --- NOVO RASTREADOR OTIMIZADO (Substitui o componente pesado) ---
-// Este componente apenas observa a mudança de rota e avisa o GA4, sem carregar scripts extras.
+// --- RASTREADOR COM ATRASO INTELIGENTE ---
 function RouteChangeTracker() {
   const location = useLocation();
+  const [isInitialized, setIsInitialized] = useState(false);
   
+  // EFEITO 1: Inicializa o GA4 com 4 segundos de atraso
   useEffect(() => {
-    // Envia o pageview apenas quando a rota muda
-    ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
-  }, [location]);
+    const timer = setTimeout(() => {
+      // Configuração para evitar baixar scripts desnecessários
+      ReactGA.initialize("G-8ZJYEN9K17", {
+        gtagOptions: { send_page_view: false }
+      });
+      setIsInitialized(true);
+    }, 4000); // 4000ms = 4 segundos de "folga" para a imagem carregar
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // EFEITO 2: Envia o pageview apenas se já estiver inicializado
+  useEffect(() => {
+    if (isInitialized) {
+      ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
+    }
+  }, [location, isInitialized]);
 
   return null;
 }
 
 function App() {
   return (
-    // REMOVIDO: HelmetProvider (já existe no main.tsx)
     <BrowserRouter>
       <Suspense fallback={<LoadingScreen />}>
         <SEO /> 
-        
-        {/* Componente leve que criamos acima */}
         <RouteChangeTracker />
         
         <Routes>
