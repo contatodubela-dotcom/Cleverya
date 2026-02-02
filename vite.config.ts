@@ -59,14 +59,17 @@ export default defineConfig({
         entryFileNames: `assets/[name].[hash].js`,
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
-        
-        // SIMPLIFICAÇÃO: Deixar o Vite gerenciar melhor os chunks menores
-        // Removemos o 'ui-libs' gigante e deixamos o React Vendor separado
+
+        // ESTRATÉGIA DE CHUNKS AGRASIVA
+        // Isso garante que mesmo carregando a Home estática, 
+        // o navegador baixe os pedaços em paralelo.
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase': ['@supabase/supabase-js'],
+          'react-core': ['react', 'react-dom', 'react-router-dom'],
           'animations': ['framer-motion'],
-          // 'ui-libs' removido para permitir tree-shaking mais eficiente
+          'supabase': ['@supabase/supabase-js'],
+          'icons': ['lucide-react'], // Separa os ícones (pesado)
+          'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+          'utils': ['date-fns', 'clsx', 'tailwind-merge', 'sonner']
         }
       }
     }
