@@ -4,7 +4,11 @@ import { useAuth } from './hooks/useAuth';
 import { SEO } from './components/SEO';
 import ReactGA from "react-ga4"; 
 
-// --- LAZY IMPORTS ---
+// --- IMPORTAÇÃO IMEDIATA (CRÍTICO PARA SPEED INDEX) ---
+// A Home carrega junto com o site para aparecer instantaneamente
+import LandingPage from './pages/LandingPage';
+
+// --- LAZY IMPORTS (Mantidos para as outras páginas) ---
 const PaymentSuccessPage = lazy(() => import('./pages/PaymentSuccessPage'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
@@ -12,7 +16,6 @@ const LoginPage = lazy(() => import('./pages/LoginPage'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage')); 
-const LandingPage = lazy(() => import('./pages/LandingPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 function LoadingScreen() {
@@ -38,12 +41,11 @@ function RouteChangeTracker() {
   // EFEITO 1: Inicializa o GA4 com 4 segundos de atraso
   useEffect(() => {
     const timer = setTimeout(() => {
-      // Configuração para evitar baixar scripts desnecessários
       ReactGA.initialize("G-8ZJYEN9K17", {
         gtagOptions: { send_page_view: false }
       });
       setIsInitialized(true);
-    }, 4000); // 4000ms = 4 segundos de "folga" para a imagem carregar
+    }, 4000); 
 
     return () => clearTimeout(timer);
   }, []);
@@ -66,7 +68,9 @@ function App() {
         <RouteChangeTracker />
         
         <Routes>
+          {/* LandingPage renderiza direto, sem esperar o Suspense/Lazy */}
           <Route path="/" element={<LandingPage />} />
+          
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/terms" element={<Terms />} />
