@@ -8,10 +8,8 @@ import { AuthProvider } from './hooks/useAuth';
 import { Toaster } from 'sonner';
 import { HelmetProvider } from 'react-helmet-async';
 
-// --- OTIMIZAÇÃO DE PERFORMANCE (PRE-FETCH) ---
-// Inicia o download da Landing Page em paralelo com a inicialização do React.
-// Isso elimina o "gap" de tempo do Lazy Loading.
-import('./pages/LandingPage');
+// REMOVIDO O PRE-FETCH MANUAL QUE TRAVAVA A REDE
+// Deixamos o App.tsx gerenciar o carregamento via Lazy Load natural
 
 // --- POSTHOG OTIMIZADO ---
 if (typeof window !== 'undefined') {

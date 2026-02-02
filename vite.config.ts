@@ -60,12 +60,13 @@ export default defineConfig({
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
 
-        // SIMPLIFICADO: Deixamos o Vite otimizar a maioria dos pacotes automaticamente.
-        // Isso reduz o número de requisições HTTP iniciais.
+        // ESTRATÉGIA DE CHUNKS GRANULAR
+        // Quebra o 'vendor' gigante em pedaços menores para acelerar o download inicial
         manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'supabase': ['@supabase/supabase-js'],
-          'animations': ['framer-motion'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge', 'sonner'],
+          'vendor-anim': ['framer-motion'], // Isola a animação pesada
+          'vendor-base': ['@supabase/supabase-js', 'i18next', 'react-i18next', 'date-fns'],
         }
       }
     }

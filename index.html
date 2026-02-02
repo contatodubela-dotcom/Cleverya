@@ -19,9 +19,15 @@
     <link 
       rel="preload" 
       as="image" 
+      href="/dashboard-mobile.webp" 
+      media="(max-width: 640px)"
+      fetchpriority="high"
+    />
+    <link 
+      rel="preload" 
+      as="image" 
       href="/dashboard-print.webp" 
-      imagesrcset="/dashboard-mobile.webp 640w, /dashboard-print.webp 1200w"
-      imagesizes="(max-width: 640px) 100vw, 1200px"
+      media="(min-width: 641px)"
       fetchpriority="high"
     />
 

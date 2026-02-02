@@ -224,22 +224,25 @@ export default function LandingPage() {
                   </div>
               </m.div>
 
-              {/* IMAGEM PRINCIPAL (HERO) - LCP OTIMIZADO */}
+              {/* IMAGEM PRINCIPAL (HERO) - TAG PICTURE PARA CONTROLE TOTAL */}
               <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
-                  {/* CORREÇÃO: Usar img direta com srcSet para o navegador decidir a melhor versão instantaneamente */}
-                  <img 
-                    src="/dashboard-print.webp" 
-                    srcSet="/dashboard-mobile.webp 640w, /dashboard-print.webp 1200w"
-                    sizes="(max-width: 640px) 100vw, 1200px"
-                    alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
-                    width="1200"
-                    height="675"
-                    // @ts-ignore
-                    fetchpriority="high"
-                    loading="eager"
-                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
-                  />
+                  
+                  {/* Uso de <picture> para forçar a imagem mobile em telas pequenas */}
+                  <picture>
+                    <source media="(max-width: 640px)" srcSet="/dashboard-mobile.webp" />
+                    <source media="(min-width: 641px)" srcSet="/dashboard-print.webp" />
+                    <img 
+                      src="/dashboard-print.webp" 
+                      alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
+                      width="1200"
+                      height="675"
+                      // @ts-ignore
+                      fetchpriority="high"
+                      loading="eager"
+                      className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+                    />
+                  </picture>
               </div>
             </div>
           </div>
