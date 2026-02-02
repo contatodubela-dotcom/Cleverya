@@ -59,14 +59,14 @@ export default defineConfig({
         entryFileNames: `assets/[name].[hash].js`,
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
-
+        
+        // SIMPLIFICAÇÃO: Deixar o Vite gerenciar melhor os chunks menores
+        // Removemos o 'ui-libs' gigante e deixamos o React Vendor separado
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // Removemos 'framer-motion' daqui para deixar o Vite decidir melhor, 
-          // já que agora estamos usando LazyMotion no componente.
           'supabase': ['@supabase/supabase-js'],
-          'ui-libs': ['lucide-react', 'date-fns', 'clsx', 'tailwind-merge', 'sonner'],
-          'i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector']
+          'animations': ['framer-motion'],
+          // 'ui-libs' removido para permitir tree-shaking mais eficiente
         }
       }
     }

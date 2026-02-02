@@ -4,11 +4,9 @@ import { useAuth } from './hooks/useAuth';
 import { SEO } from './components/SEO';
 import ReactGA from "react-ga4"; 
 
-// --- IMPORTAÇÃO IMEDIATA (CRÍTICO PARA SPEED INDEX) ---
-// A Home carrega junto com o site para aparecer instantaneamente
-import LandingPage from './pages/LandingPage';
+// VOLTAMOS AO LAZY LOADING (Melhor para Speed Index e TBT)
+const LandingPage = lazy(() => import('./pages/LandingPage'));
 
-// --- LAZY IMPORTS (Mantidos para as outras páginas) ---
 const PaymentSuccessPage = lazy(() => import('./pages/PaymentSuccessPage'));
 const Terms = lazy(() => import('./pages/Terms'));
 const Privacy = lazy(() => import('./pages/Privacy'));
@@ -33,12 +31,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// --- RASTREADOR COM ATRASO INTELIGENTE ---
 function RouteChangeTracker() {
   const location = useLocation();
   const [isInitialized, setIsInitialized] = useState(false);
   
-  // EFEITO 1: Inicializa o GA4 com 4 segundos de atraso
   useEffect(() => {
     const timer = setTimeout(() => {
       ReactGA.initialize("G-8ZJYEN9K17", {
@@ -50,7 +46,6 @@ function RouteChangeTracker() {
     return () => clearTimeout(timer);
   }, []);
 
-  // EFEITO 2: Envia o pageview apenas se já estiver inicializado
   useEffect(() => {
     if (isInitialized) {
       ReactGA.send({ hitType: "pageview", page: location.pathname + location.search });
@@ -68,9 +63,7 @@ function App() {
         <RouteChangeTracker />
         
         <Routes>
-          {/* LandingPage renderiza direto, sem esperar o Suspense/Lazy */}
           <Route path="/" element={<LandingPage />} />
-          
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/terms" element={<Terms />} />
