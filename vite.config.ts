@@ -60,13 +60,22 @@ export default defineConfig({
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
 
-        // ESTRATÉGIA DE CHUNKS GRANULAR
-        // Quebra o 'vendor' gigante em pedaços menores para acelerar o download inicial
+        // ESTRATÉGIA FINAL: "The Big Three"
+        // Em vez de fragmentar, criamos 3 pilares sólidos para reduzir requisições HTTP.
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['lucide-react', 'clsx', 'tailwind-merge', 'sonner'],
-          'vendor-anim': ['framer-motion'], // Isola a animação pesada
-          'vendor-base': ['@supabase/supabase-js', 'i18next', 'react-i18next', 'date-fns'],
+          // 1. O motor do site (React + Router + Utils + i18n) - Tudo necessário para "ligar" o site
+          'core-vendor': [
+            'react', 'react-dom', 'react-router-dom', 
+            'i18next', 'react-i18next', 'i18next-browser-languagedetector',
+            'clsx', 'tailwind-merge', 'sonner', 'lucide-react'
+            // date-fns removido daqui para ser carregado apenas quando necessário (Dashboard)
+          ],
+          
+          // 2. O gigante de animação (só baixa depois do core)
+          'animations': ['framer-motion'],
+          
+          // 3. O backend (pesado, mas necessário para Auth)
+          'supabase': ['@supabase/supabase-js'],
         }
       }
     }
