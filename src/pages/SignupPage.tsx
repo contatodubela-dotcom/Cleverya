@@ -85,6 +85,15 @@ export default function SignupPage() {
       
       // Se o usuário foi criado
       if (authData.user) {
+        // --- RASTREIO DO FACEBOOK PIXEL (COLE AQUI) ---
+          // Verifica se o fbq existe antes de chamar para evitar erros
+          if ((window as any).fbq) {
+            (window as any).fbq('track', 'CompleteRegistration', {
+              content_name: planIntent || 'free_signup', // Opcional: rastreia qual plano ele tentou
+              status: 'success'
+            }); 
+            console.log("Pixel de Cadastro Disparado!");
+          }
           const userId = authData.user.id;
           console.log("2. Usuário criado com ID:", userId);
 
