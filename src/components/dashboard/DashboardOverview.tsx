@@ -1,11 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { WhatsAppButton } from '../WhatsAppButton'; 
 import { 
   Users, Calendar, DollarSign, TrendingUp, Clock, 
-  ArrowUpRight, ArrowDownRight, ArrowRight 
+  ArrowUpRight, ArrowDownRight, ArrowRight, X // <--- Import X
 } from 'lucide-react';
 import { format, isSameDay, startOfMonth, endOfMonth, parseISO, eachDayOfInterval } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -36,6 +36,7 @@ function StatCard({ title, value, icon: Icon, trend, color }: any) {
 export default function DashboardOverview() {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const [showBanner, setShowBanner] = useState(true); // <--- Estado do Banner
   
   const currencyCode = i18n.language === 'en' ? 'USD' : 'BRL';
   const currencyLocale = i18n.language === 'en' ? 'en-US' : 'pt-BR';
@@ -48,8 +49,17 @@ export default function DashboardOverview() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard-stats-overview', user?.id],
     queryFn: async () => {
-      const { data: member } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).single();
+      // Alterado para buscar também o plano da empresa
+      const { data: member } = await supabase
+        .from('business_members')
+        .select('business_id, business:businesses(plan_type)')
+        .eq('user_id', user?.id)
+        .single();
+        
       const businessId = member?.business_id;
+      // @ts-ignore
+      const planType = member?.business?.plan_type || 'free';
+
       if (!businessId) return null;
 
       const now = new Date();
@@ -79,13 +89,13 @@ export default function DashboardOverview() {
         .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId);
 
-      return { appointments, clientsCount };
+      return { appointments, clientsCount, planType };
     },
     enabled: !!user?.id,
   });
 
   const stats = useMemo(() => {
-    if (!dashboardData?.appointments) return { revenue: 0, appointments: 0, today: 0, clients: 0, todayApps: [], chartData: [] };
+    if (!dashboardData?.appointments) return { revenue: 0, appointments: 0, today: 0, clients: 0, todayApps: [], chartData: [], planType: 'free' };
 
     const apps = dashboardData.appointments;
     const today = new Date();
@@ -119,7 +129,8 @@ export default function DashboardOverview() {
       today: todayApps.length,
       clients: dashboardData.clientsCount || 0,
       todayApps,
-      chartData: dailyData
+      chartData: dailyData,
+      planType: dashboardData.planType // Passando o plano
     };
   }, [dashboardData, dateLocale]);
 
@@ -135,26 +146,38 @@ export default function DashboardOverview() {
         <p className="text-slate-400">{t('dashboard.overview.subtitle', { defaultValue: 'Resumo financeiro e operacional deste mês.' })}</p>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900 to-indigo-900 p-6 shadow-xl border border-white/10">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="bg-yellow-500 text-yellow-950 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{t('common.premium')}</span>
-              <h3 className="text-xl font-bold text-white">{t('dashboard.banner.upgrade_pro_title', { defaultValue: 'Cleverya Pro' })}</h3>
-            </div>
-            <p className="text-purple-200 max-w-lg text-sm leading-relaxed">
-              {t('dashboard.banner.description', { defaultValue: 'Desbloqueie relatórios avançados, múltiplos profissionais e lembretes automáticos.' })}
-            </p>
-          </div>
-          <Button 
-            onClick={handleViewPlans}
-            className="bg-white text-purple-900 hover:bg-purple-50 font-bold shadow-lg group"
+      {/* BANNER INTELIGENTE: SÓ APARECE SE FOR FREE E NÃO TIVER FECHADO */}
+      {(stats.planType === 'free' && showBanner) && (
+        <div className="relative bg-gradient-to-r from-[#240b3b] to-[#4c1d95] rounded-2xl p-6 mb-8 border border-purple-500/30 shadow-[0_0_20px_rgba(88,28,135,0.3)] overflow-hidden group">
+          
+          <button 
+              onClick={() => setShowBanner(false)} 
+              className="absolute top-2 right-2 p-2 bg-black/20 hover:bg-black/40 rounded-full text-purple-200 hover:text-white transition-all z-20"
+              aria-label="Fechar banner"
           >
-            {t('dashboard.banner.cta', { defaultValue: 'Ver Planos' })} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Button>
+              <X className="w-4 h-4" />
+          </button>
+
+          <div className="absolute top-0 right-0 -mt-10 -mr-10 h-40 w-40 rounded-full bg-white/10 blur-3xl"></div>
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="bg-yellow-500 text-yellow-950 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">{t('common.premium')}</span>
+                <h3 className="text-xl font-bold text-white">{t('dashboard.banner.upgrade_pro_title', { defaultValue: 'Cleverya Pro' })}</h3>
+              </div>
+              <p className="text-purple-200 max-w-lg text-sm leading-relaxed">
+                {t('dashboard.banner.description', { defaultValue: 'Desbloqueie relatórios avançados, múltiplos profissionais e lembretes automáticos.' })}
+              </p>
+            </div>
+            <Button 
+              onClick={handleViewPlans}
+              className="bg-white text-purple-900 hover:bg-purple-50 font-bold shadow-lg group"
+            >
+              {t('dashboard.banner.cta', { defaultValue: 'Ver Planos' })} <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 

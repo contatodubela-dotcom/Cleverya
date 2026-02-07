@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query'; 
 import { supabase } from '../lib/supabase';
 import { useTranslation } from 'react-i18next';
-import { Calendar, LayoutDashboard, Settings, Sparkles, Users, ClipboardList, Share2, LogOut, FileBarChart, Crown, HelpCircle } from 'lucide-react';
+import { 
+  Calendar, LayoutDashboard, Settings, Sparkles, Users, 
+  ClipboardList, Share2, LogOut, FileBarChart, Crown, 
+  HelpCircle, CreditCard, ArrowUpCircle // <--- Ícones adicionados
+} from 'lucide-react';
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import CalendarView from '../components/dashboard/CalendarView';
 import ServicesManager from '../components/dashboard/ServicesManager';
@@ -48,16 +52,14 @@ export default function DashboardPage() {
     }
   }, [location, navigate]);
 
+  // Função para abrir o Portal do Stripe
   const handleManageSubscription = async () => {
     const loadingToast = toast.loading(t('toasts.opening_portal', { defaultValue: 'Conectando ao Stripe...' }));
     try {
       const { data, error } = await supabase.functions.invoke('create-portal-session');
 
       if (error) throw error;
-
-      if (data?.error) {
-        throw new Error(data.error); 
-      }
+      if (data?.error) throw new Error(data.error); 
 
       if (data?.url) {
         toast.dismiss(loadingToast);
@@ -71,6 +73,16 @@ export default function DashboardPage() {
       console.error("Erro detalhado:", err);
       toast.error(t('toasts.error_portal', { defaultValue: 'Erro ao abrir portal' }));
     }
+  };
+
+  // Função corrigida para o botão "Seja PRO"
+  const handleUpgradeClick = () => {
+    setActiveTab('overview');
+    setShowPricingForce(true);
+    setTimeout(() => {
+      const element = document.getElementById('pricing-section');
+      if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
   };
 
   const handleOpenTutorial = () => {
@@ -99,9 +111,7 @@ export default function DashboardPage() {
         .eq('owner_id', user.id)
         .maybeSingle();
 
-      if (ownerBusiness) {
-        return ownerBusiness;
-      }
+      if (ownerBusiness) return ownerBusiness;
 
       const { data: memberData } = await supabase
         .from('business_members')
@@ -138,7 +148,7 @@ export default function DashboardPage() {
   };
 
   const isFree = !businessData?.plan_type || businessData.plan_type === 'free';
-  const shouldShowPricing = isFree || showPricingForce;
+  const shouldShowPricing = showPricingForce; // Controlado pelo botão ou pelo "X" do banner
 
   const displayPlan = businessData?.plan_type 
     ? businessData.plan_type.toUpperCase() 
@@ -206,17 +216,29 @@ export default function DashboardPage() {
                 </span>
               </Button>
 
-              <Button 
-                onClick={handleManageSubscription} 
-                variant="outline" 
-                size="sm" 
-                className="gap-2 border-primary/30 hover:bg-primary hover:text-gray-900 text-primary h-9 transition-all bg-transparent px-2 md:px-3"
-              >
-                <Crown className="w-4 h-4 text-yellow-500" />
-                <span className="hidden md:inline">
-                    {t('dashboard.manage_subscription')}
-                </span>
-              </Button>
+              {/* LÓGICA DO BOTÃO DE ASSINATURA - HIDDEN NO MOBILE */}
+              {isFree ? (
+                <Button 
+                    onClick={handleUpgradeClick} 
+                    size="sm" 
+                    className="hidden md:flex gap-2 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-slate-900 border-0 font-bold h-9 transition-all px-3 shadow-[0_0_15px_rgba(251,191,36,0.3)] animate-pulse"
+                >
+                    <ArrowUpCircle className="w-4 h-4" />
+                    <span className="hidden md:inline">Seja PRO</span>
+                </Button>
+              ) : (
+                <Button 
+                    onClick={handleManageSubscription} 
+                    variant="outline" 
+                    size="sm" 
+                    className="hidden md:flex gap-2 border-slate-700 hover:bg-slate-800 text-slate-400 h-9 transition-all bg-transparent px-3"
+                >
+                    <CreditCard className="w-4 h-4" />
+                    <span className="hidden md:inline">
+                        {t('dashboard.manage_subscription', { defaultValue: 'Gerenciar' })}
+                    </span>
+                </Button>
+              )}
 
               <Button variant="ghost" onClick={logout} size="icon" className="h-9 w-9 text-gray-400 hover:text-red-400 hover:bg-red-500/10 shrink-0">
                 <LogOut className="w-4 h-4" />
@@ -249,8 +271,17 @@ export default function DashboardPage() {
       </div>
 
       <main className="container max-w-6xl mx-auto px-4 py-8 animate-fade-in print:p-0 print:max-w-none overflow-x-hidden">
+        
+        {/* TABELA DE PREÇOS (SÓ APARECE SE FORÇADO) */}
         {activeTab === 'overview' && shouldShowPricing && (
-           <div id="pricing-section" className="mb-12 animate-in slide-in-from-top-10">
+           <div id="pricing-section" className="mb-12 animate-in slide-in-from-top-10 relative bg-slate-900/50 p-6 rounded-3xl border border-primary/20">
+             <button 
+                onClick={() => setShowPricingForce(false)} 
+                className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 p-2 rounded-full transition-colors z-10"
+             >
+                <LogOut className="w-4 h-4 rotate-180" /> {/* Ícone de fechar improvisado ou use X */}
+             </button>
+
              <div className="text-center mb-8">
                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                  {i18n.language === 'pt' ? 'Planos Disponíveis' : 'Available Plans'}

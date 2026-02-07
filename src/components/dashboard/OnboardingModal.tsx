@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog'; // Ajuste o caminho se necessário
-import { Button } from '../../components/ui/button'; // Ajuste o caminho se necessário
-import { ClipboardList, Users, Settings, Share2, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import { Button } from '../../components/ui/button';
+import { ClipboardList, Users, Settings, Share2, CalendarCheck, ArrowRight, CheckCircle2 } from 'lucide-react'; // Adicionado CalendarCheck
 import { useTranslation } from 'react-i18next';
 
 export default function OnboardingModal() {
@@ -24,7 +24,7 @@ export default function OnboardingModal() {
     {
       icon: ClipboardList,
       title: t('tutorial.step1_title', { defaultValue: '1. Cadastre seus Serviços' }),
-      desc: t('tutorial.step1_desc', { defaultValue: 'Vá na aba "Serviços" e crie o que você oferece.' }),
+      desc: t('tutorial.step1_desc', { defaultValue: 'Vá na aba "Serviços" e crie o que você oferece (ex: Corte, Barba).' }),
       color: 'text-blue-400',
       bg: 'bg-blue-500/10'
     },
@@ -37,37 +37,44 @@ export default function OnboardingModal() {
     },
     {
       icon: Settings,
-      title: t('tutorial.step3_title', { defaultValue: '3. Ajustes Finais' }),
-      desc: t('tutorial.step3_desc', { defaultValue: 'Em "Ajustes", defina o Horário, Nome do local e Foto. Salve para ativar.' }),
+      title: t('tutorial.step3_title', { defaultValue: '3. Ajustes e Foto' }),
+      desc: t('tutorial.step3_desc', { defaultValue: 'Em "Ajustes", defina Horários e Nome do local. Para a FOTO: Copie o link de uma imagem (Google Imagens) e cole no campo indicado.' }),
       color: 'text-green-400',
       bg: 'bg-green-500/10'
     },
     {
       icon: Share2,
       title: t('tutorial.step4_title', { defaultValue: '4. Divulgue seu Link' }),
-      desc: t('tutorial.step4_desc', { defaultValue: 'Tudo pronto! Copie seu link no topo e envie para os clientes.' }),
+      desc: t('tutorial.step4_desc', { defaultValue: 'Copie seu link no topo da página e coloque na bio do Instagram ou envie no WhatsApp.' }),
       color: 'text-amber-400',
       bg: 'bg-amber-500/10'
+    },
+    {
+      icon: CalendarCheck,
+      title: t('tutorial.step5_title', { defaultValue: '5. Gerencie a Agenda' }),
+      desc: t('tutorial.step5_desc', { defaultValue: 'Novos agendamentos aparecem na aba "Agenda". Confirme e envie mensagem no Zap. O cliente também recebe notificação por e-mail.' }),
+      color: 'text-rose-400',
+      bg: 'bg-rose-500/10'
     }
   ];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] bg-[#0f172a] border-white/10 text-white p-0 overflow-hidden gap-0">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-[#0f172a] border-white/10 text-white p-0 gap-0">
         
-        <div className="bg-gradient-to-r from-primary/20 via-[#0f172a] to-[#0f172a] p-6 border-b border-white/5">
+        <div className="bg-gradient-to-r from-primary/20 via-[#0f172a] to-[#0f172a] p-6 border-b border-white/5 sticky top-0 z-10 backdrop-blur-md">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2 text-white">
               <span className="text-3xl">🚀</span> 
               {t('tutorial.welcome_title', { defaultValue: 'Bem-vindo ao Cleverya!' })}
             </DialogTitle>
-            <p className="text-slate-400 mt-2">
-              {t('tutorial.welcome_subtitle', { defaultValue: 'Siga esta sequência exata para sua agenda funcionar:' })}
+            <p className="text-slate-400 mt-2 text-sm">
+              {t('tutorial.welcome_subtitle', { defaultValue: 'Siga estes 5 passos para lotar sua agenda:' })}
             </p>
           </DialogHeader>
         </div>
 
-        <div className="p-6 space-y-5">
+        <div className="p-6 space-y-6">
           {steps.map((step, index) => {
             const Icon = step.icon;
             return (
@@ -84,12 +91,12 @@ export default function OnboardingModal() {
           })}
         </div>
 
-        <DialogFooter className="bg-slate-900/50 p-6 border-t border-white/5 flex-col sm:flex-row gap-3">
+        <DialogFooter className="bg-slate-900/50 p-6 border-t border-white/5 flex-col sm:flex-row gap-3 sticky bottom-0 z-10">
           <div className="flex-1 flex items-center gap-2 text-xs text-slate-500">
             <CheckCircle2 className="w-4 h-4" />
-            {t('tutorial.auto_save', { defaultValue: 'Configure na ordem para evitar erros.' })}
+            {t('tutorial.auto_save', { defaultValue: 'Siga a ordem para evitar erros.' })}
           </div>
-          <Button onClick={handleClose} className="bg-primary hover:bg-primary/90 text-slate-950 font-bold px-8">
+          <Button onClick={handleClose} className="bg-primary hover:bg-primary/90 text-slate-950 font-bold px-8 w-full sm:w-auto">
             {t('tutorial.btn_start', { defaultValue: 'Entendi, vamos lá!' })} <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </DialogFooter>
