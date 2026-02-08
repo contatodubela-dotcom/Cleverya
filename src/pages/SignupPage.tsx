@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom'; // <--- Adicionado useSearchParams
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-// MAPA DE LINKS DO STRIPE (Centralizado aqui para o redirecionamento funcionar)
+// ⚠️ ATENÇÃO: ESTES SÃO LINKS DE TESTE (Modo Dev).
+// QUANDO FOR VENDER DE VERDADE, TROQUE PELOS LINKS DE PRODUÇÃO DO STRIPE.
 const STRIPE_LINKS = {
   pro: {
     monthly: {
@@ -38,7 +39,7 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // <--- Hook para ler a URL
+  const [searchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
 
   const toggleLanguage = () => {
@@ -63,8 +64,7 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Captura intenções de compra da URL
-    const planIntent = searchParams.get('plan'); // 'pro' ou 'business'
+    const planIntent = searchParams.get('plan');
     const cycleIntent = searchParams.get('cycle') as 'monthly' | 'yearly' || 'monthly';
     const currentLang = i18n.language.startsWith('pt') ? 'pt' : 'en';
 
@@ -83,17 +83,16 @@ export default function SignupPage() {
 
       if (authError) throw authError;
       
-      // Se o usuário foi criado
       if (authData.user) {
-        // --- RASTREIO DO FACEBOOK PIXEL (COLE AQUI) ---
-          // Verifica se o fbq existe antes de chamar para evitar erros
+          // --- RASTREIO DO FACEBOOK PIXEL ---
           if ((window as any).fbq) {
             (window as any).fbq('track', 'CompleteRegistration', {
-              content_name: planIntent || 'free_signup', // Opcional: rastreia qual plano ele tentou
+              content_name: planIntent || 'free_signup',
               status: 'success'
             }); 
             console.log("Pixel de Cadastro Disparado!");
           }
+
           const userId = authData.user.id;
           console.log("2. Usuário criado com ID:", userId);
 
@@ -106,7 +105,7 @@ export default function SignupPage() {
                 owner_id: userId,
                 name: businessName,
                 slug: slug,
-                plan_type: 'free', // Começa como Free, o Webhook do Stripe atualiza depois
+                plan_type: 'free', // Começa como Free
                 subscription_status: 'active'
             })
             .select()
@@ -135,6 +134,20 @@ export default function SignupPage() {
              }
           }
 
+          // --- NOVO: DISPARAR E-MAIL DE BOAS-VINDAS ---
+          try {
+            await supabase.functions.invoke('send-email', {
+              body: {
+                to: email,
+                subject: 'Bem-vindo ao Cleverya! 🚀',
+                clientName: businessName,
+                type: 'welcome_business'
+              }
+            });
+          } catch (err) {
+            console.error("Erro ao enviar email de boas-vindas", err);
+          }
+
           // --- LÓGICA DE REDIRECIONAMENTO PARA PAGAMENTO ---
           if (planIntent && STRIPE_LINKS[planIntent as keyof typeof STRIPE_LINKS]) {
               const planLinks = STRIPE_LINKS[planIntent as keyof typeof STRIPE_LINKS];
@@ -155,7 +168,7 @@ export default function SignupPage() {
                       window.location.href = finalCheckoutUrl;
                   }, 1500);
                   
-                  return; // Para a execução aqui para não mostrar a tela de sucesso padrão
+                  return; // Para a execução aqui
               }
           }
       }

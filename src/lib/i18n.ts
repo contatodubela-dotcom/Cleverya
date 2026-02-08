@@ -47,19 +47,23 @@ const resources = {
         },
       tutorial: {
         welcome_title: "Bem-vindo ao Cleverya!",
-        welcome_subtitle: "Siga estes 5 passos para lotar sua agenda:",
+        welcome_subtitle: "Siga estes passos para configurar sua conta e instalar o App:", // Texto ajustado
         step1_title: "1. Cadastre seus Serviços",
         step1_desc: "Vá na aba 'Serviços' e crie o que você oferece (ex: Corte, Barba).",
         step2_title: "2. Cadastre a Equipe",
         step2_desc: "Em 'Equipe', cadastre quem atende. No plano Free, cadastre você mesmo.",
         step3_title: "3. Ajustes e Foto",
-        step3_desc: "Em 'Ajustes', defina Horários e Nome do local. Para a FOTO: Copie o link de uma imagem (Google Imagens) e cole no campo indicado.",
+        step3_desc: "Em 'Ajustes', defina Horários e Nome. FOTO: Copie o link de uma imagem e cole no campo.",
         step4_title: "4. Divulgue seu Link",
         step4_desc: "Copie seu link no topo da página e coloque na bio do Instagram ou envie no WhatsApp.",
         step5_title: "5. Gerencie a Agenda",
-        step5_desc: "Novos agendamentos aparecem na aba 'Agenda'. Confirme e envie mensagem no Zap. O cliente também recebe notificação por e-mail.",
+        step5_desc: "Novos agendamentos aparecem na aba 'Agenda'. Confirme e notifique o cliente.",
+        step6_title: "6. Instale o App (Sem Loja)",
+        step6_desc: "Nossa tecnologia não ocupa memória. Abra seu link no navegador, clique nos 3 pontinhos (ou 'Compartilhar' no iPhone) e escolha 'Adicionar à Tela Inicial'.",
+        
         auto_save: "Siga a ordem para evitar erros.",
-        btn_start: "Entendi, vamos lá!"
+        btn_start: "Entendi, vamos lá!",
+        btn_print: "Imprimir Tutorial" // Novo botão
       },
       },
       status: {
@@ -462,19 +466,23 @@ const resources = {
       },
       tutorial: {
         welcome_title: "Welcome to Cleverya!",
-        welcome_subtitle: "Follow these 5 steps to fill your schedule:",
-        step1_title: "1. Register your Services",
-        step1_desc: "Go to the 'Services' tab and create what you offer (e.g., Haircut, Beard).",
-        step2_title: "2. Register the Team",
-        step2_desc: "In 'Team', register who provides service. On the Free plan, register yourself.",
+        welcome_subtitle: "Follow these steps to set up your account and install the App:",
+        step1_title: "1. Register Services",
+        step1_desc: "Go to 'Services' tab and create what you offer.",
+        step2_title: "2. Register Team",
+        step2_desc: "In 'Team', register who works. Free plan: register yourself.",
         step3_title: "3. Settings & Photo",
-        step3_desc: "In 'Settings', set Hours and Location Name. For the PHOTO: Copy an image link (Google Images) and paste it into the field.",
-        step4_title: "4. Share your Link",
-        step4_desc: "Copy your link at the top of the page and put it in your Instagram bio or send it via WhatsApp.",
-        step5_title: "5. Manage Appointments",
-        step5_desc: "New appointments appear in the 'Agenda' tab. Confirm them and message the client. They also receive an email notification.",
-        auto_save: "Follow the order to avoid errors.",
-        btn_start: "Got it, let's go!"
+        step3_desc: "In 'Settings', set Hours/Name. PHOTO: Copy image link and paste it.",
+        step4_title: "4. Share Link",
+        step4_desc: "Copy your link at the top and put it in Instagram bio or WhatsApp.",
+        step5_title: "5. Manage Agenda",
+        step5_desc: "New bookings appear in 'Agenda'. Confirm and notify the client.",
+        step6_title: "6. Install App (No Store)",
+        step6_desc: "Our tech saves memory. Open your link, tap the 3 dots (or 'Share' on iPhone) and select 'Add to Home Screen'.",
+
+        auto_save: "Follow the order.",
+        btn_start: "Let's go!",
+        btn_print: "Print Tutorial"
       },
       status: {
         pending: "Pending",
