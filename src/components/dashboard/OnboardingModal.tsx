@@ -34,7 +34,7 @@ export default function OnboardingModal() {
     window.print();
   };
 
-  // RECOLOQUEI OS TEXTOS COMPLETOS AQUI NOS 'defaultValue'
+  // --- ATUALIZADO AQUI: TEXTOS COM A NOVA ORIENTAÇÃO (IMGUR) ---
   const steps = [
     {
       icon: ClipboardList,
@@ -53,7 +53,8 @@ export default function OnboardingModal() {
     {
       icon: Settings,
       title: t('tutorial.step3_title', { defaultValue: '3. Ajustes e Foto' }),
-      desc: t('tutorial.step3_desc', { defaultValue: 'Em "Ajustes", defina Horários e Nome do local. Para a FOTO: Copie o link de uma imagem (Google Imagens) e cole no campo indicado.' }),
+      // AQUI ESTÁ A MUDANÇA:
+      desc: t('tutorial.step3_desc', { defaultValue: 'Em "Ajustes", defina Horários e Nome. FOTO: O sistema exige um Link Direto (terminado em .jpg/.png). ❌ Não use link do Canva/Drive. ✅ Dica: Suba a foto no "Imgur.com", copie o "Direct Link" e cole aqui.' }),
       color: 'text-green-400',
       bg: 'bg-green-500/10'
     },

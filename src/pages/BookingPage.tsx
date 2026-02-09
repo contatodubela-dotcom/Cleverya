@@ -390,7 +390,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const inputStyle = { backgroundColor: '#ffffff', color: '#000000', borderColor: '#e2e8f0', opacity: 1, WebkitTextFillColor: '#000000' };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fffbf0] via-[#fff5f5] to-[#fff0f0] flex flex-col items-center justify-start pb-12 font-sans text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f0fdf4] to-[#ecfdf5] flex flex-col items-center justify-start pb-12 font-sans text-slate-900">
       
       {/* --- INJEÇÃO DE METADADOS DINÂMICOS PARA O WHATSAPP --- */}
       <Helmet>
