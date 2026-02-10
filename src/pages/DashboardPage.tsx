@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { 
   Calendar, LayoutDashboard, Settings, Sparkles, Users, 
   ClipboardList, Share2, LogOut, FileBarChart, Crown, 
-  HelpCircle, CreditCard, ArrowUpCircle // <--- Ícones adicionados
+  HelpCircle, CreditCard, ArrowUpCircle
 } from 'lucide-react';
+
+// --- COMPONENTES DO DASHBOARD ---
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import CalendarView from '../components/dashboard/CalendarView';
 import ServicesManager from '../components/dashboard/ServicesManager';
@@ -20,7 +22,11 @@ import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/use-mobile';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
-import OnboardingModal from '../components/dashboard/OnboardingModal';
+
+// --- CORREÇÃO DOS IMPORTES AQUI ---
+// Se os arquivos estiverem soltos na pasta 'components', use assim:
+import OnboardingModal from '../components/dashboard/OnboardingModal'; 
+import TutorialManual from '../components/dashboard/TutorialManual';
 
 type TabType = 'overview' | 'calendar' | 'services' | 'availability' | 'clients' | 'reports' | 'professionals';
 
@@ -32,6 +38,9 @@ export default function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showPricingForce, setShowPricingForce] = useState(false);
+  
+  // ESTADO PARA O MANUAL
+  const [showManual, setShowManual] = useState(false);
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'pt' ? 'en' : 'pt';
@@ -52,7 +61,6 @@ export default function DashboardPage() {
     }
   }, [location, navigate]);
 
-  // Função para abrir o Portal do Stripe
   const handleManageSubscription = async () => {
     const loadingToast = toast.loading(t('toasts.opening_portal', { defaultValue: 'Conectando ao Stripe...' }));
     try {
@@ -75,7 +83,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Função corrigida para o botão "Seja PRO"
   const handleUpgradeClick = () => {
     setActiveTab('overview');
     setShowPricingForce(true);
@@ -85,9 +92,8 @@ export default function DashboardPage() {
     }, 100);
   };
 
-  const handleOpenTutorial = () => {
-    localStorage.removeItem('cleverya_tutorial_seen');
-    window.location.reload();
+  const handleOpenHelp = () => {
+    setShowManual(true);
   };
 
   const tabs = [
@@ -148,7 +154,7 @@ export default function DashboardPage() {
   };
 
   const isFree = !businessData?.plan_type || businessData.plan_type === 'free';
-  const shouldShowPricing = showPricingForce; // Controlado pelo botão ou pelo "X" do banner
+  const shouldShowPricing = showPricingForce; 
 
   const displayPlan = businessData?.plan_type 
     ? businessData.plan_type.toUpperCase() 
@@ -167,7 +173,6 @@ export default function DashboardPage() {
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-2"> 
             
-            {/* LADO ESQUERDO */}
             <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1"> 
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(246,173,85,0.2)] shrink-0">
                 <Sparkles className="w-5 h-5 text-gray-900" />
@@ -187,14 +192,14 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* LADO DIREITO */}
             <div className="flex items-center gap-1 md:gap-3 shrink-0">
+              
               <Button 
-                onClick={handleOpenTutorial}
+                onClick={handleOpenHelp}
                 variant="ghost" 
                 size="icon" 
                 className="h-9 w-9 text-gray-400 hover:text-white hover:bg-white/10 hidden md:flex"
-                title={t('common.help', { defaultValue: 'Ajuda / Tutorial' })}
+                title={t('common.help', { defaultValue: 'Ajuda / Manual' })}
               >
                 <HelpCircle className="w-5 h-5" />
               </Button>
@@ -216,7 +221,6 @@ export default function DashboardPage() {
                 </span>
               </Button>
 
-              {/* LÓGICA DO BOTÃO DE ASSINATURA - HIDDEN NO MOBILE */}
               {isFree ? (
                 <Button 
                     onClick={handleUpgradeClick} 
@@ -248,7 +252,6 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* ABAS (Desktop) */}
       <div className="hidden md:block border-b border-white/10 bg-[#0f172a] sticky top-[73px] z-40 print:hidden">
         <div className="container max-w-6xl mx-auto px-4">
           <div className="flex gap-8 overflow-x-auto scrollbar-hide">
@@ -272,14 +275,13 @@ export default function DashboardPage() {
 
       <main className="container max-w-6xl mx-auto px-4 py-8 animate-fade-in print:p-0 print:max-w-none overflow-x-hidden">
         
-        {/* TABELA DE PREÇOS (SÓ APARECE SE FORÇADO) */}
         {activeTab === 'overview' && shouldShowPricing && (
            <div id="pricing-section" className="mb-12 animate-in slide-in-from-top-10 relative bg-slate-900/50 p-6 rounded-3xl border border-primary/20">
              <button 
                 onClick={() => setShowPricingForce(false)} 
                 className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 p-2 rounded-full transition-colors z-10"
              >
-                <LogOut className="w-4 h-4 rotate-180" /> {/* Ícone de fechar improvisado ou use X */}
+                <LogOut className="w-4 h-4 rotate-180" /> 
              </button>
 
              <div className="text-center mb-8">
@@ -310,7 +312,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* MOBILE TABS */}
       <div className="md:hidden fixed bottom-4 left-4 right-4 bg-[#112240]/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-50 pb-safe print:hidden">
         <div className="flex justify-around items-center px-2 py-3">
           {tabs.map((tab) => {
@@ -331,6 +332,7 @@ export default function DashboardPage() {
       </div>
 
       <OnboardingModal />
+      <TutorialManual open={showManual} onOpenChange={setShowManual} />
     </div>
   );
 }

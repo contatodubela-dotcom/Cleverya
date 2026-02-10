@@ -13,7 +13,7 @@ const resources = {
         print: "Imprimir",
         loading: "Carregando...",
         back_home: "Voltar para Home",
-        back: "Voltar", // Adicionado
+        back: "Voltar",
         app_name: "Cleverya",
         save: "Salvar",
         cancel: "Cancelar",
@@ -32,9 +32,9 @@ const resources = {
         to: "Até",
         premium: "Premium",
         sales: "vendas",
-       image_url_help: "Erro: Use o 'Direct Link' do site Imgur.com (deve terminar em .png ou .jpg).",
+        image_url_help: "Erro: Use o 'Direct Link' do site Imgur.com (deve terminar em .png ou .jpg).",
         copy_all: "Copiar para todos",
-        help: "Ver Tutorial", // Novo
+        help: "Manual de Ajuda",
 
         weekdays: {
           0: "Domingo",
@@ -44,10 +44,52 @@ const resources = {
           4: "Quinta-feira",
           5: "Sexta-feira",
           6: "Sábado"
-        },
+        }
+      },
+      // --- WIZARD COM TEXTOS MAIS SUAVES ---
+      wizard: {
+        step1_title: "Vamos personalizar sua página",
+        step1_subtitle: "Como seus clientes vão te encontrar?",
+        label_business_name: "Nome do Negócio",
+        label_whatsapp: "Seu WhatsApp (Obrigatório)",
+        whatsapp_help: "Usaremos para avisos de segurança. Não enviamos spam.",
+        label_banner: "Link da Foto de Capa (Opcional)",
+        banner_error: "❌ Erro: Use um link direto (.jpg ou .png). Não use Canva!",
+        banner_tip: "💡 Dica: Suba sua foto (1920 x 600 px) no Imgur.com, copie o 'Direct Link' e cole aqui.",
+        btn_next: "Salvar e Continuar",
+        
+        step2_title: "O que você vai vender?",
+        step2_subtitle: "Cadastre seu serviço principal agora. O resto a gente vê depois.",
+        label_service_name: "Nome do Serviço",
+        label_price: "Preço",
+        label_duration: "Duração (min)",
+        btn_create_service: "Criar Serviço",
+        
+        step3_title: "Horário de Atendimento",
+        // MUDANÇA AQUI: Texto mais explicativo
+        step3_subtitle: "Vamos configurar um horário básico para começar. Você poderá personalizar dias, folgas e almoço depois em 'Ajustes'.",
+        standard_hours: "Usar Horário Comercial (09:00 - 18:00)",
+        standard_hours_desc: "De Segunda a Sexta",
+        // MUDANÇA AQUI: Orientação clara
+        manual_warning: "💡 Dica: Se seus horários são complexos, ative o padrão agora para desbloquear a agenda e edite os detalhes depois em Ajustes.",
+        btn_confirm_hours: "Definir e Continuar",
+        
+        step4_title: "Sua Máquina de Vendas",
+        step4_subtitle: "Copie este link. É aqui que seu cliente vai agendar.",
+        your_link: "Seu Link Oficial:",
+        btn_copied: "Já copiei, avançar",
+        
+        step5_title: "Último passo: Instale o App",
+        step5_subtitle: "Para receber notificações na hora, você precisa do ícone na tela.",
+        install_1: "1. Abra seu link no navegador do celular.",
+        install_2: "2. Toque nos 3 pontinhos (Android) ou Compartilhar (iPhone).",
+        install_3: "3. Escolha 'Adicionar à Tela Inicial'.",
+        btn_finish: "🎉 Finalizar e Começar a Lucrar"
+      },
+      // ... (RESTANTE DO ARQUIVO MANTIDO IGUAL) ...
       tutorial: {
         welcome_title: "Bem-vindo ao Cleverya!",
-        welcome_subtitle: "Siga estes passos para configurar sua conta e instalar o App:", // Texto ajustado
+        welcome_subtitle: "Guia de Configuração e Instalação",
         step1_title: "1. Cadastre seus Serviços",
         step1_desc: "Vá na aba 'Serviços' e crie o que você oferece (ex: Corte, Barba).",
         step2_title: "2. Cadastre a Equipe",
@@ -60,11 +102,9 @@ const resources = {
         step5_desc: "Novos agendamentos aparecem na aba 'Agenda'. Confirme e notifique o cliente.",
         step6_title: "6. Instale o App (Sem Loja)",
         step6_desc: "Nossa tecnologia não ocupa memória. Abra seu link no navegador, clique nos 3 pontinhos (ou 'Compartilhar' no iPhone) e escolha 'Adicionar à Tela Inicial'.",
-        
         auto_save: "Siga a ordem para evitar erros.",
         btn_start: "Entendi, vamos lá!",
-        btn_print: "Imprimir Tutorial" // Novo botão
-      },
+        btn_print: "Imprimir ou Salvar PDF"
       },
       status: {
         pending: "Pendente",
@@ -105,7 +145,6 @@ const resources = {
         error_portal: "Erro ao abrir portal.",
         subscription_active_q: "Você tem uma assinatura ativa?"
       },
-      // --- NOVAS SEÇÕES ---
       legal: {
         terms_title: "Termos de Uso",
         privacy_title: "Política de Privacidade",
@@ -120,7 +159,6 @@ const resources = {
         desc: "Ops! O link que você tentou acessar não existe ou foi removido. Verifique se o endereço está correto.",
         btn_home: "Voltar para o Início"
       },
-      // --------------------
       booking: {
         default_business_name: "Agendamento Online",
         limit_title: "Agendamentos Pausados",
@@ -177,8 +215,8 @@ const resources = {
       dashboard: {
         link_btn: "Link de Agendamento",
         link_copied: "Link copiado!",
-        manage_subscription: "Gerenciar Assinatura", // Adicionado
-        subscription_short: "Assinatura", // Adicionado
+        manage_subscription: "Gerenciar Assinatura",
+        subscription_short: "Assinatura",
         banner: {
           description: "Desbloqueie relatórios avançados, múltiplos profissionais e lembretes automáticos.",
           cta: "Ver Planos",
@@ -227,80 +265,68 @@ const resources = {
           financial_performance: "Desempenho Financeiro",
           daily_revenue: "Receita diária confirmada"
         },
-        calendar: {
-          title: "Agenda",
-          week: "Semana",
-          today: "Hoje",
-          summary: "Resumo",
-          total: "Total",
-          confirmed: "Confirmados",
-          pending: "Pendentes",
-          completed: "Realizados",
-          refresh: "Atualizar",
-          no_appointments: "Nenhum agendamento encontrado neste período."
-        },
         services: {
           title: "Serviços",
           subtitle: "Configure o que você oferece aos clientes.",
           btn_new: "Novo Serviço",
-          label_name: "Nome do Serviço",
-          label_category: "Categoria",
-          label_price: "Valor",
-          label_duration: "Duração (min)",
-          label_desc: "Descrição",
-          empty_title: "Seu menu está vazio",
-          empty_desc: "Cadastre seus serviços e categorias para começar a receber agendamentos."
+          label_name: "Service Name",
+          label_category: "Category",
+          label_price: "Price",
+          label_duration: "Duration (min)",
+          label_desc: "Description",
+          empty_title: "Your menu is empty",
+          empty_desc: "Register your services to start."
         },
         team: {
-          title: "Equipe",
-          subtitle: "Gerencie quem atende em sua empresa.",
-          btn_new: "Adicionar Profissional",
-          active_count: "Ativos",
-          label_name: "Nome",
-          label_capacity: "Capacidade",
-          active: "Ativo",
-          inactive: "Inativo",
-          empty: "Nenhum profissional cadastrado.",
-          limit_free: "Plano Gratuito: Limite de 1 profissional atingido.",
-          limit_pro: "Plano Pro: Limite de 3 profissionais atingido."
+          title: "Team",
+          subtitle: "Manage your staff.",
+          btn_new: "Add Professional",
+          active_count: "Active",
+          label_name: "Name",
+          label_capacity: "Capacity",
+          active: "Active",
+          inactive: "Inactive",
+          empty: "No professionals registered.",
+          limit_free: "Free Plan Limit Reached.",
+          limit_pro: "Pro Plan Limit Reached."
         },
         clients: {
-          title: "Clientes",
-          subtitle: "Gerencie sua base de clientes.",
-          blocked_title: "Bloqueados",
-          btn_block: "Bloquear",
-          btn_unblock: "Desbloquear",
+          title: "Clients",
+          subtitle: "Manage your client base.",
+          blocked_title: "Blocked",
+          btn_block: "Block",
+          btn_unblock: "Unblock",
           stats_total: "Total",
           stats_ok: "OK", 
-          stats_faults: "Faltas"
+          stats_faults: "No-Show"
         },
         reports: {
-          title: "Relatórios Financeiros",
-          subtitle: "Acompanhe seus números.",
-          total_revenue: "Faturamento Total",
-          current_month: "Mês atual",
-          last_month: "Mês passado",
-          last_3_months: "Últimos 3 meses",
-          custom: "Personalizado",
-          real_data: "Dados reais",
-          ticket_avg: "Ticket Médio",
-          top_services: "Top Serviços",
-          daily_revenue: "Receita Diária",
-          no_data: "Nenhum dado ainda.",
-          revenue: "Receita",
-          appointments: "Agendamentos"
+          title: "Financial Reports",
+          subtitle: "Track your numbers.",
+          total_revenue: "Total Revenue",
+          current_month: "Current Month",
+          last_month: "Last Month",
+          last_3_months: "Last 3 Months",
+          custom: "Custom",
+          real_data: "Real Data",
+          ticket_avg: "Avg Ticket",
+          top_services: "Top Services",
+          daily_revenue: "Daily Revenue",
+          no_data: "No data yet.",
+          revenue: "Revenue",
+          appointments: "Appointments"
         },
         settings: {
-          profile_title: "Perfil da Empresa",
-          profile_desc: "Como seus clientes veem seu negócio.",
-          business_name: "Nome do Estabelecimento",
-          slug_label: "Link de Agendamento",
-          banner_label: "Banner (URL da Imagem)",
-          btn_save_profile: "Salvar Perfil",
-          hours_title: "Horários de Atendimento",
-          hours_desc: "Defina quando sua empresa está aberta.",
-          btn_save_hours: "Salvar Horários",
-          closed: "Fechado"
+          profile_title: "Business Profile",
+          profile_desc: "How clients see your business.",
+          business_name: "Business Name",
+          slug_label: "Booking Link",
+          banner_label: "Banner (Image URL)",
+          btn_save_profile: "Save Profile",
+          hours_title: "Operating Hours",
+          hours_desc: "When are you open.",
+          btn_save_hours: "Save Hours",
+          closed: "Closed"
         }
       },
       landing: {
@@ -396,7 +422,7 @@ const resources = {
             barber_title: "Barbearias & Salões",
             barber_desc: "Agenda organizada por barbeiro e comissões automáticas.",
             health_title: "Psicólogos & Terapeutas",
-            health_desc: "Prontuário seguro e redução de faltas dos pacientes.",
+            health_desc: "Secure records and reduced patient no-shows.",
             trainer_title: "Personal Trainers",
             trainer_desc: "Gerencie alunos, avaliações e pagamentos recorrentes.",
             consultant_title: "Consultores & Advogados",
@@ -404,7 +430,7 @@ const resources = {
         },
         floating: {
             new_app: "Novo Agendamento",
-            confirmed: "Confirmado",
+            confirmed: "Confirmed",
             revenue_week: "Receita da Semana",
             revenue_today: "Receita Hoje"
         },
@@ -425,9 +451,14 @@ const resources = {
   en: {
     translation: {
       common: {
+        confirm: "Confirm",
+        complete: "Complete",
+        undo: "Undo",
+        restore: "Restore",
+        print: "Print",
         loading: "Loading...",
         back_home: "Back to Home",
-        back: "Back", // Adicionado
+        back: "Back",
         app_name: "Cleverya",
         save: "Save",
         cancel: "Cancel",
@@ -448,12 +479,8 @@ const resources = {
         sales: "sales",
         image_url_help: "Error: Use a 'Direct Link' from Imgur.com (must end in .png or .jpg).",
         copy_all: "Copy to all",
-        confirm: "Confirm",
-        complete: "Complete",
-        undo: "Undo",
-        restore: "Restore",
-        print: "Print",
-        help: "View Tutorial", // Novo
+        help: "Help Manual",
+
         weekdays: {
           0: "Sunday",
           1: "Monday",
@@ -464,9 +491,48 @@ const resources = {
           6: "Saturday"
         }
       },
+      // --- NEW WIZARD EN ---
+      wizard: {
+        step1_title: "Let's customize your page",
+        step1_subtitle: "How will clients find you?",
+        label_business_name: "Business Name",
+        label_whatsapp: "Your WhatsApp (Required)",
+        whatsapp_help: "We use it for security alerts. No spam.",
+        label_banner: "Cover Photo Link (Optional)",
+        banner_error: "❌ Error: Use a direct link (.jpg or .png). Do not use Canva!",
+        banner_tip: "💡 Tip: Upload to (1920 x 600 px) Imgur.com, copy the 'Direct Link' and paste here.",
+        btn_next: "Save and Continue",
+        
+        step2_title: "What are you selling?",
+        step2_subtitle: "Register your main service now. We'll handle the rest later.",
+        label_service_name: "Service Name",
+        label_price: "Price",
+        label_duration: "Duration (min)",
+        btn_create_service: "Create Service",
+        
+        step3_title: "Set your boundaries",
+        step3_subtitle: "Let's set a basic schedule to start. You can customize days, breaks, and hours later in 'Settings'.",
+        standard_hours: "Use Standard Business Hours (09:00 - 18:00)",
+        standard_hours_desc: "Mon to Fri",
+        manual_warning: "💡 Tip: If you have complex hours, turn this ON now to unlock your calendar, then edit details in Settings.",
+        btn_confirm_hours: "Set and Continue",
+        
+        step4_title: "Your Sales Machine",
+        step4_subtitle: "Copy this link. This is where your client will book.",
+        your_link: "Your Official Link:",
+        btn_copied: "Copied, continue",
+        
+        step5_title: "Last step: Install the App",
+        step5_subtitle: "To receive notifications instantly, you need the icon on your screen.",
+        install_1: "1. Open your link in your mobile browser.",
+        install_2: "2. Tap the 3 dots (Android) or Share (iPhone).",
+        install_3: "3. Choose 'Add to Home Screen'.",
+        btn_finish: "🎉 Finish and Start Earning"
+      },
+      // ... (RESTANTE DO ARQUIVO MANTIDO IGUAL) ...
       tutorial: {
         welcome_title: "Welcome to Cleverya!",
-        welcome_subtitle: "Follow these steps to set up your account and install the App:",
+        welcome_subtitle: "Setup and Installation Guide",
         step1_title: "1. Register Services",
         step1_desc: "Go to 'Services' tab and create what you offer.",
         step2_title: "2. Register Team",
@@ -479,10 +545,9 @@ const resources = {
         step5_desc: "New bookings appear in 'Agenda'. Confirm and notify the client.",
         step6_title: "6. Install App (No Store)",
         step6_desc: "Our tech saves memory. Open your link, tap the 3 dots (or 'Share' on iPhone) and select 'Add to Home Screen'.",
-
         auto_save: "Follow the order.",
         btn_start: "Let's go!",
-        btn_print: "Print Tutorial"
+        btn_print: "Print or Save PDF"
       },
       status: {
         pending: "Pending",
@@ -523,7 +588,7 @@ const resources = {
         error_portal: "Error opening portal.",
         subscription_active_q: "Do you have an active subscription?"
       },
-      // --- NOVAS SEÇÕES EN ---
+      // --- NEW SECTIONS EN ---
       legal: {
         terms_title: "Terms of Use",
         privacy_title: "Privacy Policy",
@@ -595,8 +660,8 @@ const resources = {
       dashboard: {
         link_btn: "Booking Link",
         link_copied: "Link copied!",
-        manage_subscription: "Manage Subscription", // Adicionado
-        subscription_short: "Subscription", // Adicionado
+        manage_subscription: "Manage Subscription",
+        subscription_short: "Subscription",
         banner: {
           description: "Unlock advanced reports, multiple professionals, and automatic reminders.",
           cta: "View Plans",
@@ -634,18 +699,6 @@ const resources = {
           no_future_appointments: "No upcoming appointments.",
           financial_performance: "Financial Performance",
           daily_revenue: "Daily confirmed revenue"
-        },
-        calendar: {
-          title: "Calendar",
-          week: "Week",
-          today: "Today",
-          summary: "Summary",
-          total: "Total",
-          confirmed: "Confirmed",
-          pending: "Pending",
-          completed: "Completed",
-          refresh: "Refresh",
-          no_appointments: "No appointments found."
         },
         services: {
           title: "Services",
@@ -796,14 +849,14 @@ const resources = {
         },
         versatility: {
             badge: "VERSATILITY",
-            title: "Made for",
-            title_highlight: "your success",
+            title: "Feito para o",
+            title_highlight: "seu sucesso",
             subtitle: "Tools adapted to scale your business, whatever your field."
         },
         niches: {
             barber_title: "Barbershops & Salons",
-            barber_desc: "Organized schedule by barber and automatic commissions.",
-            health_title: "Psychologists & Therapists",
+            barber_desc: "Agenda organizada por barbeiro e comissões automáticas.",
+            health_title: "Psicólogos & Terapeutas",
             health_desc: "Secure records and reduced patient no-shows.",
             trainer_title: "Personal Trainers",
             trainer_desc: "Manage students, assessments and recurring payments.",
@@ -837,15 +890,12 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'pt', // Se o idioma do usuário for Japonês, cai em Português
-    supportedLngs: ['pt', 'en'], // Lista explícita do que você suporta
-    
-    // Configuração do Detector (Opcional, mas melhora a experiência)
+    fallbackLng: 'pt',
+    supportedLngs: ['pt', 'en'],
     detection: {
-      order: ['localStorage', 'navigator'], // 1º Vê se já tem salvo, 2º Vê o navegador
-      caches: ['localStorage'], // Salva a escolha do usuário na memória do navegador
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
     },
-
     interpolation: {
       escapeValue: false 
     }
