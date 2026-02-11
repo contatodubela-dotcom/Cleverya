@@ -39,35 +39,43 @@ export default function OnboardingModal() {
   });
 
   useEffect(() => {
-    checkUserStatus();
-  }, []);
+    let isMounted = true;
 
-  async function checkUserStatus() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    async function checkUserStatus() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id, name, whatsapp, banner_url')
-      .eq('owner_id', user.id)
-      .single();
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('id, name, whatsapp, banner_url')
+        .eq('owner_id', user.id)
+        .single();
 
-    if (business) {
-      setBusinessId(business.id);
-      
-      setFormData(prev => ({
-        ...prev,
-        businessName: business.name || '',
-        whatsapp: business.whatsapp || '',
-        bannerUrl: business.banner_url || ''
-      }));
+      if (isMounted && business) {
+        setBusinessId(business.id);
+        
+        setFormData(prev => ({
+          ...prev,
+          businessName: business.name || '',
+          whatsapp: business.whatsapp || '',
+          bannerUrl: business.banner_url || ''
+        }));
 
-      // Se whatsapp estiver vazio, força o onboarding
-      if (!business.whatsapp || business.whatsapp.trim().length < 8) {
-        setTimeout(() => setOpen(true), 500);
+        // LÓGICA DE ABERTURA ROBUSTA
+        // Verifica se whatsapp é nulo, vazio ou muito curto
+        const needsOnboarding = !business.whatsapp || business.whatsapp.trim().length < 8;
+        
+        if (needsOnboarding) {
+           // Removemos o setTimeout para evitar condições de corrida no mobile
+           setOpen(true);
+        }
       }
     }
-  }
+
+    checkUserStatus();
+
+    return () => { isMounted = false; };
+  }, []);
 
   const handleClose = () => {
     if (step === 5) {
@@ -129,18 +137,16 @@ export default function OnboardingModal() {
 
       if (error) throw error;
 
-      // 2. CRIAÇÃO AUTOMÁTICA DE PROFISSIONAL (A CORREÇÃO)
-      // Verifica se já existe algum profissional
+      // 2. Cria Profissional se não existir
       const { count } = await supabase
         .from('professionals')
         .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId);
 
       if (count === 0) {
-        // Se não existe, cria o "Dono" como profissional
         await supabase.from('professionals').insert({
             business_id: businessId,
-            name: formData.businessName, // Usa o nome da empresa ou "Profissional"
+            name: formData.businessName, 
             capacity: 1,
             is_active: true
         });

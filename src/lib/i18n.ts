@@ -907,8 +907,8 @@ const resources = {
         },
         niches: {
             barber_title: "Barbershops & Salons",
-            barber_desc: "Agenda organizada por barbeiro e comissões automáticas.",
-            health_title: "Psicólogos & Terapeutas",
+            barber_desc: "Schedule organized by barber and with automatic commissions.",
+            health_title: "Psychologists & Therapists",
             health_desc: "Secure records and reduced patient no-shows.",
             trainer_title: "Personal Trainers",
             trainer_desc: "Manage students, assessments and recurring payments.",
