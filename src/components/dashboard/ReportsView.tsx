@@ -236,7 +236,7 @@ export default function ReportsView() {
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                            <SelectItem value="0">{t('dashboard.reports.this_month', { defaultValue: 'Este Mês' })}</SelectItem>
+                            <SelectItem value="0">{t('dashboard.reports.this_month', { defaultValue: 'Este mês' })}</SelectItem>
                             <SelectItem value="1">{t('dashboard.reports.last_month', { defaultValue: 'Mês Passado' })}</SelectItem>
                             <SelectItem value="3">{t('dashboard.reports.last_3_months', { defaultValue: 'Últimos 3 Meses' })}</SelectItem>
                             <SelectItem value="custom" className="text-primary font-bold">{t('dashboard.reports.custom', { defaultValue: 'Personalizado' })}</SelectItem>
@@ -294,12 +294,27 @@ export default function ReportsView() {
                             minTickGap={15}
                         />
                         <YAxis hide />
-                        <Tooltip 
-                            cursor={{fill: '#334155', opacity: 0.4}}
-                            contentStyle={{ borderRadius: '8px', border: 'none', backgroundColor: '#1e293b', color: '#fff' }}
-                            formatter={(value: number) => [currencyFormatter.format(value), 'Receita']}
-                            labelFormatter={(label) => `Dia ${label}`}
-                        />
+                        <Tooltip
+                    formatter={(value: number) => [
+                      currencyFormatter.format(value),
+                      t('dashboard.reports.revenue_label', { defaultValue: 'Receita' })
+                    ]}
+                    // --- INÍCIO DA CORREÇÃO DE CSS ---
+                    contentStyle={{ 
+                      backgroundColor: '#1e293b', // Cor de fundo escura (slate-800)
+                      borderColor: '#334155',     // Borda sutil (slate-700)
+                      borderRadius: '8px',        // Cantos arredondados
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' // Sombra suave
+                    }}
+                    itemStyle={{
+                      color: '#f8fafc' // Cor do texto quase branca (slate-50)
+                    }}
+                    labelStyle={{
+                      color: '#94a3b8' // Cor da data/label um pouco mais cinza (slate-400)
+                    }}
+                    cursor={{ fill: 'rgba(255,255,255,0.05)' }} // Cor do cursor ao passar o mouse
+                    // --- FIM DA CORREÇÃO DE CSS ---
+                  />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             {stats?.chartData?.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#4ade80' : '#334155'} />

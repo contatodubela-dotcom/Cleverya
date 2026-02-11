@@ -35,6 +35,9 @@ const resources = {
         image_url_help: "Erro: Use o 'Direct Link' do site Imgur.com (deve terminar em .png ou .jpg).",
         copy_all: "Copiar para todos",
         help: "Manual de Ajuda",
+        price_locale: "pt-BR",
+        currency: "BRL",
+
 
         weekdays: {
           0: "Domingo",
@@ -265,68 +268,92 @@ const resources = {
           financial_performance: "Desempenho Financeiro",
           daily_revenue: "Receita diária confirmada"
         },
+ // --- SEÇÃO CALENDAR RESTAURADA ---
+        calendar: {
+          title: "Agenda",
+          week: "Semana",
+          today: "Hoje",
+          summary: "Resumo",
+          total: "Total",
+          confirmed: "Confirmados",
+          pending: "Pendentes",
+          completed: "Realizados",
+          refresh: "Atualizar",
+          no_appointments: "Nenhum agendamento encontrado neste período."
+        },
         services: {
           title: "Serviços",
           subtitle: "Configure o que você oferece aos clientes.",
           btn_new: "Novo Serviço",
-          label_name: "Service Name",
-          label_category: "Category",
-          label_price: "Price",
-          label_duration: "Duration (min)",
-          label_desc: "Description",
-          empty_title: "Your menu is empty",
-          empty_desc: "Register your services to start."
+          label_name: "Nome do Serviço",
+          label_category: "Categoria",
+          label_price: "Valor",
+          label_duration: "Duração (min)",
+          label_desc: "Descrição",
+          desc_placeholder: "Ex: Inclui lavagem e finalização.",
+          empty_title: "Seu menu está vazio",
+          empty_desc: "Cadastre seus serviços e categorias para começar a receber agendamentos."
         },
         team: {
-          title: "Team",
-          subtitle: "Manage your staff.",
-          btn_new: "Add Professional",
-          active_count: "Active",
-          label_name: "Name",
-          label_capacity: "Capacity",
-          active: "Active",
-          inactive: "Inactive",
-          empty: "No professionals registered.",
-          limit_free: "Free Plan Limit Reached.",
-          limit_pro: "Pro Plan Limit Reached."
+          title: "Equipe",
+          subtitle: "Gerencie quem atende em sua empresa.",
+          btn_new: "Adicionar Profissional",
+          active_count: "Ativos",
+          label_name: "Nome",
+          label_capacity: "Capacidade",
+          active: "Ativo",
+          inactive: "Inativo",
+          empty: "Nenhum profissional cadastrado.",
+          limit_free: "Limite do plano atingido",
+          limit_pro: "Plano Pro: Limite de 3 profissionais atingido.",
+          name_placeholder: "Nome do Profissional"
         },
         clients: {
-          title: "Clients",
-          subtitle: "Manage your client base.",
-          blocked_title: "Blocked",
-          btn_block: "Block",
-          btn_unblock: "Unblock",
+          title: "Clientes",
+          subtitle: "Gerencie sua base de clientes.",
+          blocked_title: "Bloqueados",
+          btn_block: "Bloquear",
+          btn_unblock: "Desbloquear",
           stats_total: "Total",
           stats_ok: "OK", 
-          stats_faults: "No-Show"
+          stats_faults: "Faltas"
         },
         reports: {
-          title: "Financial Reports",
-          subtitle: "Track your numbers.",
-          total_revenue: "Total Revenue",
-          current_month: "Current Month",
-          last_month: "Last Month",
-          last_3_months: "Last 3 Months",
-          custom: "Custom",
-          real_data: "Real Data",
-          ticket_avg: "Avg Ticket",
-          top_services: "Top Services",
-          daily_revenue: "Daily Revenue",
-          no_data: "No data yet.",
-          revenue: "Revenue",
-          appointments: "Appointments"
+          title: "Relatórios Financeiros",
+          subtitle: "Acompanhe seus números.",
+          total_revenue: "Faturamento Total",
+          
+          // --- CORREÇÃO: Chaves renomeadas para bater com ReportsView.tsx ---
+          this_month: "Este Mês",          // Antes estava 'current_month' ou faltando
+          last_month: "Mês Passado",
+          last_3_months: "Últimos 3 Meses",
+          custom: "Personalizado",
+          
+          // --- CORREÇÃO: Chaves que estavam faltando ---
+          appointments_count: "Atendimentos", // O código pede 'appointments_count'
+          chart_title: "Evolução Diária",     // O código pede 'chart_title'
+          revenue_label: "Receita",           // O código pede 'revenue_label' (no gráfico)
+          
+          ticket_avg: "Ticket Médio",
+          top_services: "Top Serviços",
+          daily_revenue: "Receita Diária",
+          no_data: "Nenhum dado ainda.",
+          revenue: "Receita",
+          appointments: "Agendamentos",
+          upgrade_title: "Relatórios Financeiros",
+          upgrade_desc: "Acompanhe seu faturamento diário, serviços mais vendidos e métricas de crescimento com o plano Pro."
         },
         settings: {
-          profile_title: "Business Profile",
-          profile_desc: "How clients see your business.",
-          business_name: "Business Name",
-          slug_label: "Booking Link",
-          banner_label: "Banner (Image URL)",
-          btn_save_profile: "Save Profile",
-          hours_title: "Operating Hours",
-          hours_desc: "When are you open.",
-          btn_save_hours: "Save Hours",
-          closed: "Closed"
+          profile_title: "Perfil da Empresa",
+          profile_desc: "Como seus clientes veem seu negócio.",
+          business_name: "Nome do Estabelecimento",
+          slug_label: "Link de Agendamento",
+          banner_label: "Banner (URL da Imagem)",
+          btn_save_profile: "Salvar Perfil",
+          hours_title: "Horários de Atendimento",
+          hours_desc: "Defina quando sua empresa está aberta.",
+          btn_save_hours: "Salvar Horários",
+          closed: "Fechado"
         }
       },
       landing: {
@@ -422,7 +449,7 @@ const resources = {
             barber_title: "Barbearias & Salões",
             barber_desc: "Agenda organizada por barbeiro e comissões automáticas.",
             health_title: "Psicólogos & Terapeutas",
-            health_desc: "Secure records and reduced patient no-shows.",
+            health_desc: "Registros seguros e redução de faltas de pacientes.",
             trainer_title: "Personal Trainers",
             trainer_desc: "Gerencie alunos, avaliações e pagamentos recorrentes.",
             consultant_title: "Consultores & Advogados",
@@ -430,7 +457,7 @@ const resources = {
         },
         floating: {
             new_app: "Novo Agendamento",
-            confirmed: "Confirmed",
+            confirmed: "Confirmado",
             revenue_week: "Receita da Semana",
             revenue_today: "Receita Hoje"
         },
@@ -480,6 +507,8 @@ const resources = {
         image_url_help: "Error: Use a 'Direct Link' from Imgur.com (must end in .png or .jpg).",
         copy_all: "Copy to all",
         help: "Help Manual",
+        price_locale: "en-US",
+        currency: "USD",
 
         weekdays: {
           0: "Sunday",
@@ -690,7 +719,7 @@ const resources = {
           no_pending: "All caught up!",
           no_today: "Schedule clear for today.",
           btn_confirm: "Confirm",
-          btn_reschedule: "View Agenda",
+          btn_reschedule: "View Schedule",
           status_noshow: "No-Show",
           new_badge: "NEW",
           revenue: "Revenue (Month)",
@@ -699,6 +728,18 @@ const resources = {
           no_future_appointments: "No upcoming appointments.",
           financial_performance: "Financial Performance",
           daily_revenue: "Daily confirmed revenue"
+        },
+        calendar: {
+          title: "Calendar",
+          week: "Week",
+          today: "Today",
+          summary: "Summary",
+          total: "Total",
+          confirmed: "Confirmed",
+          pending: "Pending",
+          completed: "Completed",
+          refresh: "Refresh",
+          no_appointments: "No appointments found in this period."
         },
         services: {
           title: "Services",
@@ -709,10 +750,11 @@ const resources = {
           label_price: "Price",
           label_duration: "Duration (min)",
           label_desc: "Description",
+          desc_placeholder: "Ex: Includes washing and finishing.",
           empty_title: "Your menu is empty",
           empty_desc: "Register your services to start."
         },
-        team: {
+         team: {
           title: "Team",
           subtitle: "Manage your staff.",
           btn_new: "Add Professional",
@@ -722,8 +764,9 @@ const resources = {
           active: "Active",
           inactive: "Inactive",
           empty: "No professionals registered.",
-          limit_free: "Free Plan Limit Reached.",
-          limit_pro: "Pro Plan Limit Reached."
+          limit_free: "Plan limit reached.",
+          limit_pro: "Pro Plan Limit reached.",
+          name_placeholder: "Professional Name"
         },
         clients: {
           title: "Clients",
@@ -735,21 +778,29 @@ const resources = {
           stats_ok: "OK", 
           stats_faults: "No-Show"
         },
-        reports: {
+       reports: {
           title: "Financial Reports",
           subtitle: "Track your numbers.",
           total_revenue: "Total Revenue",
-          current_month: "Current Month",
+          
+          // --- CORREÇÃO: Versão em Inglês ---
+          this_month: "This Month",
           last_month: "Last Month",
           last_3_months: "Last 3 Months",
           custom: "Custom",
-          real_data: "Real Data",
+          
+          appointments_count: "Appointments", 
+          chart_title: "Daily Evolution",
+          revenue_label: "Revenue",
+          
           ticket_avg: "Avg Ticket",
           top_services: "Top Services",
           daily_revenue: "Daily Revenue",
           no_data: "No data yet.",
           revenue: "Revenue",
-          appointments: "Appointments"
+          appointments: "Appointments",
+          upgrade_title: "Financial Reports",
+          upgrade_desc: "Track your daily revenue, best-selling services, and growth metrics with the Pro plan."
         },
         settings: {
           profile_title: "Business Profile",
@@ -764,6 +815,7 @@ const resources = {
           closed: "Closed"
         }
       },
+      // --- LANDING PAGE ---
       landing: {
         plans: {
           title: "Investment that pays off instantly",
@@ -849,8 +901,8 @@ const resources = {
         },
         versatility: {
             badge: "VERSATILITY",
-            title: "Feito para o",
-            title_highlight: "seu sucesso",
+            title: "Made for",
+            title_highlight: "your success",
             subtitle: "Tools adapted to scale your business, whatever your field."
         },
         niches: {

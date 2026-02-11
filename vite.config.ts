@@ -9,6 +9,16 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      
+      // --- A PARTE QUE FALTAVA ---
+      workbox: {
+        cleanupOutdatedCaches: true, // Deleta o cache da versão anterior
+        clientsClaim: true, // Assume o controle da página imediatamente
+        skipWaiting: true, // Não espera o usuário fechar todas as abas
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'] // Arquivos para cachear
+      },
+      // ---------------------------
+
       manifest: {
         name: 'Cleverya - Gestão Inteligente',
         short_name: 'Cleverya',
@@ -60,21 +70,13 @@ export default defineConfig({
         chunkFileNames: `assets/[name].[hash].js`,
         assetFileNames: `assets/[name].[hash].[ext]`,
 
-        // ESTRATÉGIA FINAL: "The Big Three"
-        // Em vez de fragmentar, criamos 3 pilares sólidos para reduzir requisições HTTP.
         manualChunks: {
-          // 1. O motor do site (React + Router + Utils + i18n) - Tudo necessário para "ligar" o site
           'core-vendor': [
             'react', 'react-dom', 'react-router-dom', 
             'i18next', 'react-i18next', 'i18next-browser-languagedetector',
             'clsx', 'tailwind-merge', 'sonner', 'lucide-react'
-            // date-fns removido daqui para ser carregado apenas quando necessário (Dashboard)
           ],
-          
-          // 2. O gigante de animação (só baixa depois do core)
           'animations': ['framer-motion'],
-          
-          // 3. O backend (pesado, mas necessário para Auth)
           'supabase': ['@supabase/supabase-js'],
         }
       }

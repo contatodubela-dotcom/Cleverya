@@ -62,7 +62,7 @@ export default function OnboardingModal() {
         bannerUrl: business.banner_url || ''
       }));
 
-      // Se whatsapp estiver vazio ou nulo, abre o modal
+      // Se whatsapp estiver vazio, força o onboarding
       if (!business.whatsapp || business.whatsapp.trim().length < 8) {
         setTimeout(() => setOpen(true), 500);
       }
@@ -76,32 +76,23 @@ export default function OnboardingModal() {
     }
   };
 
-  // --- MÁSCARA E VALIDAÇÃO DE TELEFONE ---
+  // --- MÁSCARA E VALIDAÇÃO ---
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ""); // Remove tudo que não é número
-    
-    // Limita a 11 dígitos (DDD + 9 dígitos)
+    let value = e.target.value.replace(/\D/g, "");
     if (value.length > 11) value = value.slice(0, 11);
     
-    // Aplica a máscara visualmente
     if (value.length > 10) {
-        // Formato Celular: (11) 99999-9999
         value = value.replace(/^(\d\d)(\d{5})(\d{4}).*/, "($1) $2-$3");
     } else if (value.length > 6) {
-        // Formato Fixo/Incompleto: (11) 9999-9999
         value = value.replace(/^(\d\d)(\d{4})(\d{0,4}).*/, "($1) $2-$3");
     } else if (value.length > 2) {
-        // Apenas DDD: (11) ...
         value = value.replace(/^(\d\d)(\d{0,5}).*/, "($1) $2");
     } else {
-        // Digitando DDD
         value = value.replace(/^(\d*)/, "($1");
     }
-    
     setFormData({ ...formData, whatsapp: value });
   };
 
-  // Verifica se o telefone tem pelo menos 10 números reais (DDD + 8 dígitos)
   const isPhoneValid = () => {
       const cleanNumber = formData.whatsapp.replace(/\D/g, "");
       return cleanNumber.length >= 10;
@@ -112,20 +103,21 @@ export default function OnboardingModal() {
     return url.match(/\.(jpeg|jpg|gif|png|webp)$/) != null;
   };
 
+  // --- SALVAMENTO ---
+
   const saveStep1 = async () => {
-    // 1. Validação Dupla
     if (!formData.businessName || !formData.whatsapp) {
-      toast.error(t('toasts.error_general', { defaultValue: 'Preencha os campos obrigatórios' }));
+      toast.error(t('toasts.error_general', { defaultValue: 'Preencha os campos' }));
       return;
     }
-
     if (!isPhoneValid()) {
-        toast.error("Número de WhatsApp inválido. Digite o DDD + Número.");
+        toast.error("Número inválido.");
         return;
     }
 
     setLoading(true);
     try {
+      // 1. Atualiza Negócio
       const { error } = await supabase
         .from('businesses')
         .update({ 
@@ -136,10 +128,28 @@ export default function OnboardingModal() {
         .eq('id', businessId);
 
       if (error) throw error;
+
+      // 2. CRIAÇÃO AUTOMÁTICA DE PROFISSIONAL (A CORREÇÃO)
+      // Verifica se já existe algum profissional
+      const { count } = await supabase
+        .from('professionals')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', businessId);
+
+      if (count === 0) {
+        // Se não existe, cria o "Dono" como profissional
+        await supabase.from('professionals').insert({
+            business_id: businessId,
+            name: formData.businessName, // Usa o nome da empresa ou "Profissional"
+            capacity: 1,
+            is_active: true
+        });
+      }
+
       setStep(2);
       toast.success("Perfil salvo!");
     } catch (e) {
-      toast.error("Erro ao salvar perfil.");
+      toast.error("Erro ao salvar.");
     } finally {
       setLoading(false);
     }
@@ -153,15 +163,13 @@ export default function OnboardingModal() {
 
     setLoading(true);
     try {
-      const { error } = await supabase.from('services').insert({
+      await supabase.from('services').insert({
         business_id: businessId,
         name: formData.serviceName,
         price: parseFloat(formData.servicePrice.replace(',', '.')),
         duration_minutes: parseInt(formData.serviceDuration),
         is_active: true
       });
-
-      if (error) throw error;
       setStep(3);
     } catch (e) {
       toast.error("Erro ao criar serviço.");
@@ -199,7 +207,7 @@ export default function OnboardingModal() {
     toast.success("Link copiado!");
   };
 
-  // --- RENDERIZAÇÃO ---
+  // --- RENDER ---
   const renderStep = () => {
     switch(step) {
       case 1: 
@@ -234,7 +242,7 @@ export default function OnboardingModal() {
                   value={formData.whatsapp} 
                   onChange={handlePhoneChange}
                   placeholder="(00) 00000-0000" 
-                  maxLength={15} // (11) 99999-9999 = 15 chars
+                  maxLength={15}
                   className={`bg-slate-900/50 border-white/10 text-white h-11 focus:border-amber-500/50 placeholder:text-slate-600 ${!isPhoneValid() && formData.whatsapp.length > 0 ? "border-red-500/50" : ""}`}
                 />
                 <div className="flex justify-between items-center mt-1.5">
@@ -242,7 +250,6 @@ export default function OnboardingModal() {
                         <CheckCircle2 className="w-3 h-3 text-green-500" /> 
                         {t('wizard.whatsapp_help')}
                     </p>
-                    {/* Feedback visual de erro se digitar pouco */}
                     {!isPhoneValid() && formData.whatsapp.length > 3 && (
                         <span className="text-[10px] text-red-400 font-bold">Incompleto</span>
                     )}
@@ -272,7 +279,6 @@ export default function OnboardingModal() {
               </div>
             </div>
 
-            {/* BOTÃO COM TRAVA DE SEGURANÇA */}
             <Button 
                 onClick={saveStep1} 
                 disabled={loading || !formData.businessName || !isPhoneValid()} 
@@ -422,22 +428,18 @@ export default function OnboardingModal() {
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden bg-[#0f172a] border border-white/10 text-white shadow-2xl">
-        
         <div className="h-1 bg-slate-800 w-full flex">
            <div 
              className="h-full bg-gradient-to-r from-amber-400 to-orange-600 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-500 ease-out" 
              style={{ width: `${(step / 5) * 100}%` }}
            ></div>
         </div>
-
         <div className="p-8">
            {renderStep()}
         </div>
-
         <div className="bg-[#020617]/50 p-4 text-center text-[10px] text-slate-500 border-t border-white/5 uppercase tracking-widest font-medium">
            Passo {step} de 5 • Cleverya Setup
         </div>
-
       </DialogContent>
     </Dialog>
   );
