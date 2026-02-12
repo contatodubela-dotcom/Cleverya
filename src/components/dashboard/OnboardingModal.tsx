@@ -5,16 +5,8 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Switch } from '../../components/ui/switch';
 import { 
-  Store, 
-  Scissors, 
-  Clock, 
-  Share2, 
-  Smartphone, 
-  Loader2, 
-  Image as ImageIcon,
-  Copy,
-  CheckCircle2,
-  Info
+  Store, Scissors, Clock, Share2, Smartphone, 
+  Loader2, Image as ImageIcon, Copy, CheckCircle2, Info
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -61,30 +53,26 @@ export default function OnboardingModal() {
           bannerUrl: business.banner_url || ''
         }));
 
-        // LÓGICA DE ABERTURA ROBUSTA
-        // Verifica se whatsapp é nulo, vazio ou muito curto
-        const needsOnboarding = !business.whatsapp || business.whatsapp.trim().length < 8;
-        
-        if (needsOnboarding) {
-           // Removemos o setTimeout para evitar condições de corrida no mobile
+        // TRAVA DE SEGURANÇA:
+        // Se não tiver WhatsApp válido, ABRE O MODAL IMEDIATAMENTE (sem timeout)
+        if (!business.whatsapp || business.whatsapp.trim().length < 8) {
            setOpen(true);
         }
       }
     }
 
     checkUserStatus();
-
     return () => { isMounted = false; };
   }, []);
 
   const handleClose = () => {
+    // Só permite fechar se chegou no passo final (5)
     if (step === 5) {
       setOpen(false);
       window.location.reload();
     }
   };
 
-  // --- MÁSCARA E VALIDAÇÃO ---
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
     if (value.length > 11) value = value.slice(0, 11);
@@ -111,21 +99,18 @@ export default function OnboardingModal() {
     return url.match(/\.(jpeg|jpg|gif|png|webp)$/) != null;
   };
 
-  // --- SALVAMENTO ---
-
   const saveStep1 = async () => {
     if (!formData.businessName || !formData.whatsapp) {
       toast.error(t('toasts.error_general', { defaultValue: 'Preencha os campos' }));
       return;
     }
     if (!isPhoneValid()) {
-        toast.error("Número inválido.");
+        toast.error("Número inválido. Digite DDD + Número.");
         return;
     }
 
     setLoading(true);
     try {
-      // 1. Atualiza Negócio
       const { error } = await supabase
         .from('businesses')
         .update({ 
@@ -137,7 +122,7 @@ export default function OnboardingModal() {
 
       if (error) throw error;
 
-      // 2. Cria Profissional se não existir
+      // Cria Profissional Automaticamente para não travar a agenda
       const { count } = await supabase
         .from('professionals')
         .select('*', { count: 'exact', head: true })
@@ -213,7 +198,6 @@ export default function OnboardingModal() {
     toast.success("Link copiado!");
   };
 
-  // --- RENDER ---
   const renderStep = () => {
     switch(step) {
       case 1: 
@@ -432,20 +416,29 @@ export default function OnboardingModal() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[420px] p-0 overflow-hidden bg-[#0f172a] border border-white/10 text-white shadow-2xl">
+    // ADICIONEI: onPointerDownOutside e onEscapeKeyDown para impedir fechamento
+    <Dialog open={open} onOpenChange={() => { /* Bloqueado */ }}>
+      <DialogContent 
+        className="sm:max-w-[420px] p-0 overflow-hidden bg-[#0f172a] border border-white/10 text-white shadow-2xl [&>button]:hidden"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
+        
         <div className="h-1 bg-slate-800 w-full flex">
            <div 
              className="h-full bg-gradient-to-r from-amber-400 to-orange-600 shadow-[0_0_10px_rgba(245,158,11,0.5)] transition-all duration-500 ease-out" 
              style={{ width: `${(step / 5) * 100}%` }}
            ></div>
         </div>
+
         <div className="p-8">
            {renderStep()}
         </div>
+
         <div className="bg-[#020617]/50 p-4 text-center text-[10px] text-slate-500 border-t border-white/5 uppercase tracking-widest font-medium">
            Passo {step} de 5 • Cleverya Setup
         </div>
+
       </DialogContent>
     </Dialog>
   );

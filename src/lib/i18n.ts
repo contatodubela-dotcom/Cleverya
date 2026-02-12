@@ -216,6 +216,12 @@ const resources = {
         btn_back_login: "Voltar para Login"
       },
       dashboard: {
+        trial_banner: {
+          title: "Modo Teste Premium Ativo:",
+          desc: "Você tem acesso total ao Cleverya Pro.",
+          days_left: "Restam {{count}} dias para aproveitar.",
+          btn_subscribe: "Assinar Agora"
+        },
         link_btn: "Link de Agendamento",
         link_copied: "Link copiado!",
         manage_subscription: "Gerenciar Assinatura",
@@ -687,6 +693,12 @@ const resources = {
         btn_back_login: "Back to Login"
       },
       dashboard: {
+        trial_banner: {
+          title: "Premium Trial Active:",
+          desc: "You have full access to Cleverya Pro.",
+          days_left: "{{count}} days left to enjoy.",
+          btn_subscribe: "Subscribe Now"
+        },
         link_btn: "Booking Link",
         link_copied: "Link copied!",
         manage_subscription: "Manage Subscription",

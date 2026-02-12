@@ -6,7 +6,7 @@ import { differenceInDays, parseISO, isPast } from 'date-fns';
 export function usePlan() {
   const { user } = useAuth();
 
-  // 1. Busca Métricas de Uso (Contagem)
+  // 1. Busca contagem de uso (Limites)
   const { data: metrics, isLoading: loadingMetrics } = useQuery({
     queryKey: ['usage-metrics', user?.id],
     queryFn: async () => {
@@ -19,16 +19,15 @@ export function usePlan() {
     staleTime: 1000 * 60 * 5 
   });
 
-  // 2. Busca Status do Plano e Trial (Dados Reais)
+  // 2. Busca status financeiro e datas
   const { data: planData, isLoading: loadingPlan } = useQuery({
     queryKey: ['plan-status', user?.id],
     queryFn: async () => {
         if (!user?.id) return null;
-        // Busca direto da tabela business para ter a data exata
+        
         const { data: member } = await supabase.from('business_members').select('business_id').eq('user_id', user.id).maybeSingle();
         const businessId = member?.business_id;
         
-        // Fallback se for owner direto
         let query = supabase.from('businesses').select('plan_type, subscription_status, trial_ends_at');
         if (businessId) query = query.eq('id', businessId);
         else query = query.eq('owner_id', user.id);
@@ -39,7 +38,7 @@ export function usePlan() {
     enabled: !!user?.id
   });
 
-  // --- LÓGICA DE TRIAL ---
+  // --- LÓGICA DE TRIAL INTELIGENTE ---
   const dbPlan = planData?.plan_type || 'free';
   const subStatus = planData?.subscription_status;
   const trialEnds = planData?.trial_ends_at ? parseISO(planData.trial_ends_at) : null;
@@ -48,19 +47,18 @@ export function usePlan() {
   let daysLeft = 0;
   let isTrial = false;
 
+  // Se estiver em Trial, verificamos se ainda é válido
   if (subStatus === 'trial' && trialEnds) {
       if (isPast(trialEnds)) {
-          // SE O TRIAL ACABOU: Força ser Free
-          finalPlan = 'free';
+          finalPlan = 'free'; // Acabou o tempo -> Vira Free
       } else {
-          // SE AINDA ESTÁ VALENDO
-          finalPlan = 'pro'; // Garante que é PRO
+          finalPlan = 'pro'; // Tempo válido -> É Pro
           isTrial = true;
           daysLeft = differenceInDays(trialEnds, new Date());
       }
   }
 
-  // --- LIMITES ---
+  // --- REGRAS DE LIMITES ---
   const limits = {
     maxAppointments: finalPlan === 'business' || finalPlan === 'pro' ? 999999 : 50,
     maxProfessionals: finalPlan === 'business' ? 999999 : (finalPlan === 'pro' ? 3 : 1),
