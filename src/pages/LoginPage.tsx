@@ -96,10 +96,11 @@ export default function LoginPage() {
           {t('common.back_home', { defaultValue: 'Voltar para Home' })}
         </Link>
 
-        <div className="text-center mb-8">
-          <div className="text-center mb-8">
-  {/* Antes era o ícone, agora é a imagem */}
-  <img src="/logo.land.png" alt="Cleverya" className="w-20 h-20 mx-auto mb-4" />
+        
+         <div className="text-center mb-8">
+          {/* VERSÃO ANTIGA (COM SPARKLES) */}
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[0_0_20px_rgba(249,115,22,0.3)]">
+          <img src="/logo.3.png" className="w-16 h-16 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">{t('auth.login_title')}</h1>
           <p className="text-slate-400">{t('auth.login_subtitle')}</p>

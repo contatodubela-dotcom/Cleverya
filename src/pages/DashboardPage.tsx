@@ -8,7 +8,6 @@ import {
   HelpCircle, CreditCard, ArrowUpCircle
 } from 'lucide-react';
 
-// --- COMPONENTES DO DASHBOARD ---
 import DashboardOverview from '../components/dashboard/DashboardOverview';
 import CalendarView from '../components/dashboard/CalendarView';
 import ServicesManager from '../components/dashboard/ServicesManager';
@@ -23,10 +22,9 @@ import { useIsMobile } from '../hooks/use-mobile';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-// --- CORREÇÃO DOS IMPORTES AQUI ---
-// Se os arquivos estiverem soltos na pasta 'components', use assim:
 import OnboardingModal from '../components/dashboard/OnboardingModal'; 
 import TutorialManual from '../components/dashboard/TutorialManual';
+import TrialBanner from '../components/dashboard/TrialBanner'; // <--- NOVO IMPORT
 
 type TabType = 'overview' | 'calendar' | 'services' | 'availability' | 'clients' | 'reports' | 'professionals';
 
@@ -38,8 +36,6 @@ export default function DashboardPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showPricingForce, setShowPricingForce] = useState(false);
-  
-  // ESTADO PARA O MANUAL
   const [showManual, setShowManual] = useState(false);
 
   const toggleLanguage = () => {
@@ -169,19 +165,22 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0f172a] pb-24 md:pb-6 print:bg-white print:pb-0 text-slate-100 overflow-x-hidden">
       
+      {/* AQUI ESTÁ O BANNER DO TRIAL */}
+      <TrialBanner />
+
       <header className="bg-[#1e293b]/90 border-b border-white/10 sticky top-0 z-50 print:hidden backdrop-blur-md">
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-2"> 
             
             {/* LADO ESQUERDO */}
-        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1"> 
+            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1"> 
             {/* LOGO IMAGEM */}
             <img 
-            src="/logo.png" 
-            alt="Logo Cleverya" 
-            className="w-10 h-10 object-contain" // Ajuste w-10 h-10 conforme o tamanho desejado
-              />
-              <div className="flex flex-col justify-center min-w-0">
+                src="/logo.png" 
+                alt="Logo Cleverya" 
+                className="w-10 h-10 object-contain" 
+            />
+                <div className="flex flex-col justify-center min-w-0">
                 <h1 className="font-bold text-lg leading-tight text-white truncate">Cleverya</h1>
                 
                 <div className="flex items-center gap-2">
