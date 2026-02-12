@@ -450,12 +450,12 @@ function BookingContent({ business }: { business: BusinessInfo }) {
 
       <div className="w-full max-w-lg px-4 -mt-32 relative z-10">
         
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl p-6 mb-8 text-center border border-white/50 relative overflow-hidden">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-x1 p-4 mb-8 text-center border border-white/50 relative overflow-hidden">
           <div className="w-28 h-28 bg-white rounded-full mx-auto -mt-20 flex items-center justify-center shadow-2xl border-4 border-white">
              {/* SE TIVER BANNER, PODE TENTAR USAR COMO LOGO TBM, SENÃO USA ÍCONE */}
-             <div className="w-full h-full rounded-full bg-[#fffbf0] flex items-center justify-center overflow-hidden">
-                <Sparkles className="w-12 h-12 text-[#d4af37]" />
-             </div>
+             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-lg -mt-10 relative z-10 overflow-hidden">
+             <img src="/logo.png" className="w-12 h-12 object-contain" />
+          </div>
           </div>
 
           <div className="mt-4">

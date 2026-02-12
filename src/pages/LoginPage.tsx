@@ -97,8 +97,9 @@ export default function LoginPage() {
         </Link>
 
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary to-orange-400 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg shadow-primary/20">
-            <Sparkles className="w-8 h-8 text-white" />
+          <div className="text-center mb-8">
+  {/* Antes era o ícone, agora é a imagem */}
+  <img src="/logo.land.png" alt="Cleverya" className="w-20 h-20 mx-auto mb-4" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">{t('auth.login_title')}</h1>
           <p className="text-slate-400">{t('auth.login_subtitle')}</p>

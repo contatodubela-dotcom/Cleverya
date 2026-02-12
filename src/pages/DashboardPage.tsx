@@ -173,10 +173,14 @@ export default function DashboardPage() {
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-2"> 
             
-            <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1"> 
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(246,173,85,0.2)] shrink-0">
-                <Sparkles className="w-5 h-5 text-gray-900" />
-              </div>
+            {/* LADO ESQUERDO */}
+        <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1"> 
+            {/* LOGO IMAGEM */}
+            <img 
+            src="/logo.png" 
+            alt="Logo Cleverya" 
+            className="w-10 h-10 object-contain" // Ajuste w-10 h-10 conforme o tamanho desejado
+              />
               <div className="flex flex-col justify-center min-w-0">
                 <h1 className="font-bold text-lg leading-tight text-white truncate">Cleverya</h1>
                 
