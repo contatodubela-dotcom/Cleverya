@@ -1,23 +1,39 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, Sparkles, Building2, Zap } from 'lucide-react';
+import { Check, Sparkles, Building2, Zap, Loader2 } from 'lucide-react'; 
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth'; 
+import { useCountry } from '../hooks/useCountry'; // RESTAURADO
 
 export function PricingTable() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth(); 
+  
+  // 1. RECUPERA A DETECÇÃO DE LOCALIZAÇÃO
+  const { currency: locCurrency, loading: locLoading } = useCountry();
+
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   
-  const isBRL = i18n.language?.startsWith('pt');
-  const currency = isBRL ? 'R$' : '$';
+  // 2. LÓGICA HÍBRIDA (IGUAL À LANDING PAGE)
+  // - Se o idioma for PT -> Força Real.
+  // - Se a localização for BR (mesmo em Inglês) -> Força Real.
+  // - Caso contrário (Gringo em Inglês) -> Dólar.
+  const isLanguagePT = i18n.language?.startsWith('pt');
+  const isLocationBR = !locLoading && locCurrency === 'BRL';
+  
+  const isBRL = isLanguagePT || isLocationBR;
+  const currencySymbol = isBRL ? 'R$' : '$';
+
+  // 3. TEXTOS DINÂMICOS (Baseados no idioma visual, não na moeda)
+  // Isso garante que se o cara tá no Brasil usando EN, ele vê texto em Inglês mas preço em Real.
+  const isTextPT = i18n.language?.startsWith('pt');
 
   const plans = [
     {
       name: 'Free',
       id: 'free',
-      description: isBRL ? 'Para começar e sentir o valor.' : 'To start and feel the value.',
+      description: isTextPT ? 'Para começar e sentir o valor.' : 'To start and feel the value.',
       price: {
         monthly: '0',
         yearly: '0',
@@ -27,10 +43,10 @@ export function PricingTable() {
         yearly: '',
       },
       features: [
-        isBRL ? 'Até 50 agendamentos/mês' : 'Up to 50 appointments/mo',
-        isBRL ? '1 Profissional' : '1 Professional',
-        isBRL ? 'Agenda Online' : 'Online Booking',
-        isBRL ? 'Link de agendamento' : 'Booking Link',
+        isTextPT ? 'Até 50 agendamentos/mês' : 'Up to 50 appointments/mo',
+        isTextPT ? '1 Profissional' : '1 Professional',
+        isTextPT ? 'Agenda Online' : 'Online Booking',
+        isTextPT ? 'Link de agendamento' : 'Booking Link',
       ],
       popular: false,
       icon: Zap,
@@ -40,12 +56,13 @@ export function PricingTable() {
     {
       name: 'Pro',
       id: 'pro', 
-      description: isBRL ? 'Para profissionais independentes em crescimento.' : 'For growing independent professionals.',
+      description: isTextPT ? 'Para profissionais independentes em crescimento.' : 'For growing independent professionals.',
       price: {
         monthly: isBRL ? '29,90' : '9.90',
         yearly: isBRL ? '269,10' : '89.10',
       },
       links: {
+        // Links do Stripe (Brasil e Internacional)
         monthly: isBRL 
           ? 'https://buy.stripe.com/8x2eVfb7rg1A93E6qa3gk00' 
           : 'https://buy.stripe.com/8x2bJ36RbaHgdjUbKu3gk01',
@@ -54,10 +71,10 @@ export function PricingTable() {
           : 'https://buy.stripe.com/eVqaEZdfz8z80x8dSC3gk06',
       },
       features: [
-        isBRL ? 'Agendamentos ilimitados' : 'Unlimited appointments',
-        isBRL ? 'Até 3 profissionais' : 'Up to 3 professionals',
-        isBRL ? 'Relatórios básicos' : 'Basic reports',
-        isBRL ? 'Link personalizado' : 'Custom link',
+        isTextPT ? 'Agendamentos ilimitados' : 'Unlimited appointments',
+        isTextPT ? 'Até 3 profissionais' : 'Up to 3 professionals',
+        isTextPT ? 'Relatórios básicos' : 'Basic reports',
+        isTextPT ? 'Link personalizado' : 'Custom link',
       ],
       popular: true,
       icon: Sparkles,
@@ -67,7 +84,7 @@ export function PricingTable() {
     {
       name: 'Business',
       id: 'business', 
-      description: isBRL ? 'Para clínicas e estabelecimentos maiores.' : 'For clinics and larger establishments.',
+      description: isTextPT ? 'Para clínicas e estabelecimentos maiores.' : 'For clinics and larger establishments.',
       price: {
         monthly: isBRL ? '59,90' : '19.90',
         yearly: isBRL ? '539,10' : '179.10',
@@ -81,10 +98,10 @@ export function PricingTable() {
           : 'https://buy.stripe.com/4gM5kFcbvg1AdjU5m63gk04',
       },
       features: [
-        isBRL ? 'Tudo do Pro' : 'Everything in Pro',
-        isBRL ? 'Profissionais ilimitados' : 'Unlimited professionals',
-        isBRL ? 'Gestão multi-unidade' : 'Multi-unit management',
-        isBRL ? 'Exportação de dados' : 'Data export',
+        isTextPT ? 'Tudo do Pro' : 'Everything in Pro',
+        isTextPT ? 'Profissionais ilimitados' : 'Unlimited professionals',
+        isTextPT ? 'Gestão multi-unidade' : 'Multi-unit management',
+        isTextPT ? 'Exportação de dados' : 'Data export',
       ],
       popular: false,
       icon: Building2,
@@ -93,28 +110,27 @@ export function PricingTable() {
     },
   ];
 
-  // Função para lidar com o clique
   const handlePlanClick = (plan: typeof plans[0], rawLink: string) => {
-    // 1. Se não tiver usuário, redireciona para criar conta
     if (!user) {
       window.location.href = `/signup?plan=${plan.id}&cycle=${billingCycle}`;
       return;
     }
+    if (plan.id === 'free') return;
 
-    // 2. Se for plano Free e já estiver logado, não faz nada (botão estará desabilitado visualmente também)
-    if (plan.id === 'free') {
-      return;
-    }
-
-    // 3. Se for Pago, abre Stripe em NOVA ABA para não deslogar
     if (rawLink) {
       const checkoutUrl = `${rawLink}?client_reference_id=${user.id}&prefilled_email=${user.email}`;
       window.open(checkoutUrl, '_blank');
     }
   };
 
+  // Carregamento inicial suave para evitar "piscar" a moeda errada
+  if (locLoading) {
+      return <div className="flex justify-center py-12"><Loader2 className="animate-spin text-slate-500" /></div>;
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4">
+      {/* Seletor Mensal / Anual */}
       <div className="flex justify-center mb-8 mt-4">
         <div className="bg-slate-800/50 p-1 rounded-lg inline-flex relative border border-white/5">
           <button
@@ -124,7 +140,7 @@ export function PricingTable() {
               billingCycle === 'monthly' ? "text-white font-bold" : "text-slate-400 hover:text-white"
             )}
           >
-            {isBRL ? 'Mensal' : 'Monthly'}
+            {isTextPT ? 'Mensal' : 'Monthly'}
           </button>
           <button
             onClick={() => setBillingCycle('yearly')}
@@ -133,9 +149,9 @@ export function PricingTable() {
               billingCycle === 'yearly' ? "text-white font-bold" : "text-slate-400 hover:text-white"
             )}
           >
-            {isBRL ? 'Anual' : 'Yearly'}
+            {isTextPT ? 'Anual' : 'Yearly'}
             <span className="absolute -top-3 -right-5 bg-green-500 text-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-bounce shadow-lg z-20 border border-slate-900">
-              -25%
+              {isTextPT ? '-3 meses' : '-3 months'}
             </span>
           </button>
           
@@ -148,6 +164,7 @@ export function PricingTable() {
         </div>
       </div>
 
+      {/* Cards de Preço */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
         {plans.map((plan) => {
           const Icon = plan.icon;
@@ -166,7 +183,7 @@ export function PricingTable() {
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-slate-900 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg flex items-center gap-1">
                   <Sparkles className="w-3 h-3 fill-slate-900" />
-                  {isBRL ? 'Mais Popular' : 'Most Popular'}
+                  {isTextPT ? 'Mais Popular' : 'Most Popular'}
                 </div>
               )}
 
@@ -183,14 +200,14 @@ export function PricingTable() {
               <div className="mb-6 p-4 rounded-xl bg-white/5 border border-white/5 text-center">
                 {isFree ? (
                     <div className="flex items-center justify-center h-full">
-                        <span className="text-3xl font-extrabold text-white tracking-tight">{isBRL ? 'Grátis' : 'Free'}</span>
+                        <span className="text-3xl font-extrabold text-white tracking-tight">{isTextPT ? 'Grátis' : 'Free'}</span>
                     </div>
                 ) : (
                     <div className="flex items-end justify-center gap-1">
-                      <span className="text-lg font-medium text-slate-400 mb-1">{currency}</span>
+                      <span className="text-lg font-medium text-slate-400 mb-1">{currencySymbol}</span>
                       <span className="text-4xl font-extrabold text-white tracking-tight">{price}</span>
                       <span className="text-slate-500 mb-1 text-sm font-medium">
-                        /{billingCycle === 'monthly' ? (isBRL ? 'mês' : 'mo') : (isBRL ? 'ano' : 'yr')}
+                        /{billingCycle === 'monthly' ? (isTextPT ? 'mês' : 'mo') : (isTextPT ? 'ano' : 'yr')}
                       </span>
                     </div>
                 )}
@@ -207,11 +224,10 @@ export function PricingTable() {
                 ))}
               </div>
 
-              {/* Botão sem tag <a> ao redor */}
               <div className="mt-auto w-full">
                 <Button 
                   onClick={() => handlePlanClick(plan, rawLink)}
-                  disabled={!!user && isFree} // Desabilita o botão Free se o usuário já estiver logado
+                  disabled={!!user && isFree}
                   className={cn(
                     "w-full font-bold h-12 text-base transition-all rounded-xl shadow-lg",
                     plan.popular 
@@ -220,8 +236,8 @@ export function PricingTable() {
                   )}
                 >
                   {isFree 
-                    ? (isBRL ? 'Plano Atual' : 'Current Plan') 
-                    : (isBRL ? 'Começar Agora' : 'Get Started')}
+                    ? (isTextPT ? 'Plano Atual' : 'Current Plan') 
+                    : (isTextPT ? 'Começar Agora' : 'Get Started')}
                 </Button>
               </div>
             </div>
