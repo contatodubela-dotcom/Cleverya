@@ -37,6 +37,7 @@ const resources = {
         help: "Manual de Ajuda",
         price_locale: "pt-BR",
         currency: "BRL",
+        Help_Center: "Central de Ajuda",
 
 
         weekdays: {

@@ -429,19 +429,118 @@ export default function LandingPage() {
         </section>
 
         <footer className="bg-slate-950 py-12 border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-primary rounded flex items-center justify-center"><Star className="w-3 h-3 text-slate-950 fill-slate-950" /></div>
-                <span className="font-bold text-lg">Cleverya</span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            {/* --- NOVO: LINKS DE SEO (O Google ama isso) --- */}
+            <div className="grid md:grid-cols-4 gap-8 mb-12 border-b border-white/5 pb-12">
+              <div>
+                {/* Coluna 1: */}
+                <h4 className="text-white font-bold mb-4">Barbearias</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/solucoes/barbearia/sao-paulo" className="hover:text-primary">Barbearia em São Paulo</Link></li>
+                  <li><Link to="/solucoes/barbearia/rio-de-janeiro" className="hover:text-primary">Barbearia no Rio de Janeiro</Link></li>
+                  <li><Link to="/solucoes/barbearia/belo-horizonte" className="hover:text-primary">Barbearia em BH</Link></li>
+                  <li><Link to="/solucoes/barbearia/curitiba" className="hover:text-primary">Barbearia em Curitiba</Link></li>
+                </ul>
               </div>
-              <div className="text-gray-500 text-sm hidden md:block">|</div>
-              <div className="text-gray-400 text-sm">{t('landing.footer.copy')}</div>
+              
+              {/* Coluna 2: USA - Barbers & Salons */}
+              {/* CORREÇÃO: Usei 'nail-salon' e 'barber' para garantir Modo Inglês */}
+              <div>
+                <h4 className="text-white font-bold mb-4 flex items-center gap-2">🇺🇸 United States</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/solucoes/Manicurist/orlando" className="hover:text-primary">Manicurist in Orlando</Link></li>
+                  <li><Link to="/solucoes/nail-salon/minnesota" className="hover:text-primary">Salon in Minnesota</Link></li>
+                  <li><Link to="/solucoes/Eyebrows/california" className="hover:text-primary">Eyebrows in California</Link></li>
+                  <li><Link to="/solucoes/barber/arizona" className="hover:text-primary">Hairdresser in Arizona</Link></li>
+                </ul>
+              </div>
+
+              {/* Coluna 3: */}
+              <div>
+                <h4 className="text-white font-bold mb-4">Salões e Manicures</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/solucoes/manicure/sao-paulo" className="hover:text-primary">Manicure em São Paulo</Link></li>
+                  <li><Link to="/solucoes/salao-de-beleza/salvador" className="hover:text-primary">Salão em Salvador</Link></li>
+                  <li><Link to="/solucoes/designer-de-sobrancelhas/fortaleza" className="hover:text-primary">Sobrancelhas em Fortaleza</Link></li>
+                  <li><Link to="/solucoes/cabeleireira/brasilia" className="hover:text-primary">Cabeleireira em Brasília</Link></li>
+                </ul>
+              </div>
+
+              {/* Coluna 4: USA - Salons and Manicurists (LINKS NOVOS) */}
+              
+              <div>
+                <h4 className="text-white font-bold mb-4 flex items-center gap-2">🇺🇸 United States</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/solucoes/manicurist/Brooklin" className="hover:text-primary">Manicurist in Brooklin</Link></li>
+                  <li><Link to="/solucoes/nail-salon/Minnesota" className="hover:text-primary">Salon in Minnesota</Link></li>
+                  <li><Link to="/solucoes/eyebrows/California" className="hover:text-primary">Eyebrows in California</Link></li>
+                  <li><Link to="/solucoes/barber/Arizona" className="hover:text-primary">Hairdresser in Arizona</Link></li>
+                </ul>
+              </div>
+
+              
+              {/* Coluna 5: USA */}
+              <div>
+                <h4 className="text-white font-bold mb-4">Saúde e Bem-estar</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/solucoes/psicologo/sao-paulo" className="hover:text-primary">Psicólogo em São Paulo</Link></li>
+                  <li><Link to="/solucoes/fisioterapeuta/porto-alegre" className="hover:text-primary">Fisioterapeuta em Porto Alegre</Link></li>
+                  <li><Link to="/solucoes/dentista/recife" className="hover:text-primary">Dentista em Recife</Link></li>
+                  <li><Link to="/solucoes/personal-trainer/goiania" className="hover:text-primary">Personal em Goiânia</Link></li>
+                </ul>
+              </div>
+              
+              {/* Coluna 6 */}
+              <div>
+                <h4 className="text-white font-bold mb-4 flex items-center gap-2">🇺🇸 United States</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/solucoes/Psychologist/Mississippi" className="hover:text-primary">Psychologist in Mississippi</Link></li>
+                  <li><Link to="/solucoes/Physical Therapist/New Jersey" className="hover:text-primary">Physical Therapist in New Jersey</Link></li>
+                  <li><Link to="/solucoes/Dentist/Ohio" className="hover:text-primary">Dentist in Ohio</Link></li>
+                  <li><Link to="/solucoes/Personal Trainer/Tennessee" className="hover:text-primary">Personal Trainer in Tennessee</Link></li>
+                </ul>
+              </div>
+
+              {/* Coluna 7: Institucional */}
+              <div>
+                <h4 className="text-white font-bold mb-4">{t('landing.footer.terms')}</h4>
+                <ul className="space-y-2 text-sm text-gray-400">
+                  <li><Link to="/terms" className="hover:text-primary">{t('landing.footer.terms')}</Link></li>
+                  <li><Link to="/privacy" className="hover:text-primary">{t('landing.footer.privacy')}</Link></li>
+                  <li><a href="mailto:support@cleverya.com" className="hover:text-primary">Help Center</a></li>
+                </ul>
+              </div>
+
+              {/* Coluna 8: Sobre */}
+              <div>
+                <h4 className="text-white font-bold mb-4">Sobre</h4>
+                <p className="text-gray-400 text-sm mb-4">
+                  O Cleverya é a plataforma de agendamento mais simples para profissionais independentes do Brasil.
+                </p>
+                <div className="flex gap-4">
+                  <a href="https://instagram.com/cleverya" target="_blank" className="text-gray-400 hover:text-white">Instagram</a>
+                  <a href="mailto:contato@cleverya.com" className="text-gray-400 hover:text-white">Contato</a>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-6">
-              <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.terms')}</Link>
-              <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.privacy')}</Link>
-              <a href="https://www.instagram.com/cleverya.app" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.instagram')}</a>
+
+            {/* Rodapé Original (Copyright) */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+                    <Star className="w-3 h-3 text-slate-950 fill-slate-950" />
+                  </div>
+                  <span className="font-bold text-lg text-white">Cleverya</span>
+                </div>
+                <div className="text-gray-500 text-sm hidden md:block">|</div>
+                <div className="text-gray-400 text-sm">{t('landing.footer.copy')}</div>
+              </div>
+              <div className="flex gap-6">
+                <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.terms')}</Link>
+                <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.privacy')}</Link>
+              </div>
             </div>
           </div>
         </footer>
