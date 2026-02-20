@@ -245,14 +245,15 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   });
 
  const { data: availableSlots, isLoading: isLoadingSlots } = useQuery({
-    queryKey: ['available-slots', selectedProfessional?.id, selectedDate],
+    // Adicionamos o selectedService?.id aqui para ele recarregar se o cliente trocar de serviço
+    queryKey: ['available-slots', selectedProfessional?.id, selectedDate, selectedService?.id],
     queryFn: async () => {
       if (!selectedProfessional?.id || !selectedDate) return [];
       
       const { data, error } = await supabase.rpc('get_available_slots', {
         p_professional_id: selectedProfessional.id,
         p_date: selectedDate,
-        p_interval_minutes: selectedService?.duration_minutes || 30
+        p_service_duration: selectedService?.duration_minutes || 30 // <--- NOME NOVO
       });
 
       if (error) {

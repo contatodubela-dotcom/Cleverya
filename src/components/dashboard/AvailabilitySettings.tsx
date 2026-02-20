@@ -40,17 +40,20 @@ export default function AvailabilitySettings() {
     { id: 6, label: i18n.language === 'pt' ? 'Sábado' : 'Saturday' },
   ];
 
-  // --- BUSCA DADOS ---
+  // --- BUSCA DADOS (CORRIGIDO) ---
   const getBusinessId = async () => {
-    // Busca o ID da empresa através da tabela de membros
-    const { data } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).maybeSingle();
-    return data?.business_id;
+    // 1. Tenta buscar direto na tabela de empresas (como Dono)
+    const { data: bizData } = await supabase.from('businesses').select('id').eq('owner_id', user?.id).maybeSingle();
+    if (bizData?.id) return bizData.id;
+
+    // 2. Fallback: tenta buscar na tabela de membros (como Funcionário)
+    const { data: memberData } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).maybeSingle();
+    return memberData?.business_id;
   }
 
   const { data: profileData } = useQuery({
     queryKey: ['settings-branding', user?.id],
     queryFn: async () => {
-      // CORREÇÃO CRÍTICA: Busca por 'owner_id' e não 'user_id'
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
@@ -103,8 +106,6 @@ export default function AvailabilitySettings() {
   // --- MUTAÇÕES ---
   const saveBrandingMutation = useMutation({
     mutationFn: async () => {
-      // CORREÇÃO: Atualiza usando 'owner_id' na tabela 'businesses'
-      // Removemos a chamada duplicada e incorreta que usava 'user_id'
       const { error } = await supabase.from('businesses').update({
         name: branding.business_name,
         slug: branding.slug.toLowerCase(),
@@ -116,7 +117,7 @@ export default function AvailabilitySettings() {
     onSuccess: () => {
       toast.success(t('toasts.profile_updated'));
       queryClient.invalidateQueries({ queryKey: ['settings-branding'] });
-      queryClient.invalidateQueries({ queryKey: ['my-business-info'] }); // Atualiza o header também
+      queryClient.invalidateQueries({ queryKey: ['my-business-info'] });
     },
     onError: (err) => {
       console.error(err);
@@ -226,10 +227,9 @@ export default function AvailabilitySettings() {
                 className="bg-white text-slate-900 border-slate-200"
               />
               <p className="text-[11px] text-slate-400 flex items-center gap-1">
-    <span className="text-amber-500 font-bold">Dica:</span> 
-    Use uma imagem de <span className="text-white">1920x600px</span>. 
-    Mantenha o foco no centro.
-  </p>
+                <span className="text-amber-500 font-bold">Dica:</span> 
+                Use uma imagem de <span className="text-white">1920x600px</span>. Mantenha o foco no centro.
+              </p>
               <p className="text-xs text-slate-500 mt-2">{t('common.image_url_help')}</p>
             </div>
             {branding.banner_url && (
