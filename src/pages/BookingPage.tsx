@@ -1,19 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Sparkles, Clock, CheckCircle, ArrowLeft, Loader2, AlertTriangle, Crown } from 'lucide-react';
+import { Sparkles, Clock, CheckCircle, ArrowLeft, Loader2, AlertTriangle, Crown, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, addDays, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { Helmet } from 'react-helmet-async'; // <--- IMPORTANTE: Adicionado para controlar o link do WhatsApp
+import { Helmet } from 'react-helmet-async'; 
 import NotFound from './NotFound';
 
-// --- TIPAGEM INTERNA ---
 interface BusinessInfo {
   id: string;
   owner_id: string;
@@ -37,6 +36,7 @@ interface Service {
   duration_minutes: number;
   description?: string;
   category?: string;
+  require_deposit?: boolean; // <-- NOVO
 }
 
 interface AvailabilitySetting {
@@ -47,7 +47,6 @@ interface AvailabilitySetting {
   is_active: boolean;
 }
 
-// --- COMPONENTE PRINCIPAL ---
 export default function BookingPage() {
   const params = useParams();
   const paramId = params.userId; 
@@ -60,7 +59,6 @@ export default function BookingPage() {
     async function resolveProfile() {
       setLoadingProfile(true);
       try {
-        // 1. Tenta buscar na tabela NOVA (Businesses)
         if (paramSlug) {
           const { data } = await supabase
             .from('businesses')
@@ -82,7 +80,6 @@ export default function BookingPage() {
           }
         }
 
-        // 2. FALLBACK: Tabela Antiga
         let query = supabase.from('businesses').select('*');
         if (paramSlug) query = query.eq('slug', paramSlug.toLowerCase());
         else if (paramId) query = query.eq('user_id', paramId);
@@ -105,7 +102,6 @@ export default function BookingPage() {
                 plan_type: newBiz?.plan_type
             });
         }
-
       } catch (err) {
         console.error("Erro ao carregar perfil:", err);
       } finally {
@@ -123,25 +119,22 @@ export default function BookingPage() {
     );
   }
 
-  if (!businessData) {
-    return <NotFound />;
-  }
+  if (!businessData) return <NotFound />;
 
   return <BookingContent business={businessData} />;
 }
 
-// --- CONTEÚDO DO AGENDAMENTO ---
 function BookingContent({ business }: { business: BusinessInfo }) {
   const { t, i18n } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const isSuccessReturn = searchParams.get('success') === 'true'; // Se veio do Mercado Pago
   const dateLocale = i18n.language === 'en' ? enUS : ptBR;
   const currencyCode = i18n.language === 'en' ? 'USD' : 'BRL';
   const formatPrice = (price: number) => new Intl.NumberFormat(i18n.language, { style: 'currency', currency: currencyCode }).format(price);
 
-  // Define os dados visuais
   const businessName = business.name || t('booking.default_business_name', { defaultValue: 'Agendamento Online' });
   const bannerUrl = business.banner_url || 'https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/salon-images/Cleverya.link.webp';
 
-  // --- 1. VERIFICAÇÃO DE PLANO E LIMITES ---
   const { data: usageMetrics } = useQuery({
     queryKey: ['public-usage-metrics', business.owner_id],
     queryFn: async () => {
@@ -157,14 +150,12 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   
   const isLimitReached = useMemo(() => {
     if (!usageMetrics) return false;
-    if (currentPlan === 'free' && usageMetrics.appointments_used >= 50) {
-        return true;
-    }
+    if (currentPlan === 'free' && usageMetrics.appointments_used >= 50) return true;
     return false;
   }, [usageMetrics, currentPlan]);
 
   // ESTADOS
-  const [step, setStep] = useState<'service' | 'datetime' | 'identification' | 'confirmation' | 'success'>('service');
+  const [step, setStep] = useState<'service' | 'datetime' | 'identification' | 'confirmation' | 'success'>(isSuccessReturn ? 'success' : 'service');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -176,33 +167,20 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
   const [existingClient, setExistingClient] = useState<any>(null);
 
-  // --- TELA DE BLOQUEIO ---
   if (isLimitReached) {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
-                <AlertTriangle className="w-10 h-10 text-red-500" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">
-                {t('booking.limit_title', { defaultValue: 'Agendamentos Pausados' })}
-            </h1>
-            <p className="text-slate-600 max-w-md mb-8">
-                {t('booking.limit_desc', { defaultValue: 'Este estabelecimento atingiu o limite mensal de agendamentos.' })}
-            </p>
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6"><AlertTriangle className="w-10 h-10 text-red-500" /></div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('booking.limit_title', { defaultValue: 'Agendamentos Pausados' })}</h1>
+            <p className="text-slate-600 max-w-md mb-8">{t('booking.limit_desc', { defaultValue: 'Este estabelecimento atingiu o limite mensal de agendamentos.' })}</p>
         </div>
     );
   }
 
-  // --- QUERIES DE DADOS ---
   const { data: services } = useQuery({
     queryKey: ['public-services', business.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', business.id)
-        .eq('is_active', true)
-        .order('price');
+      const { data } = await supabase.from('services').select('*').eq('business_id', business.id).eq('is_active', true).order('price');
       return data as Service[];
     },
   });
@@ -211,9 +189,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     if (!services) return {};
     return services.reduce((acc, service) => {
       let cat = service.category;
-      if (!cat || cat === 'Geral') {
-          cat = t('booking.category_general', { defaultValue: 'Geral' });
-      }
+      if (!cat || cat === 'Geral') cat = t('booking.category_general', { defaultValue: 'Geral' });
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(service);
       return acc;
@@ -223,11 +199,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const { data: professionals } = useQuery({
     queryKey: ['public-professionals', business.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('professionals')
-        .select('*')
-        .eq('business_id', business.id)
-        .eq('is_active', true);
+      const { data } = await supabase.from('professionals').select('*').eq('business_id', business.id).eq('is_active', true);
       return data as Professional[] || [];
     },
   });
@@ -235,32 +207,22 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const { data: availability } = useQuery({
     queryKey: ['public-availability', business.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('availability_settings')
-        .select('*')
-        .eq('business_id', business.id)
-        .eq('is_active', true);
+      const { data } = await supabase.from('availability_settings').select('*').eq('business_id', business.id).eq('is_active', true);
       return data as AvailabilitySetting[];
     },
   });
 
  const { data: availableSlots, isLoading: isLoadingSlots } = useQuery({
-    // Adicionamos o selectedService?.id aqui para ele recarregar se o cliente trocar de serviço
     queryKey: ['available-slots', selectedProfessional?.id, selectedDate, selectedService?.id],
     queryFn: async () => {
       if (!selectedProfessional?.id || !selectedDate) return [];
-      
       const { data, error } = await supabase.rpc('get_available_slots', {
         p_professional_id: selectedProfessional.id,
         p_date: selectedDate,
-        p_service_duration: selectedService?.duration_minutes || 30 // <--- NOME NOVO
+        p_service_duration: selectedService?.duration_minutes || 30 
       });
 
-      if (error) {
-        console.error('Error fetching slots:', error);
-        toast.error(t('booking.error_fetch_slots', { defaultValue: 'Erro ao buscar horários' }));
-        return [];
-      }
+      if (error) return [];
       
       const now = new Date();
       const isToday = parseISO(selectedDate).toDateString() === now.toDateString();
@@ -271,36 +233,23 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         .filter(time => {
             if (!isToday) return true;
             const [h, m] = time.split(':').map(Number);
-            const slotMinutes = h * 60 + m;
-            return slotMinutes > currentMinutes; 
+            return (h * 60 + m) > currentMinutes; 
         });
     },
     enabled: !!selectedDate && !!selectedProfessional,
   });
 
-  // --- HANDLERS ---
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientPhone || clientPhone.length < 8) {
-        toast.error(t('common.invalid_phone', { defaultValue: "Telefone inválido" }));
-        return;
-    }
+    if (!clientPhone || clientPhone.length < 8) return toast.error(t('common.invalid_phone', { defaultValue: "Telefone inválido" }));
 
     setIsCheckingPhone(true);
     try {
-        const { data } = await supabase
-            .from('clients')
-            .select('*')
-            .eq('phone', clientPhone)
-            .eq('business_id', business.id)
-            .limit(1)
-            .maybeSingle();
-
+        const { data } = await supabase.from('clients').select('*').eq('phone', clientPhone).eq('business_id', business.id).limit(1).maybeSingle();
         if (data) {
             setExistingClient(data);
             setClientName(data.name);
             setClientEmail(data.email || '');
-            toast.success(t('booking.welcome_back', { name: data.name.split(' ')[0], defaultValue: `Olá, ${data.name.split(' ')[0]}!` }));
         } else {
             setExistingClient(null);
             setClientName('');
@@ -318,18 +267,11 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     mutationFn: async () => {
       let clientId = existingClient?.id;
 
+      // 1. Criar ou Atualizar Cliente
       if (existingClient) {
-         if (clientEmail !== existingClient.email) {
-             await supabase.from('clients').update({ email: clientEmail }).eq('id', clientId);
-         }
+         if (clientEmail !== existingClient.email) await supabase.from('clients').update({ email: clientEmail }).eq('id', clientId);
       } else {
-         const { data: newClient, error } = await supabase.from('clients').insert({ 
-             name: clientName, 
-             phone: clientPhone, 
-             email: clientEmail || null, 
-             business_id: business.id 
-         }).select().single();
-         
+         const { data: newClient, error } = await supabase.from('clients').insert({ name: clientName, phone: clientPhone, email: clientEmail || null, business_id: business.id }).select().single();
          if (error) throw error;
          clientId = newClient.id;
       }
@@ -337,35 +279,56 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       const { data: blocked } = await supabase.from('blocked_clients').select('id').eq('client_id', clientId).maybeSingle();
       if (blocked) throw new Error('Blocked');
 
-      const { error: appError } = await supabase.from('appointments').insert({ 
+      // 2. Se exigir sinal, o status inicial é "pending_payment". Se não, é "pending".
+      const initialStatus = selectedService?.require_deposit ? 'pending_payment' : 'pending';
+
+      const { data: newApp, error: appError } = await supabase.from('appointments').insert({ 
           business_id: business.id, 
           client_id: clientId, 
           service_id: selectedService!.id, 
           professional_id: selectedProfessional!.id, 
           appointment_date: selectedDate, 
           appointment_time: selectedTime, 
-          status: 'pending' 
-      });
+          status: initialStatus 
+      }).select().single();
       
       if (appError) throw appError;
 
-      if (clientEmail) {
-        supabase.functions.invoke('send-email', {
-            body: {
-                to: clientEmail,
-                subject: `Confirmação: ${selectedService!.name}`,
-                clientName: clientName,
-                serviceName: selectedService!.name,
-                date: format(parseISO(selectedDate), 'dd/MM/yyyy'),
-                time: selectedTime,
-                type: 'confirmation'
-            }
-        });
+      // 3. Se exige sinal, acionar a nossa Edge Function do Mercado Pago!
+      if (selectedService?.require_deposit) {
+          const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
+              body: {
+                  appointment_id: newApp.id,
+                  business_id: business.id,
+                  service_id: selectedService!.id,
+                  client_name: clientName,
+                  client_email: clientEmail
+              }
+          });
+
+          if (paymentError || !paymentData?.init_point) {
+              throw new Error('PaymentLinkError');
+          }
+
+          // Devolve o link gerado para o onSuccess redirecionar o cliente
+          return { requiresPayment: true, url: paymentData.init_point };
       }
+
+      if (clientEmail) supabase.functions.invoke('send-email', { body: { to: clientEmail, subject: `Confirmação`, clientName, serviceName: selectedService!.name, date: selectedDate, time: selectedTime, type: 'confirmation' }});
+      
+      return { requiresPayment: false };
     },
-    onSuccess: () => setStep('success'),
+    onSuccess: (data) => {
+        if (data && data.requiresPayment && data.url) {
+            // Cliente é redirecionado para o ecrã do Mercado Pago!
+            window.location.href = data.url; 
+        } else {
+            setStep('success');
+        }
+    },
     onError: (err: any) => {
         if (err.message === 'Blocked') toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
+        else if (err.message === 'PaymentLinkError') toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
         else toast.error(t('auth.error_generic', { defaultValue: 'Erro ao agendar.' }));
     },
   });
@@ -374,8 +337,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     const dates = [];
     for (let i = 0; i < 14; i++) {
       const date = addDays(new Date(), i);
-      const dayOfWeek = date.getDay();
-      if (availability?.some(a => a.day_of_week === dayOfWeek)) dates.push(format(date, 'yyyy-MM-dd'));
+      if (availability?.some(a => a.day_of_week === date.getDay())) dates.push(format(date, 'yyyy-MM-dd'));
     }
     return dates;
   };
@@ -393,59 +355,23 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f0fdf4] to-[#ecfdf5] flex flex-col items-center justify-start pb-12 font-sans text-slate-900">
       
-      {/* --- INJEÇÃO DE METADADOS DINÂMICOS PARA O WHATSAPP --- */}
       <Helmet>
         <title>{`${businessName} | Agendamento`}</title>
         <meta name="description" content={`Agende seu horário com ${businessName} de forma rápida e online.`} />
-        
-        {/* Open Graph / Facebook / WhatsApp */}
-        <meta property="og:type" content="website" />
         <meta property="og:title" content={`Agendamento | ${businessName}`} />
-        <meta property="og:description" content={`Clique para ver os serviços e horários disponíveis de ${businessName}.`} />
         <meta property="og:image" content={bannerUrl} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={businessName} />
-        <meta name="twitter:description" content="Agendamento Online" />
-        <meta name="twitter:image" content={bannerUrl} />
       </Helmet>
-      {/* -------------------------------------------------------- */}
 
       <style>{`input:-webkit-autofill { -webkit-box-shadow: 0 0 0 30px white inset !important; -webkit-text-fill-color: black !important; }`}</style>
 
-      {/* Seletor de Idioma */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">
          <button onClick={() => i18n.changeLanguage('pt')} className={`text-xs p-2 rounded-full transition ${i18n.language === 'pt' ? 'bg-white shadow-md opacity-100' : 'bg-white/50 opacity-60 hover:opacity-100'}`}>🇧🇷</button>
          <button onClick={() => i18n.changeLanguage('en')} className={`text-xs p-2 rounded-full transition ${i18n.language === 'en' ? 'bg-white shadow-md opacity-100' : 'bg-white/50 opacity-60 hover:opacity-100'}`}>🇺🇸</button>
       </div>
 
-      {/* BANNER DINÂMICO */}
-      <div 
-        className="w-full h-64 md:h-80 shadow-lg bg-cover bg-center relative transition-all duration-500 overflow-hidden"
-        style={
-          bannerUrl 
-            ? { backgroundImage: `url(${bannerUrl})` } 
-            : { 
-                background: `
-                  radial-gradient(circle at 15% 25%, rgba(251, 191, 36, 0.35) 0%, rgba(15, 23, 42, 0) 45%),
-                  radial-gradient(circle at 85% 75%, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0) 50%),
-                  linear-gradient(to bottom right, #020617 0%, #1e293b 100%)
-                `
-              }
-        }
+      <div className="w-full h-64 md:h-80 shadow-lg bg-cover bg-center relative transition-all duration-500 overflow-hidden"
+        style={bannerUrl ? { backgroundImage: `url(${bannerUrl})` } : { background: `linear-gradient(to bottom right, #020617 0%, #1e293b 100%)` }}
       >
-        {!bannerUrl && (
-           <div 
-             className="absolute inset-0 opacity-[0.15]" 
-             style={{ 
-               backgroundImage: 'radial-gradient(#ffffff 1.5px, transparent 1.5px)', 
-               backgroundSize: '24px 24px' 
-             }}
-           ></div>
-        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
       </div>
 
@@ -453,7 +379,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         
         <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-x1 p-4 mb-8 text-center border border-white/50 relative overflow-hidden">
           <div className="w-28 h-28 bg-white rounded-full mx-auto -mt-20 flex items-center justify-center shadow-2xl border-4 border-white">
-             {/* SE TIVER BANNER, PODE TENTAR USAR COMO LOGO TBM, SENÃO USA ÍCONE */}
              <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-lg -mt-10 relative z-10 overflow-hidden">
              <img src="/logo.png" className="w-12 h-12 object-contain" />
           </div>
@@ -461,7 +386,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
 
           <div className="mt-4">
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-tight">{businessName}</h1>
-            
             {isPremium && (
                 <div className="flex items-center justify-center gap-1 mt-2 text-[#d4af37] font-bold text-xs uppercase tracking-widest animate-pulse">
                     <Crown className="w-3 h-3 fill-current" />
@@ -486,14 +410,22 @@ function BookingContent({ business }: { business: BusinessInfo }) {
                   <h3 className="text-xs font-bold text-[#d4af37] uppercase tracking-widest mb-3 ml-1">{category}</h3>
                   <div className="grid gap-3">
                     {items.map((service) => (
-                      <button key={service.id} onClick={() => { setSelectedService(service); setStep('datetime'); setSelectedProfessional(null); setSelectedDate(''); setSelectedTime(''); }} className="flex items-center p-4 bg-white rounded-2xl border border-[#f5f0e6] shadow-sm hover:border-[#d4af37]/30 hover:shadow-md transition-all text-left w-full group">
+                      <button key={service.id} onClick={() => { setSelectedService(service); setStep('datetime'); setSelectedProfessional(null); setSelectedDate(''); setSelectedTime(''); }} className="flex items-center p-4 bg-white rounded-2xl border border-[#f5f0e6] shadow-sm hover:border-[#d4af37]/30 hover:shadow-md transition-all text-left w-full group relative overflow-hidden">
                         <div className="flex-1">
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-start">
                             <span className="font-bold text-slate-800 group-hover:text-[#d4af37] transition-colors">{service.name}</span>
                             {service.price && <span className="font-medium text-sm bg-slate-100 px-2 py-1 rounded text-slate-600">{formatPrice(service.price)}</span>}
                           </div>
                           {service.description && <p className="text-xs text-slate-500 mt-1 line-clamp-1">{service.description}</p>}
-                          <div className="flex items-center gap-1 text-xs text-slate-400 mt-2"><Clock className="w-3 h-3" /> {service.duration_minutes} min</div>
+                          <div className="flex items-center gap-3 mt-2">
+                             <span className="flex items-center gap-1 text-xs text-slate-400"><Clock className="w-3 h-3" /> {service.duration_minutes} min</span>
+                             {/* MOSTRAR TAG DE SINAL NO SERVIÇO */}
+                             {service.require_deposit && (
+                                <span className="flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                   <Wallet className="w-3 h-3" /> Sinal Obrigatório
+                                </span>
+                             )}
+                          </div>
                         </div>
                       </button>
                     ))}
@@ -551,11 +483,33 @@ function BookingContent({ business }: { business: BusinessInfo }) {
           {step === 'confirmation' && (
              <Card className="p-6 animate-fade-in border-0 shadow-2xl bg-white rounded-3xl">
                 <h3 className="text-center font-bold text-slate-900 mb-6">{t('booking.step_confirmation', { defaultValue: 'Confirmação' })}</h3>
+                
+                {/* AVISO DE COBRANÇA DE SINAL */}
+                {selectedService?.require_deposit && (
+                   <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center mb-6 animate-in zoom-in-95">
+                      <Wallet className="w-6 h-6 text-amber-500 mx-auto mb-2" />
+                      <p className="text-sm text-amber-800 font-bold mb-1">Pagamento de Sinal Obrigatório</p>
+                      <p className="text-xs text-amber-700">Para garantir a sua reserva na agenda, é necessário o pagamento de 50% do valor do serviço agora.</p>
+                      <div className="mt-3 bg-white py-2 rounded-lg border border-amber-100">
+                         <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">Valor a Pagar (PIX)</span>
+                         <span className="text-xl font-black text-amber-600">{formatPrice((selectedService.price || 0) / 2)}</span>
+                      </div>
+                   </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder={t('booking.label_your_name', {defaultValue: 'Seu Nome'})} required className="h-12" style={inputStyle} />
                     <Input value={clientPhone} disabled className="h-12 bg-slate-50 opacity-70" style={inputStyle} />
                     <Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder={t('booking.label_email_optional', {defaultValue: 'Email (Opcional)'})} className="h-12" style={inputStyle} />
-                    <Button type="submit" className="w-full bg-[#d4af37] hover:bg-[#c5a028] text-white font-bold h-12 rounded-xl" disabled={createAppointmentMutation.isPending}>{createAppointmentMutation.isPending ? t('booking.confirming', {defaultValue: 'Confirmando...'}) : t('booking.btn_confirm', { defaultValue: 'Confirmar' })}</Button>
+                    
+                    <Button type="submit" className="w-full bg-[#d4af37] hover:bg-[#c5a028] text-white font-bold h-12 rounded-xl" disabled={createAppointmentMutation.isPending}>
+                        {createAppointmentMutation.isPending 
+                          ? <Loader2 className="animate-spin mx-auto" /> 
+                          : selectedService?.require_deposit 
+                            ? `Pagar ${formatPrice((selectedService.price || 0) / 2)} e Confirmar` 
+                            : t('booking.btn_confirm', { defaultValue: 'Confirmar' })
+                        }
+                    </Button>
                 </form>
              </Card>
           )}
@@ -563,9 +517,16 @@ function BookingContent({ business }: { business: BusinessInfo }) {
           {step === 'success' && (
              <Card className="p-8 text-center animate-fade-in bg-white border-0 shadow-2xl rounded-3xl">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold mb-2">{t('booking.success_title', { defaultValue: 'Agendado!' })}</h2>
-                <p className="text-slate-500 mb-6">{t('booking.success_msg', { name: clientName.split(' ')[0], service: selectedService?.name, defaultValue: 'Tudo certo com seu agendamento.' })}</p>
-                <Button className="w-full bg-slate-900 text-white h-12 rounded-xl" onClick={() => window.location.reload()}>{t('booking.btn_new', { defaultValue: 'Novo Agendamento' })}</Button>
+                <h2 className="text-2xl font-bold mb-2">
+                   {isSuccessReturn ? 'Pagamento Aprovado!' : t('booking.success_title', { defaultValue: 'Agendado!' })}
+                </h2>
+                <p className="text-slate-500 mb-6">
+                   {isSuccessReturn 
+                     ? 'O seu pagamento foi recebido e o seu horário está 100% garantido na nossa agenda.' 
+                     : t('booking.success_msg', { defaultValue: 'Tudo certo com o seu agendamento.' })
+                   }
+                </p>
+                <Button className="w-full bg-slate-900 text-white h-12 rounded-xl" onClick={() => window.location.href = `/${business.slug}`}>Novo Agendamento</Button>
              </Card>
           )}
         </div>

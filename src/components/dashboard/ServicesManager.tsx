@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { usePlan } from '../../hooks/usePlan'; 
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card } from '../ui/card';
-import { Trash2, Scissors, Plus, Clock, Loader2, FileText, Pencil } from 'lucide-react'; // <-- Adicionado o ícone Pencil
+import { Switch } from '../ui/switch';
+import { Trash2, Scissors, Plus, Clock, Loader2, FileText, Pencil, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
@@ -14,15 +16,18 @@ interface ServiceForm {
   duration: string;
   price: string;
   category: string;
-  description: string; 
+  description: string;
+  require_deposit: boolean; 
 }
 
 export default function ServicesManager() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
+  const { plan } = usePlan(); 
   const queryClient = useQueryClient();
   
-  // --- NOVOS ESTADOS PARA EDIÇÃO ---
+  const isPremium = plan === 'pro' || plan === 'business'; 
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -35,7 +40,8 @@ export default function ServicesManager() {
     duration: '30',
     price: '',
     category: 'Geral',
-    description: '' 
+    description: '',
+    require_deposit: false 
   });
 
   const { data: services, isLoading } = useQuery({
@@ -63,28 +69,26 @@ export default function ServicesManager() {
     enabled: !!user?.id,
   });
 
-  // --- FUNÇÃO AUXILIAR PARA FECHAR O FORMULÁRIO E LIMPAR DADOS ---
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
-    setForm({ name: '', duration: '30', price: '', category: 'Geral', description: '' });
+    setForm({ name: '', duration: '30', price: '', category: 'Geral', description: '', require_deposit: false });
   };
 
-  // --- FUNÇÃO PARA ABRIR O MODO DE EDIÇÃO ---
   const handleEditClick = (service: any) => {
     setForm({
       name: service.name,
       duration: service.duration_minutes.toString(),
       price: service.price ? service.price.toString().replace('.', ',') : '',
       category: service.category || 'Geral',
-      description: service.description || ''
+      description: service.description || '',
+      require_deposit: service.require_deposit || false
     });
     setEditingId(service.id);
     setIsFormOpen(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola a página para cima
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 1. MUTAÇÃO: CRIAR NOVO SERVIÇO
   const createMutation = useMutation({
     mutationFn: async (newService: ServiceForm) => {
       const { data: member } = await supabase
@@ -104,6 +108,7 @@ export default function ServicesManager() {
         price: priceValue,
         category: newService.category,
         description: newService.description, 
+        require_deposit: isPremium ? newService.require_deposit : false, 
         business_id: member.business_id,
         is_active: true
       });
@@ -118,7 +123,6 @@ export default function ServicesManager() {
     onError: () => toast.error(t('toasts.service_error'))
   });
 
-  // 2. MUTAÇÃO: ATUALIZAR SERVIÇO EXISTENTE (NOVO)
   const updateMutation = useMutation({
     mutationFn: async (updatedService: ServiceForm & { id: string }) => {
       const priceValue = updatedService.price ? parseFloat(updatedService.price.replace(',', '.')) : 0;
@@ -130,6 +134,7 @@ export default function ServicesManager() {
         price: priceValue,
         category: updatedService.category,
         description: updatedService.description, 
+        require_deposit: isPremium ? updatedService.require_deposit : false 
       }).eq('id', updatedService.id);
 
       if (error) throw error;
@@ -142,7 +147,6 @@ export default function ServicesManager() {
     onError: () => toast.error(t('toasts.error_general', { defaultValue: 'Ocorreu um erro.' }))
   });
 
-  // 3. MUTAÇÃO: DELETAR SERVIÇO
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -159,7 +163,6 @@ export default function ServicesManager() {
     onError: () => toast.error(t('toasts.service_delete_error'))
   });
 
-  // --- HANDLER INTELIGENTE (Sabe se é pra criar ou atualizar) ---
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
@@ -190,7 +193,6 @@ export default function ServicesManager() {
 
       {isFormOpen && (
         <Card className="p-6 border border-white/10 bg-slate-800 animate-in slide-in-from-top-4 relative overflow-hidden">
-          {/* Tag visual para indicar Modo de Edição */}
           {editingId && (
             <div className="absolute top-0 right-0 bg-amber-500 text-slate-900 text-xs font-bold px-3 py-1 rounded-bl-xl">
               Editando Serviço
@@ -263,6 +265,46 @@ export default function ServicesManager() {
               </div>
             </div>
 
+            {/* --- NOVA CHAVINHA DE SINAL COM CLIQUER PARA UPGRADE --- */}
+            <div 
+               onClick={() => {
+                 if (!isPremium) {
+                   // AQUI VAI O SEU LINK DE CHECKOUT OU WHATSAPP
+                   window.open('https://wa.me/55XX000000000', '_blank');
+                 }
+               }}
+               className={`md:col-span-4 mt-4 p-4 border rounded-xl flex items-center justify-between transition-all duration-200 ${
+                 isPremium 
+                   ? 'border-emerald-500/20 bg-emerald-500/5' 
+                   : 'border-amber-500/20 bg-slate-900/50 cursor-pointer hover:bg-slate-800 hover:border-amber-500/50 hover:shadow-lg'
+               }`}
+            >
+               <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Wallet className={`w-4 h-4 ${isPremium ? 'text-emerald-400' : 'text-amber-500'}`} /> 
+                    Exigir 50% de Sinal (PIX)
+                    {!isPremium && (
+                      <span className="bg-amber-500 text-slate-900 text-[9px] px-2 py-0.5 rounded uppercase tracking-wider font-bold">PRO</span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-md">
+                    {isPremium 
+                      ? 'O cliente precisará pagar 50% do valor via PIX para confirmar a reserva na agenda.'
+                      : 'Clique aqui e faça o upgrade do seu plano para ativar a cobrança de sinal automática.'
+                    }
+                  </p>
+               </div>
+               
+               {/* Usamos pointer-events-none para que o clique vaze para a div pai quando não for Premium */}
+               <div className={!isPremium ? "pointer-events-none opacity-80" : ""}>
+                 <Switch 
+                    disabled={!isPremium}
+                    checked={isPremium ? form.require_deposit : false}
+                    onCheckedChange={(checked) => setForm({...form, require_deposit: checked})}
+                 />
+               </div>
+            </div>
+
             <div className="md:col-span-4 flex justify-end gap-2 mt-4 pt-4 border-t border-white/5">
               <Button type="button" variant="ghost" onClick={closeForm} className="text-slate-300 hover:text-white">
                 {t('common.cancel')}
@@ -290,7 +332,14 @@ export default function ServicesManager() {
                 {service.name.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h3 className="font-bold text-white">{service.name}</h3>
+                <h3 className="font-bold text-white flex items-center gap-2">
+                  {service.name}
+                  {service.require_deposit && (
+                    <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold flex items-center gap-1">
+                      <Wallet className="w-3 h-3" /> Sinal 50%
+                    </span>
+                  )}
+                </h3>
                 {service.description && (
                    <p className="text-xs text-slate-500 mt-0.5 max-w-md truncate">{service.description}</p>
                 )}
@@ -306,7 +355,6 @@ export default function ServicesManager() {
               </div>
             </div>
 
-            {/* BOTÕES DE AÇÃO: Editar e Deletar */}
             <div className="flex items-center gap-1">
               <Button 
                 variant="ghost" 
