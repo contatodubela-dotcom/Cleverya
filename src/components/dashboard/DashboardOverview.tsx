@@ -297,7 +297,7 @@ export default function DashboardOverview() {
                         clientName={app.clients?.name}
                         clientPhone={app.clients?.phone}
                         serviceName={app.services?.name}
-                        date={format(parseISO(app.appointment_date), 'dd/MM')}
+                        date={app.appointment_date}
                         time={app.appointment_time.slice(0, 5)}
                         variant="icon"
                     />
