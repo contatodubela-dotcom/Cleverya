@@ -241,7 +241,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientPhone || clientPhone.length < 8) return toast.error(t('common.invalid_phone', { defaultValue: "Telefone inválido" }));
+    if (!clientPhone || clientPhone.replace(/\D/g, '').length < 10) return toast.error('Telefone inválido. Digite o DDD e o número correto.');
 
     setIsCheckingPhone(true);
     try {
@@ -500,7 +500,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder={t('booking.label_your_name', {defaultValue: 'Seu Nome'})} required className="h-12" style={inputStyle} />
                     <Input value={clientPhone} disabled className="h-12 bg-slate-50 opacity-70" style={inputStyle} />
-                    <Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder={t('booking.label_email_optional', {defaultValue: 'Email (Opcional)'})} className="h-12" style={inputStyle} />
+                    <Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="Seu melhor E-mail" required className="h-12 border-amber-200 focus:border-[#d4af37]" style={inputStyle} />
                     
                     <Button type="submit" className="w-full bg-[#d4af37] hover:bg-[#c5a028] text-white font-bold h-12 rounded-xl" disabled={createAppointmentMutation.isPending}>
                         {createAppointmentMutation.isPending 

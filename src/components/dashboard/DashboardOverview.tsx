@@ -78,6 +78,7 @@ export default function DashboardOverview() {
           professionals ( name )
         `)
         .eq('business_id', businessId)
+        .neq('status', 'pending_payment') // <-- MÁGICA: Esconde os PIXs não pagos!
         .gte('appointment_date', firstDay)
         .lte('appointment_date', lastDay)
         .order('appointment_date', { ascending: true });
