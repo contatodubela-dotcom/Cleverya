@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -11,8 +11,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { useReactToPrint } from 'react-to-print';
-import { FinancialReport } from './FinancialReport'; // Importando o relatório de impressão
+import { FinancialReport } from './FinancialReport'; 
 
 export default function ReportsView() {
   const { t, i18n } = useTranslation();
@@ -23,20 +22,15 @@ export default function ReportsView() {
   const [customStart, setCustomStart] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [customEnd, setCustomEnd] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-  // Ref para impressão
-  const componentRef = useRef<HTMLDivElement>(null);
+  // --- IMPRESSÃO NATIVA ---
+  const handlePrint = () => {
+    document.title = `Relatorio_Financeiro_${format(new Date(), 'yyyy-MM')}`;
+    window.print();
+  };
 
-  // Hook de impressão
-  const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-    documentTitle: `Relatorio_Financeiro_${format(new Date(), 'yyyy-MM')}`,
-  });
-
-  // --- LÓGICA DE DATAS SIMPLIFICADA E ROBUSTA ---
   const dateRange = useMemo(() => {
     const now = new Date();
     
-    // 1. Personalizado
     if (selectedMonth === 'custom') {
         return { 
             start: startOfDay(parseISO(customStart)), 
@@ -45,20 +39,19 @@ export default function ReportsView() {
         };
     }
     
-    // 2. Períodos Pré-definidos
     const monthsBack = parseInt(selectedMonth);
     let start, end, display;
 
-    if (monthsBack === 0) { // Este mês
+    if (monthsBack === 0) { 
         start = startOfMonth(now);
         end = endOfMonth(now);
         display = format(now, 'MMMM yyyy', { locale: i18n.language === 'pt' ? ptBR : enUS });
-    } else if (monthsBack === 1) { // Mês passado
+    } else if (monthsBack === 1) { 
         const target = subMonths(now, 1);
         start = startOfMonth(target);
         end = endOfMonth(target);
         display = format(target, 'MMMM yyyy', { locale: i18n.language === 'pt' ? ptBR : enUS });
-    } else { // Últimos X meses
+    } else { 
         const target = subMonths(now, monthsBack);
         start = startOfMonth(target);
         end = endOfMonth(now);
@@ -68,7 +61,6 @@ export default function ReportsView() {
     return { start, end, display };
   }, [selectedMonth, customStart, customEnd, i18n.language, t]);
 
-  // --- BUSCA DADOS ---
   const { data: stats, isLoading } = useQuery({
     queryKey: ['reports-advanced', user?.id, dateRange.start, dateRange.end],
     queryFn: async () => {
@@ -76,7 +68,6 @@ export default function ReportsView() {
       const bid = member?.business_id;
       if (!bid) return { dailyRevenue: [], totalRevenue: 0, appointmentsCount: 0, topServices: [], ticket: 0, revenue: 0, count: 0, chartData: [], appointmentsList: [] };
 
-      // ATUALIZAÇÃO: Buscando também o nome do cliente (profiles)
       const { data: apps, error } = await supabase
         .from('appointments')
         .select(`
@@ -91,20 +82,17 @@ export default function ReportsView() {
       
       if (error) throw error;
 
-      // Processamento
       const dailyMap = new Map();
       let total = 0;
       const servicesMap = new Map();
 
-      // Lista formatada para o Relatório de Impressão
       const appointmentsList = apps?.map((app: any) => ({
         start_time: app.appointment_date,
-        client_name: app.profiles?.name || t('common.client', { defaultValue: 'Cliente' }), // Tenta pegar o nome ou usa padrão
+        client_name: app.profiles?.name || t('common.client', { defaultValue: 'Cliente' }), 
         service_name: app.services?.name || '-',
         price: app.services?.price || 0
       })) || [];
 
-      // Preenche dias vazios para o gráfico não ficar buracado
       const interval = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
       interval.forEach(d => dailyMap.set(format(d, 'yyyy-MM-dd'), 0));
 
@@ -120,7 +108,6 @@ export default function ReportsView() {
           
           total += price;
 
-          // Top Serviços
           const sName = app.services?.name || 'Outros';
           servicesMap.set(sName, (servicesMap.get(sName) || 0) + 1);
       });
@@ -148,7 +135,7 @@ export default function ReportsView() {
           count: apps?.length || 0, 
           ticket: apps?.length ? total / apps.length : 0,
           topServices,
-          appointmentsList // Retorna a lista pronta para impressão
+          appointmentsList
       };
     },
     enabled: !!user?.id && (plan === 'pro' || plan === 'business') 
@@ -159,11 +146,9 @@ export default function ReportsView() {
     currency: i18n.language === 'pt' ? 'BRL' : 'USD'
   });
 
-  // --- TELA DE BLOQUEIO (Plano Free) ---
   if (plan === 'free') {
       return (
           <div className="relative min-h-[500px] w-full bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center p-8 text-center">
-              
               <div className="absolute inset-0 opacity-20 pointer-events-none">
                  <div className="grid grid-cols-3 gap-4 p-8">
                     <div className="h-32 bg-slate-700 rounded-xl w-full"></div>
@@ -177,21 +162,15 @@ export default function ReportsView() {
                   <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto border border-amber-500/20">
                       <Lock className="w-8 h-8 text-amber-500" />
                   </div>
-                  
                   <div>
                       <h2 className="text-2xl font-bold text-white mb-2">{t('dashboard.reports.upgrade_title', { defaultValue: 'Relatórios Financeiros' })}</h2>
                       <p className="text-slate-400 leading-relaxed">
                           {t('dashboard.reports.upgrade_desc', { defaultValue: 'Acompanhe seu faturamento diário, serviços mais vendidos e métricas de crescimento com o plano Pro.' })}
                       </p>
                   </div>
-
-                  <Button 
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold h-12 text-lg"
-                    onClick={() => window.location.hash = '#pricing'} 
-                  >
+                  <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold h-12 text-lg" onClick={() => window.location.hash = '#pricing'}>
                       {t('dashboard.banner.cta', { defaultValue: 'Ver Planos' })}
                   </Button>
-                  
                   <p className="text-xs text-slate-500 uppercase tracking-widest font-bold">{t('common.premium_feature', {defaultValue: 'Recurso Premium'})}</p>
               </div>
           </div>
@@ -213,19 +192,9 @@ export default function ReportsView() {
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                 {selectedMonth === 'custom' && (
                     <div className="flex gap-2 items-center bg-slate-800 p-1 px-3 rounded-md border border-white/10 animate-in slide-in-from-right-5">
-                       <input 
-                           type="date" 
-                           value={customStart}
-                           onChange={(e) => setCustomStart(e.target.value)}
-                           className="bg-transparent text-white text-sm focus:outline-none py-1 [color-scheme:dark]"
-                       />
+                       <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none py-1 [color-scheme:dark]" />
                        <span className="text-slate-500">-</span>
-                       <input 
-                           type="date" 
-                           value={customEnd}
-                           onChange={(e) => setCustomEnd(e.target.value)}
-                           className="bg-transparent text-white text-sm focus:outline-none py-1 [color-scheme:dark]"
-                       />
+                       <input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="bg-transparent text-white text-sm focus:outline-none py-1 [color-scheme:dark]" />
                     </div>
                 )}
 
@@ -243,7 +212,7 @@ export default function ReportsView() {
                         </SelectContent>
                     </Select>
                     
-                    {/* Botão de Impressão Atualizado */}
+                    {/* BOTÃO NATIVO DE IMPRIMIR */}
                     <Button variant="outline" className="gap-2 text-slate-300 border-slate-600 hover:text-white hover:bg-slate-700" onClick={handlePrint}>
                         <Printer className="w-4 h-4" /> 
                     </Button>
@@ -251,15 +220,12 @@ export default function ReportsView() {
             </div>
         </div>
 
-        {/* CARDS DE RESUMO */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-6 bg-slate-800 border-slate-700">
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('dashboard.reports.total_revenue', { defaultValue: 'Faturamento Total' })}</p>
                 <div className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-green-400" />
-                    <span className="text-2xl font-bold text-white">
-                        {currencyFormatter.format(stats?.revenue || 0)}
-                    </span>
+                    <span className="text-2xl font-bold text-white">{currencyFormatter.format(stats?.revenue || 0)}</span>
                 </div>
             </Card>
             <Card className="p-6 bg-slate-800 border-slate-700">
@@ -279,42 +245,19 @@ export default function ReportsView() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-           {/* GRÁFICO */}
            <div className="lg:col-span-2 bg-slate-800 p-6 rounded-2xl border border-slate-700 min-h-[400px]">
               <h4 className="font-bold text-white mb-6">{t('dashboard.reports.chart_title', { defaultValue: 'Evolução Diária' })}</h4>
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={stats?.chartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
-                        <XAxis 
-                            dataKey="name" 
-                            axisLine={false} 
-                            tickLine={false} 
-                            tick={{fill: '#94a3b8', fontSize: 12}} 
-                            minTickGap={15}
-                        />
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} minTickGap={15} />
                         <YAxis hide />
                         <Tooltip
-                    formatter={(value: number) => [
-                      currencyFormatter.format(value),
-                      t('dashboard.reports.revenue_label', { defaultValue: 'Receita' })
-                    ]}
-                    // --- INÍCIO DA CORREÇÃO DE CSS ---
-                    contentStyle={{ 
-                      backgroundColor: '#1e293b', // Cor de fundo escura (slate-800)
-                      borderColor: '#334155',     // Borda sutil (slate-700)
-                      borderRadius: '8px',        // Cantos arredondados
-                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' // Sombra suave
-                    }}
-                    itemStyle={{
-                      color: '#f8fafc' // Cor do texto quase branca (slate-50)
-                    }}
-                    labelStyle={{
-                      color: '#94a3b8' // Cor da data/label um pouco mais cinza (slate-400)
-                    }}
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }} // Cor do cursor ao passar o mouse
-                    // --- FIM DA CORREÇÃO DE CSS ---
-                  />
+                            formatter={(value: number) => [currencyFormatter.format(value), t('dashboard.reports.revenue_label', { defaultValue: 'Receita' })]}
+                            contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
+                            itemStyle={{ color: '#f8fafc' }} labelStyle={{ color: '#94a3b8' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                        />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             {stats?.chartData?.map((entry: any, index: number) => (
                                 <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#4ade80' : '#334155'} />
@@ -325,7 +268,6 @@ export default function ReportsView() {
               </div>
            </div>
 
-           {/* TOP SERVIÇOS */}
            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
               <h4 className="font-bold text-white mb-6">{t('dashboard.reports.top_services', { defaultValue: 'Top Serviços' })}</h4>
               <div className="space-y-4">
@@ -335,17 +277,13 @@ export default function ReportsView() {
                   stats.topServices.map((service: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-white/5 hover:border-white/10 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold">
-                          {idx + 1}
-                        </div>
+                        <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold">{idx + 1}</div>
                         <div>
                           <p className="text-sm font-bold text-slate-200">{service.name}</p>
                           <p className="text-xs text-slate-500">{service.count} {t('common.sales', { defaultValue: 'vendas' })}</p>
                         </div>
                       </div>
-                      <span className="text-sm font-bold text-primary">
-                          {currencyFormatter.format(service.value)}
-                      </span>
+                      <span className="text-sm font-bold text-primary">{currencyFormatter.format(service.value)}</span>
                     </div>
                   ))
                 )}
@@ -353,15 +291,46 @@ export default function ReportsView() {
            </div>
         </div>
 
-        {/* --- COMPONENTE DE IMPRESSÃO INVISÍVEL --- */}
-        <div style={{ display: "none" }}>
+        {/* --- O RELATÓRIO OFICIAL (Escondido da tela) --- */}
+        <div id="print-area" className="hidden">
             <FinancialReport 
-                ref={componentRef} 
                 data={stats?.appointmentsList || []} 
                 totalRevenue={stats?.revenue || 0} 
                 period={dateRange.display}
             />
         </div>
+
+        {/* --- O ANTÍDOTO DO CSS QUE RESOLVE TUDO --- */}
+        <style>{`
+          @media print {
+            /* 1. Cegueira Total: Esconde TODO o site, incluindo modais do Radix e Portals */
+            body * {
+              visibility: hidden !important;
+            }
+
+            /* 2. Foco Único: Torna APENAS o relatório e o seu conteúdo visíveis */
+            #print-area, #print-area * {
+              visibility: visible !important;
+            }
+
+            /* 3. Posicionamento Absoluto: Arranca o relatório do rodapé e cola-o no topo da folha */
+            #print-area {
+              display: block !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            /* 4. Limpeza: Garante que o fundo da folha sai branco e não cinzento */
+            body {
+              background-color: white !important;
+            }
+          }
+        `}</style>
+
     </div>
   );
 }

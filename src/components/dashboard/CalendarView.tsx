@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { format, startOfWeek, endOfWeek, addDays, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle, MessageCircle, Loader2, Check, DollarSign, Undo2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle, MessageCircle, Loader2, Check, DollarSign, Undo2, Trash2 } from 'lucide-react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
@@ -41,6 +41,7 @@ export default function CalendarView() {
   
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(addDays(new Date(), 6), 'yyyy-MM-dd'));
+  const [showAbandoned, setShowAbandoned] = useState(false); // <-- NOVO: Estado do botão
   const dateLocale = i18n.language === 'en' ? enUS : ptBR;
 
   const { data: businessName } = useQuery({
@@ -52,13 +53,13 @@ export default function CalendarView() {
   });
 
   const { data: appointments, isLoading, refetch } = useQuery({
-    queryKey: ['appointments-list', user?.id, startDate, endDate],
+    queryKey: ['appointments-list', user?.id, startDate, endDate, showAbandoned], // <-- Adicionamos o showAbandoned aqui
     queryFn: async () => {
       const { data: member } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).single();
       const businessId = member?.business_id;
       if (!businessId) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('appointments')
         .select(`
           *,
@@ -67,12 +68,17 @@ export default function CalendarView() {
           professionals (name)
         `)
         .eq('business_id', businessId)
-        .neq('status', 'pending_payment')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .order('appointment_date', { ascending: true })
         .order('appointment_time', { ascending: true });
 
+      // SE O BOTÃO ESTIVER DESLIGADO, ESCONDE OS PENDENTES
+      if (!showAbandoned) {
+        query = query.neq('status', 'pending_payment');
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data || [];
     },
@@ -132,6 +138,14 @@ export default function CalendarView() {
     refetch();
   };
 
+  // 5. EXCLUIR ABANDONADO (Limpar a sujeira)
+  const handleDeleteAbandoned = async (app: any) => {
+    if(!confirm('Deseja excluir permanentemente este agendamento pendente? Esta ação não pode ser desfeita.')) return;
+    await supabase.from('appointments').delete().eq('id', app.id);
+    toast.success('Agendamento removido com sucesso!');
+    refetch();
+  };
+
   // Função auxiliar para cores de status
   const getStatusColor = (status: string) => {
       switch(status) {
@@ -163,7 +177,20 @@ export default function CalendarView() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-white">{t('dashboard.calendar.title')}</h2>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-white/20 text-gray-300 hover:text-white hover:bg-white/10">{t('dashboard.calendar.refresh')}</Button>
+          <div className="flex items-center gap-2">
+            
+            {/* O NOVO BOTÃO DE CARRINHOS ABANDONADOS */}
+            <Button 
+              variant={showAbandoned ? "default" : "outline"} 
+              size="sm" 
+              onClick={() => setShowAbandoned(!showAbandoned)}
+              className={showAbandoned ? "bg-amber-600 hover:bg-amber-700 text-white border-none shadow-lg shadow-amber-900/20" : "border-amber-500/50 text-amber-500 hover:bg-amber-500/10"}
+            >
+              {showAbandoned ? "Ocultar Abandonados" : "Ver Abandonados"}
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="border-white/20 text-gray-300 hover:text-white hover:bg-white/10">{t('dashboard.calendar.refresh')}</Button>
+          </div>
         </div>
 
         {appointments?.length === 0 ? (
@@ -215,6 +242,13 @@ export default function CalendarView() {
                         }}
                     >
                         <MessageCircle className="w-5 h-5" />
+                    </Button>
+                  )}
+
+                  {/* AÇÕES PARA STATUS: PENDENTE DE PAGAMENTO (Carrinho Abandonado) */}
+                  {app.status === 'pending_payment' && (
+                    <Button size="sm" variant="outline" className="text-red-400 hover:bg-red-950/30 border-red-900/50" onClick={() => handleDeleteAbandoned(app)}>
+                        <Trash2 className="w-4 h-4 mr-2" /> Excluir
                     </Button>
                   )}
 

@@ -15,7 +15,7 @@ export const FinancialReport = forwardRef<HTMLDivElement, ReportProps>((props, r
   return (
     // A classe 'print:block' faz aparecer na impressão, 'hidden' esconde na tela normal
     // A classe 'print:text-black' garante que o texto saia preto no papel
-    <div ref={ref} className="p-10 bg-white text-black font-sans">
+    <div ref={ref} className="p-10 bg-white text-black font-sans w-full">
       
       {/* Cabeçalho do Relatório */}
       <div className="flex justify-between items-center border-b-2 border-gray-800 pb-4 mb-8">
