@@ -6,7 +6,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Card } from '../ui/card';
-import { Trash2, User, Plus, Crown, Loader2, Users, Pencil, X } from 'lucide-react';
+import { Trash2, User, Plus, Crown, Loader2, Users, Pencil, X, Scissors } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
@@ -16,6 +16,7 @@ interface Professional {
   name: string;
   capacity: number;
   is_active: boolean;
+  service_ids?: string[]; // <-- NOVO: A mochila de serviços do profissional
 }
 
 export default function ProfessionalsManager() {
@@ -25,19 +26,35 @@ export default function ProfessionalsManager() {
   const queryClient = useQueryClient();
   
   // Estados para Formulário e Edição
-  const [formData, setFormData] = useState({ name: '', capacity: 1 });
+  const [formData, setFormData] = useState({ name: '', capacity: 1, service_ids: [] as string[] });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Busca Profissionais
+  // 1. Busca os Serviços da Empresa (Para criar os botões de seleção)
+  const { data: services } = useQuery({
+    queryKey: ['services-list-for-pros', user?.id],
+    queryFn: async () => {
+      let businessId = null;
+      const { data: member } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).maybeSingle();
+      if (member) businessId = member.business_id;
+      else {
+         const { data: owner } = await supabase.from('businesses').select('id').eq('owner_id', user?.id).maybeSingle();
+         businessId = owner?.id;
+      }
+      if (!businessId) return [];
+      const { data } = await supabase.from('services').select('id, name').eq('business_id', businessId).eq('is_active', true);
+      return data || [];
+    },
+    enabled: !!user?.id,
+  });
+
+  // 2. Busca Profissionais
   const { data: professionals, isLoading } = useQuery({
     queryKey: ['professionals-list', user?.id],
     queryFn: async () => {
-      // Tenta buscar ID via business_members
       const { data: member } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).maybeSingle();
       let businessId = member?.business_id;
       
-      // Se não achar, tenta buscar como dono (Fallback)
       if (!businessId) {
          const { data: owner } = await supabase.from('businesses').select('id').eq('owner_id', user?.id).maybeSingle();
          businessId = owner?.id;
@@ -71,7 +88,6 @@ export default function ProfessionalsManager() {
 
       if (!businessId) throw new Error("Empresa não encontrada");
 
-      // Checa limite apenas se for criação nova
       if (!editingId) {
           const currentCount = professionals?.length || 0;
           if (plan === 'free' && currentCount >= 1) {
@@ -80,19 +96,18 @@ export default function ProfessionalsManager() {
       }
 
       if (editingId) {
-        // ATUALIZAR
         const { error } = await supabase
           .from('professionals')
-          .update({ name: formData.name, capacity: formData.capacity })
+          .update({ name: formData.name, capacity: formData.capacity, service_ids: formData.service_ids })
           .eq('id', editingId);
         if (error) throw error;
       } else {
-        // CRIAR
         const { error } = await supabase.from('professionals').insert({
           name: formData.name,
           capacity: formData.capacity,
           business_id: businessId,
-          is_active: true
+          is_active: true,
+          service_ids: formData.service_ids
         });
         if (error) throw error;
       }
@@ -126,16 +141,25 @@ export default function ProfessionalsManager() {
   };
 
   const handleEdit = (pro: Professional) => {
-    setFormData({ name: pro.name, capacity: pro.capacity || 1 });
+    setFormData({ name: pro.name, capacity: pro.capacity || 1, service_ids: pro.service_ids || [] });
     setEditingId(pro.id);
     setIsCreating(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
-    setFormData({ name: '', capacity: 1 });
+    setFormData({ name: '', capacity: 1, service_ids: [] });
     setEditingId(null);
     setIsCreating(false);
+  };
+
+  const toggleService = (serviceId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      service_ids: prev.service_ids.includes(serviceId)
+        ? prev.service_ids.filter(id => id !== serviceId)
+        : [...prev.service_ids, serviceId]
+    }));
   };
 
   const canAdd = plan !== 'free' || (professionals?.length || 0) < 1;
@@ -154,7 +178,7 @@ export default function ProfessionalsManager() {
         </div>
       </div>
 
-      <div className="space-y-4"> {/* MUDANÇA: Grid removido, agora é space-y-4 (lista vertical) */}
+      <div className="space-y-4"> 
         
         {/* Formulário de Adicionar/Editar */}
         {isCreating && (
@@ -191,9 +215,31 @@ export default function ProfessionalsManager() {
                             />
                         </div>
                     </div>
+
+                    {/* NOVO: SELEÇÃO DE SERVIÇOS */}
+                    <div className="md:col-span-2 space-y-2 mt-2">
+                        <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                            <Scissors className="w-3 h-3" /> Especialidades (O que este profissional faz?)
+                        </label>
+                        <p className="text-[10px] text-slate-500 mb-2">Deixe vazio para o sistema assumir que ele faz TODOS os serviços, ou clique para especificar.</p>
+                        
+                        <div className="flex flex-wrap gap-2">
+                            {services?.map(s => (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => toggleService(s.id)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${formData.service_ids.includes(s.id) ? 'bg-primary text-slate-900 border-primary shadow-[0_0_10px_rgba(246,173,85,0.3)]' : 'bg-slate-900 text-slate-400 border-slate-700 hover:border-slate-500'}`}
+                                >
+                                    {s.name}
+                                </button>
+                            ))}
+                            {services?.length === 0 && <span className="text-xs text-slate-500 italic">Cadastre serviços primeiro.</span>}
+                        </div>
+                    </div>
                  </div>
 
-                 <div className="flex gap-2 justify-end pt-2">
+                 <div className="flex gap-2 justify-end pt-4 border-t border-white/10 mt-4">
                    <Button type="button" size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white hover:bg-slate-800">{t('common.cancel', {defaultValue: 'Cancelar'})}</Button>
                    <Button type="submit" size="sm" disabled={upsertMutation.isPending} className="bg-primary text-slate-900 font-bold hover:bg-primary/90">
                      {upsertMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingId ? 'Salvar Alterações' : t('common.save', {defaultValue: 'Salvar'}))}
@@ -203,7 +249,7 @@ export default function ProfessionalsManager() {
              </Card>
         )}
 
-        {/* Botão de Novo Profissional (Modo Lista) */}
+        {/* Botão de Novo Profissional */}
         {!isCreating && (
             canAdd ? (
                 <button 
@@ -228,12 +274,10 @@ export default function ProfessionalsManager() {
             )
         )}
 
-        {/* Lista de Profissionais (Visual padronizado com Serviços) */}
         <div className="grid gap-3">
             {professionals?.map((pro) => (
             <Card key={pro.id} className="p-4 flex items-center justify-between hover:border-primary/30 transition-all group border-white/10 bg-slate-800/50">
                 
-                {/* Lado Esquerdo: Ícone e Info */}
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-slate-700 text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-600 transition-colors">
                         <User className="w-6 h-6" />
@@ -249,11 +293,15 @@ export default function ProfessionalsManager() {
                             <span className="flex items-center gap-1" title="Capacidade simultânea">
                                 <Users className="w-3 h-3" /> Cap: {pro.capacity || 1}
                             </span>
+                            <span className="w-1 h-1 rounded-full bg-slate-600" />
+                            <span className="flex items-center gap-1">
+                                <Scissors className="w-3 h-3" /> 
+                                {pro.service_ids && pro.service_ids.length > 0 ? `${pro.service_ids.length} especialidades` : 'Faz Tudo'}
+                            </span>
                         </div>
                     </div>
                 </div>
                 
-                {/* Lado Direito: Ações */}
                 <div className="flex gap-1">
                     <Button 
                         size="icon" variant="ghost" 

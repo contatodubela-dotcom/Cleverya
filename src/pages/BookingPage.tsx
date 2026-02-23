@@ -27,6 +27,7 @@ interface Professional {
   name: string;
   capacity: number;
   is_active: boolean;
+  service_ids?: string[]; // <-- Lendo a mochila do banco
 }
 
 interface Service {
@@ -36,7 +37,7 @@ interface Service {
   duration_minutes: number;
   description?: string;
   category?: string;
-  require_deposit?: boolean; // <-- NOVO
+  require_deposit?: boolean;
 }
 
 interface AvailabilitySetting {
@@ -127,7 +128,7 @@ export default function BookingPage() {
 function BookingContent({ business }: { business: BusinessInfo }) {
   const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
-  const isSuccessReturn = searchParams.get('success') === 'true'; // Se veio do Mercado Pago
+  const isSuccessReturn = searchParams.get('success') === 'true'; 
   const dateLocale = i18n.language === 'en' ? enUS : ptBR;
   const currencyCode = i18n.language === 'en' ? 'USD' : 'BRL';
   const formatPrice = (price: number) => new Intl.NumberFormat(i18n.language, { style: 'currency', currency: currencyCode }).format(price);
@@ -154,7 +155,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     return false;
   }, [usageMetrics, currentPlan]);
 
-  // ESTADOS
   const [step, setStep] = useState<'service' | 'datetime' | 'identification' | 'confirmation' | 'success'>(isSuccessReturn ? 'success' : 'service');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null);
@@ -203,6 +203,17 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       return data as Professional[] || [];
     },
   });
+
+  // --- O FILTRO MÁGICO DE PROFISSIONAIS ---
+  const availableProfessionals = useMemo(() => {
+    if (!professionals || !selectedService) return [];
+    return professionals.filter(p => {
+        // Se a mochila está vazia, assumimos que ele faz tudo (Retrocompatibilidade)
+        if (!p.service_ids || p.service_ids.length === 0) return true;
+        // Caso contrário, só aparece se tiver o ID do serviço na mochila!
+        return p.service_ids.includes(selectedService.id);
+    });
+  }, [professionals, selectedService]);
 
   const { data: availability } = useQuery({
     queryKey: ['public-availability', business.id],
@@ -267,7 +278,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     mutationFn: async () => {
       let clientId = existingClient?.id;
 
-      // 1. Criar ou Atualizar Cliente
       if (existingClient) {
          if (clientEmail !== existingClient.email) await supabase.from('clients').update({ email: clientEmail }).eq('id', clientId);
       } else {
@@ -279,7 +289,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       const { data: blocked } = await supabase.from('blocked_clients').select('id').eq('client_id', clientId).maybeSingle();
       if (blocked) throw new Error('Blocked');
 
-      // 2. Se exigir sinal, o status inicial é "pending_payment". Se não, é "pending".
       const initialStatus = selectedService?.require_deposit ? 'pending_payment' : 'pending';
 
       const { data: newApp, error: appError } = await supabase.from('appointments').insert({ 
@@ -294,7 +303,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       
       if (appError) throw appError;
 
-      // 3. Se exige sinal, acionar a nossa Edge Function do Mercado Pago!
       if (selectedService?.require_deposit) {
           const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
               body: {
@@ -310,7 +318,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
               throw new Error('PaymentLinkError');
           }
 
-          // Devolve o link gerado para o onSuccess redirecionar o cliente
           return { requiresPayment: true, url: paymentData.init_point };
       }
 
@@ -320,7 +327,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     },
     onSuccess: (data) => {
         if (data && data.requiresPayment && data.url) {
-            // Cliente é redirecionado para o ecrã do Mercado Pago!
             window.location.href = data.url; 
         } else {
             setStep('success');
@@ -419,7 +425,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
                           {service.description && <p className="text-xs text-slate-500 mt-1 line-clamp-1">{service.description}</p>}
                           <div className="flex items-center gap-3 mt-2">
                              <span className="flex items-center gap-1 text-xs text-slate-400"><Clock className="w-3 h-3" /> {service.duration_minutes} min</span>
-                             {/* MOSTRAR TAG DE SINAL NO SERVIÇO */}
                              {service.require_deposit && (
                                 <span className="flex items-center gap-1 text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                                    <Wallet className="w-3 h-3" /> Sinal Obrigatório
@@ -439,11 +444,18 @@ function BookingContent({ business }: { business: BusinessInfo }) {
              <div className="bg-white rounded-3xl border border-[#f5f0e6] shadow-xl p-6 animate-fade-in space-y-6">
                 <h2 className="text-lg font-bold text-center text-slate-800 mb-4">{t('booking.step_date', { defaultValue: 'Data & Hora' })}</h2>
                 <div className="grid gap-2">
-                    {professionals.map((prof) => (
-                      <button key={prof.id} onClick={() => { setSelectedProfessional(prof); setSelectedDate(''); setSelectedTime(''); }} className={`p-3 rounded-xl border text-left transition-all flex justify-between items-center ${selectedProfessional?.id === prof.id ? 'bg-[#fffbf0] border-[#d4af37] text-slate-900' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'}`}>
-                        <span className="font-bold text-sm">{prof.name}</span>{selectedProfessional?.id === prof.id && <CheckCircle className="w-4 h-4 text-[#d4af37]" />}
-                      </button>
-                    ))}
+                    {/* AQUI É AONDE IMPRIME OS PROFISSIONAIS FILTRADOS */}
+                    {availableProfessionals.length === 0 ? (
+                        <div className="text-center text-sm text-slate-500 py-4 border border-dashed rounded-xl">
+                            Nenhum profissional disponível para este serviço.
+                        </div>
+                    ) : (
+                        availableProfessionals.map((prof) => (
+                          <button key={prof.id} onClick={() => { setSelectedProfessional(prof); setSelectedDate(''); setSelectedTime(''); }} className={`p-3 rounded-xl border text-left transition-all flex justify-between items-center ${selectedProfessional?.id === prof.id ? 'bg-[#fffbf0] border-[#d4af37] text-slate-900' : 'bg-white text-slate-600 border-slate-100 hover:border-slate-300'}`}>
+                            <span className="font-bold text-sm">{prof.name}</span>{selectedProfessional?.id === prof.id && <CheckCircle className="w-4 h-4 text-[#d4af37]" />}
+                          </button>
+                        ))
+                    )}
                 </div>
                 {selectedProfessional && (
                     <>
