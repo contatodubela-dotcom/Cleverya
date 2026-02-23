@@ -67,6 +67,7 @@ export default function CalendarView() {
           professionals (name)
         `)
         .eq('business_id', businessId)
+        .neq('status', 'pending_payment')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .order('appointment_date', { ascending: true })
