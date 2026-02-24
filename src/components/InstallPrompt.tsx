@@ -1,37 +1,41 @@
 import { useState, useEffect } from 'react';
-import { X, Download, Share, PlusSquare } from 'lucide-react';
+import { X, Download, Share, PlusSquare, MoreVertical } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function InstallPrompt() {
+  const { t } = useTranslation();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(true);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [showManualAndroid, setShowManualAndroid] = useState(false);
 
   useEffect(() => {
-    // 1. Verifica se já está instalado
+    // 1. Já instalou? Não faz nada.
     const isAppMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-    setIsStandalone(isAppMode);
-
     if (isAppMode) return; 
 
-    // 2. Verifica se o usuário já fechou este banner
+    // 2. Já fechou no passado? Não incomoda.
     const dismissed = localStorage.getItem('cleverya-pwa-dismissed');
     if (dismissed) return;
 
-    // 3. Detecta se é iPhone/iPad
+    // 3. Detetar Mobile
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+    const isAndroidDevice = /android/.test(userAgent);
+    
     setIsIOS(isIOSDevice);
+    setIsAndroid(isAndroidDevice);
 
-    if (isIOSDevice) {
-       setShowInstallPrompt(true);
+    // MÁGICA: Só aparece se for celular. Espera 2 segundos para ficar elegante e ABRE SEMPRE.
+    if (isIOSDevice || isAndroidDevice) {
+       setTimeout(() => setIsVisible(true), 2000);
     }
 
-    // 4. Detecta Android/Chrome
+    // Tenta apanhar o botão automático do Android (se ele aparecer)
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallPrompt(true);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -42,24 +46,29 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt(); 
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setShowInstallPrompt(false);
+    if (deferredPrompt) {
+      // Abre a janelinha automática do Android
+      deferredPrompt.prompt(); 
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setIsVisible(false);
+      }
+      setDeferredPrompt(null);
+    } else {
+      // Se clicou em instalar mas o Android não gerou o evento, ensina onde clicar.
+      setShowManualAndroid(true);
     }
-    setDeferredPrompt(null);
   };
 
   const dismissPrompt = () => {
-    setShowInstallPrompt(false);
+    setIsVisible(false);
     localStorage.setItem('cleverya-pwa-dismissed', 'true');
   };
 
-  if (!showInstallPrompt || isStandalone) return null;
+  if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 z-[9999] bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-primary/30 flex flex-col gap-3 animate-in slide-in-from-bottom-10 max-w-md mx-auto">
+    <div className="fixed bottom-24 md:bottom-4 left-4 right-4 z-[9999] bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-primary/30 flex flex-col gap-3 animate-in slide-in-from-bottom-10 max-w-md mx-auto">
       <button onClick={dismissPrompt} className="absolute top-2 right-2 text-slate-400 hover:text-white p-1">
         <X className="w-5 h-5" />
       </button>
@@ -79,6 +88,13 @@ export default function InstallPrompt() {
             <Share className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
             <p>
               No iPhone, clique em <strong>Compartilhar</strong> na barra inferior e escolha <span className="whitespace-nowrap"><PlusSquare className="w-3 h-3 inline pb-0.5 text-slate-400"/> <strong>Tela de Início</strong></span>.
+            </p>
+         </div>
+      ) : showManualAndroid ? (
+         <div className="bg-slate-800 p-3 rounded-xl text-xs text-slate-300 flex items-start gap-3 mt-1 animate-in zoom-in-95">
+            <MoreVertical className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
+            <p>
+              Clique nos <strong>3 pontinhos</strong> do navegador no canto superior direito e selecione <strong>Adicionar à tela inicial</strong> ou <strong>Instalar</strong>.
             </p>
          </div>
       ) : (
