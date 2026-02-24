@@ -21,7 +21,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useIsMobile } from '../hooks/use-mobile';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router-dom';
-
+import InstallPrompt from '../components/InstallPrompt';
 import OnboardingModal from '../components/dashboard/OnboardingModal'; 
 import TutorialManual from '../components/dashboard/TutorialManual';
 import TrialBanner from '../components/dashboard/TrialBanner'; // <--- NOVO IMPORT
@@ -336,6 +336,9 @@ export default function DashboardPage() {
 
       <OnboardingModal />
       <TutorialManual open={showManual} onOpenChange={setShowManual} />
+      
+      {/* BANNER DE INSTALAÇÃO DO APP PARA O DONO */}
+      <InstallPrompt />
     </div>
   );
 }

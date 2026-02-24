@@ -26,6 +26,8 @@ const resources = {
         confirm_delete: "Tem certeza que deseja excluir?",
         search_placeholder: "Buscar...",
         client: "Cliente",
+        client_deleted: "Cliente deletado",
+        service_deleted: "Serviço excluído",
         closed: "Fechado",
         open: "Aberto",
         from: "De",
@@ -38,8 +40,13 @@ const resources = {
         price_locale: "pt-BR",
         currency: "BRL",
         Help_Center: "Central de Ajuda",
-
-
+        activated: "ATIVADO",
+        deactivated: "DESATIVADO",
+        active: "ATIVO",
+        step_1: "PASSO 1",
+        step_2: "PASSO 2",
+        send_message: "Enviar mensagem",
+        premium_feature: "Recurso Premium",
         weekdays: {
           0: "Domingo",
           1: "Segunda-feira",
@@ -50,7 +57,6 @@ const resources = {
           6: "Sábado"
         }
       },
-      // --- WIZARD COM TEXTOS MAIS SUAVES ---
       wizard: {
         step1_title: "Vamos personalizar sua página",
         step1_subtitle: "Como seus clientes vão te encontrar?",
@@ -61,28 +67,22 @@ const resources = {
         banner_error: "❌ Erro: Use um link direto (.jpg ou .png). Não use Canva!",
         banner_tip: "💡 Dica: Suba sua foto (1920 x 600 px) no Imgur.com, copie o 'Direct Link' e cole aqui.",
         btn_next: "Salvar e Continuar",
-        
         step2_title: "O que você vai vender?",
         step2_subtitle: "Cadastre seu serviço principal agora. O resto a gente vê depois.",
         label_service_name: "Nome do Serviço",
         label_price: "Preço",
         label_duration: "Duração (min)",
         btn_create_service: "Criar Serviço",
-        
         step3_title: "Horário de Atendimento",
-        // MUDANÇA AQUI: Texto mais explicativo
         step3_subtitle: "Vamos configurar um horário básico para começar. Você poderá personalizar dias, folgas e almoço depois em 'Ajustes'.",
         standard_hours: "Usar Horário Comercial (09:00 - 18:00)",
         standard_hours_desc: "De Segunda a Sexta",
-        // MUDANÇA AQUI: Orientação clara
         manual_warning: "💡 Dica: Se seus horários são complexos, ative o padrão agora para desbloquear a agenda e edite os detalhes depois em Ajustes.",
         btn_confirm_hours: "Definir e Continuar",
-        
         step4_title: "Sua Máquina de Vendas",
         step4_subtitle: "Copie este link. É aqui que seu cliente vai agendar.",
         your_link: "Seu Link Oficial:",
         btn_copied: "Já copiei, avançar",
-        
         step5_title: "Último passo: Instale o App",
         step5_subtitle: "Para receber notificações na hora, você precisa do ícone na tela.",
         install_1: "1. Abra seu link no navegador do celular.",
@@ -90,7 +90,6 @@ const resources = {
         install_3: "3. Escolha 'Adicionar à Tela Inicial'.",
         btn_finish: "🎉 Finalizar e Começar a Lucrar"
       },
-      // ... (RESTANTE DO ARQUIVO MANTIDO IGUAL) ...
       tutorial: {
         welcome_title: "Bem-vindo ao Cleverya!",
         welcome_subtitle: "Guia de Configuração e Instalação",
@@ -147,7 +146,10 @@ const resources = {
         restore: "Agendamento restaurado.",
         opening_portal: "Abrindo portal...",
         error_portal: "Erro ao abrir portal.",
-        subscription_active_q: "Você tem uma assinatura ativa?"
+        subscription_active_q: "Você tem uma assinatura ativa?",
+        confirm_delete_abandoned: "Deseja excluir permanentemente este agendamento pendente? Esta ação não pode ser desfeita.",
+        abandoned_deleted: "Agendamento removido com sucesso!",
+        confirm_disconnect: "Tem a certeza de que deseja desconectar a sua conta? O recebimento de sinais será pausado."
       },
       legal: {
         terms_title: "Termos de Uso",
@@ -234,16 +236,6 @@ const resources = {
           upgrade_biz_title: "Migre para o Business",
           upgrade_pro_desc: "Desbloqueie agendamentos ilimitados e remova a marca Cleverya.",
           upgrade_biz_desc: "Gerencie múltiplos profissionais, locais e tenha relatórios avançados.",
-          title: "Agenda",
-          today: "Hoje",
-          week: "Semana",
-          summary: "Resumo",
-          total: "Total",
-          pending: "Pendentes",
-          confirmed: "Confirmados",
-          completed: "Realizados",
-          no_appointments: "Nenhum agendamento neste período.",
-          refresh: "Atualizar"
         },
         tabs: {
           overview: "Visão Geral",
@@ -275,7 +267,6 @@ const resources = {
           financial_performance: "Desempenho Financeiro",
           daily_revenue: "Receita diária confirmada"
         },
- // --- SEÇÃO CALENDAR RESTAURADA ---
         calendar: {
           title: "Agenda",
           week: "Semana",
@@ -286,7 +277,10 @@ const resources = {
           pending: "Pendentes",
           completed: "Realizados",
           refresh: "Atualizar",
-          no_appointments: "Nenhum agendamento encontrado neste período."
+          no_appointments: "Nenhum agendamento encontrado neste período.",
+          show_abandoned: "Ver Abandonados",
+          hide_abandoned: "Ocultar Abandonados",
+          deposit_paid: "Sinal Pago"
         },
         services: {
           title: "Serviços",
@@ -329,18 +323,13 @@ const resources = {
           title: "Relatórios Financeiros",
           subtitle: "Acompanhe seus números.",
           total_revenue: "Faturamento Total",
-          
-          // --- CORREÇÃO: Chaves renomeadas para bater com ReportsView.tsx ---
-          this_month: "Este Mês",          // Antes estava 'current_month' ou faltando
+          this_month: "Este Mês",          
           last_month: "Mês Passado",
           last_3_months: "Últimos 3 Meses",
           custom: "Personalizado",
-          
-          // --- CORREÇÃO: Chaves que estavam faltando ---
-          appointments_count: "Atendimentos", // O código pede 'appointments_count'
-          chart_title: "Evolução Diária",     // O código pede 'chart_title'
-          revenue_label: "Receita",           // O código pede 'revenue_label' (no gráfico)
-          
+          appointments_count: "Atendimentos",
+          chart_title: "Evolução Diária",     
+          revenue_label: "Receita",           
           ticket_avg: "Ticket Médio",
           top_services: "Top Serviços",
           daily_revenue: "Receita Diária",
@@ -360,7 +349,27 @@ const resources = {
           hours_title: "Horários de Atendimento",
           hours_desc: "Defina quando sua empresa está aberta.",
           btn_save_hours: "Salvar Horários",
-          closed: "Fechado"
+          closed: "Fechado",
+          payments: {
+            title: "Integração Mercado Pago",
+            desc: "Conecte sua conta para poder cobrar sinal nos seus serviços.",
+            deposit_title: "Cobrança de Sinal via PIX",
+            deposit_lock_desc: "Acabe com as faltas cobrando 50% de sinal automático no momento do agendamento. Exclusivo para PRO e Business.",
+            upgrade_now: "Fazer Upgrade Agora",
+            enable_title: "Ativar Recebimentos via PIX",
+            enable_desc: "Ao ativar, você poderá escolher na aba 'Serviços' quais deles exigirão um sinal de 50% pago via PIX.",
+            account_connected: "Conta Conectada",
+            account_ready: "O seu Mercado Pago está pronto para receber o dinheiro dos sinais.",
+            disconnect: "Desconectar Conta",
+            config_title: "Configure os seus Recebimentos",
+            config_desc: "Para receber os sinais de agendamento via PIX automaticamente, siga os dois passos abaixo.",
+            no_account: "Não tem conta no Mercado Pago?",
+            no_account_desc: "É obrigatório ter uma conta digital. Clique abaixo para criar a sua de forma 100% gratuita antes de prosseguir.",
+            btn_create_account: "Criar Conta Grátis",
+            have_account: "Já tem a sua conta pronta?",
+            have_account_desc: "Conecte-a ao Cleverya para automatizar os recebimentos. Você será redirecionado e voltará automaticamente.",
+            btn_connect: "Conectar Conta"
+          }
         }
       },
       landing: {
@@ -505,6 +514,8 @@ const resources = {
         confirm_delete: "Are you sure you want to delete?",
         search_placeholder: "Search...",
         client: "Customer",
+        client_deleted: "Deleted Client",
+        service_deleted: "Deleted Service",
         closed: "Closed",
         open: "Open",
         from: "From",
@@ -516,7 +527,13 @@ const resources = {
         help: "Help Manual",
         price_locale: "en-US",
         currency: "USD",
-
+        activated: "ACTIVATED",
+        deactivated: "DEACTIVATED",
+        active: "ACTIVE",
+        step_1: "STEP 1",
+        step_2: "STEP 2",
+        send_message: "Send message",
+        premium_feature: "Premium Feature",
         weekdays: {
           0: "Sunday",
           1: "Monday",
@@ -527,7 +544,6 @@ const resources = {
           6: "Saturday"
         }
       },
-      // --- NEW WIZARD EN ---
       wizard: {
         step1_title: "Let's customize your page",
         step1_subtitle: "How will clients find you?",
@@ -538,26 +554,22 @@ const resources = {
         banner_error: "❌ Error: Use a direct link (.jpg or .png). Do not use Canva!",
         banner_tip: "💡 Tip: Upload to (1920 x 600 px) Imgur.com, copy the 'Direct Link' and paste here.",
         btn_next: "Save and Continue",
-        
         step2_title: "What are you selling?",
         step2_subtitle: "Register your main service now. We'll handle the rest later.",
         label_service_name: "Service Name",
         label_price: "Price",
         label_duration: "Duration (min)",
         btn_create_service: "Create Service",
-        
         step3_title: "Set your boundaries",
         step3_subtitle: "Let's set a basic schedule to start. You can customize days, breaks, and hours later in 'Settings'.",
         standard_hours: "Use Standard Business Hours (09:00 - 18:00)",
         standard_hours_desc: "Mon to Fri",
         manual_warning: "💡 Tip: If you have complex hours, turn this ON now to unlock your calendar, then edit details in Settings.",
         btn_confirm_hours: "Set and Continue",
-        
         step4_title: "Your Sales Machine",
         step4_subtitle: "Copy this link. This is where your client will book.",
         your_link: "Your Official Link:",
         btn_copied: "Copied, continue",
-        
         step5_title: "Last step: Install the App",
         step5_subtitle: "To receive notifications instantly, you need the icon on your screen.",
         install_1: "1. Open your link in your mobile browser.",
@@ -565,7 +577,6 @@ const resources = {
         install_3: "3. Choose 'Add to Home Screen'.",
         btn_finish: "🎉 Finish and Start Earning"
       },
-      // ... (RESTANTE DO ARQUIVO MANTIDO IGUAL) ...
       tutorial: {
         welcome_title: "Welcome to Cleverya!",
         welcome_subtitle: "Setup and Installation Guide",
@@ -622,9 +633,11 @@ const resources = {
         restore: "Appointment restored.",
         opening_portal: "Opening portal...",
         error_portal: "Error opening portal.",
-        subscription_active_q: "Do you have an active subscription?"
+        subscription_active_q: "Do you have an active subscription?",
+        confirm_delete_abandoned: "Permanently delete this pending appointment? This cannot be undone.",
+        abandoned_deleted: "Appointment successfully removed!",
+        confirm_disconnect: "Are you sure you want to disconnect your account? Deposit payments will be paused."
       },
-      // --- NEW SECTIONS EN ---
       legal: {
         terms_title: "Terms of Use",
         privacy_title: "Privacy Policy",
@@ -639,7 +652,6 @@ const resources = {
         desc: "Oops! The link you tried to access does not exist or has been removed. Please check the address.",
         btn_home: "Back to Home"
       },
-      // -----------------------
       booking: {
         default_business_name: "Online Booking",
         limit_title: "Booking Paused",
@@ -752,7 +764,10 @@ const resources = {
           pending: "Pending",
           completed: "Completed",
           refresh: "Refresh",
-          no_appointments: "No appointments found in this period."
+          no_appointments: "No appointments found in this period.",
+          show_abandoned: "View Abandoned",
+          hide_abandoned: "Hide Abandoned",
+          deposit_paid: "Deposit Paid"
         },
         services: {
           title: "Services",
@@ -795,17 +810,13 @@ const resources = {
           title: "Financial Reports",
           subtitle: "Track your numbers.",
           total_revenue: "Total Revenue",
-          
-          // --- CORREÇÃO: Versão em Inglês ---
           this_month: "This Month",
           last_month: "Last Month",
           last_3_months: "Last 3 Months",
           custom: "Custom",
-          
           appointments_count: "Appointments", 
           chart_title: "Daily Evolution",
           revenue_label: "Revenue",
-          
           ticket_avg: "Avg Ticket",
           top_services: "Top Services",
           daily_revenue: "Daily Revenue",
@@ -825,10 +836,29 @@ const resources = {
           hours_title: "Operating Hours",
           hours_desc: "When are you open.",
           btn_save_hours: "Save Hours",
-          closed: "Closed"
+          closed: "Closed",
+          payments: {
+            title: "Online Payments",
+            desc: "Connect your digital wallet to charge a deposit.",
+            deposit_title: "Automatic Deposit",
+            deposit_lock_desc: "End no-shows by charging a 50% deposit automatically. Exclusive for PRO and Business.",
+            upgrade_now: "Upgrade Now",
+            enable_title: "Enable Online Receipts",
+            enable_desc: "When activated, you can choose which services require a 50% deposit.",
+            account_connected: "Account Connected",
+            account_ready: "Your wallet is ready to receive deposits.",
+            disconnect: "Disconnect Account",
+            config_title: "Configure your Receipts",
+            config_desc: "Follow the two steps below to receive deposit payments automatically.",
+            no_account: "No digital account?",
+            no_account_desc: "You need a digital account to proceed. Click below to create yours for free.",
+            btn_create_account: "Create Free Account",
+            have_account: "Is your account ready?",
+            have_account_desc: "Connect it to Cleverya to automate receipts. You will be redirected and return automatically.",
+            btn_connect: "Connect Account"
+          }
         }
       },
-      // --- LANDING PAGE ---
       landing: {
         plans: {
           title: "Investment that pays off instantly",
@@ -913,7 +943,7 @@ const resources = {
           item_4: "Client History"
         },
         versatility: {
-            badge: "VERSATILITY",
+            badge: "VERSATILIDADE",
             title: "Made for",
             title_highlight: "your success",
             subtitle: "Tools adapted to scale your business, whatever your field."

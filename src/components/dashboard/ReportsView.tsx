@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -6,7 +7,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Loader2, TrendingUp, Calendar, DollarSign, Lock, CreditCard, Printer } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, DollarSign, Lock, Wallet, CreditCard, Printer } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -22,7 +23,6 @@ export default function ReportsView() {
   const [customStart, setCustomStart] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [customEnd, setCustomEnd] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-  // --- IMPRESSÃO NATIVA ---
   const handlePrint = () => {
     document.title = `Relatorio_Financeiro_${format(new Date(), 'yyyy-MM')}`;
     window.print();
@@ -30,34 +30,18 @@ export default function ReportsView() {
 
   const dateRange = useMemo(() => {
     const now = new Date();
-    
     if (selectedMonth === 'custom') {
-        return { 
-            start: startOfDay(parseISO(customStart)), 
-            end: endOfDay(parseISO(customEnd)),
-            display: `${format(parseISO(customStart), 'dd/MM')} - ${format(parseISO(customEnd), 'dd/MM')}`
-        };
+        return { start: startOfDay(parseISO(customStart)), end: endOfDay(parseISO(customEnd)), display: `${format(parseISO(customStart), 'dd/MM')} - ${format(parseISO(customEnd), 'dd/MM')}` };
     }
-    
     const monthsBack = parseInt(selectedMonth);
     let start, end, display;
-
     if (monthsBack === 0) { 
-        start = startOfMonth(now);
-        end = endOfMonth(now);
-        display = format(now, 'MMMM yyyy', { locale: i18n.language === 'pt' ? ptBR : enUS });
+        start = startOfMonth(now); end = endOfMonth(now); display = format(now, 'MMMM yyyy', { locale: i18n.language === 'pt' ? ptBR : enUS });
     } else if (monthsBack === 1) { 
-        const target = subMonths(now, 1);
-        start = startOfMonth(target);
-        end = endOfMonth(target);
-        display = format(target, 'MMMM yyyy', { locale: i18n.language === 'pt' ? ptBR : enUS });
+        const target = subMonths(now, 1); start = startOfMonth(target); end = endOfMonth(target); display = format(target, 'MMMM yyyy', { locale: i18n.language === 'pt' ? ptBR : enUS });
     } else { 
-        const target = subMonths(now, monthsBack);
-        start = startOfMonth(target);
-        end = endOfMonth(now);
-        display = t('dashboard.reports.last_months', { count: monthsBack, defaultValue: `Últimos ${monthsBack} meses` });
+        const target = subMonths(now, monthsBack); start = startOfMonth(target); end = endOfMonth(now); display = t('dashboard.reports.last_months', { count: monthsBack, defaultValue: `Últimos ${monthsBack} meses` });
     }
-
     return { start, end, display };
   }, [selectedMonth, customStart, customEnd, i18n.language, t]);
 
@@ -66,50 +50,63 @@ export default function ReportsView() {
     queryFn: async () => {
       const { data: member } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).single();
       const bid = member?.business_id;
-      if (!bid) return { dailyRevenue: [], totalRevenue: 0, appointmentsCount: 0, topServices: [], ticket: 0, revenue: 0, count: 0, chartData: [], appointmentsList: [] };
+      if (!bid) return { totalPaid: 0, totalPending: 0, count: 0, topServices: [], chartData: [], appointmentsList: [] };
 
       const { data: apps, error } = await supabase
         .from('appointments')
         .select(`
-            id, appointment_date, status,
+            id, appointment_date, status, deposit_paid, balance_paid,
             services ( name, price ),
             profiles:client_id ( name )
         `)
         .eq('business_id', bid)
         .gte('appointment_date', dateRange.start.toISOString())
         .lte('appointment_date', dateRange.end.toISOString())
-        .or('status.eq.confirmed,status.eq.completed');
+        .in('status', ['confirmed', 'completed']);
       
       if (error) throw error;
 
+      const validApps = apps || [];
+      let totalPaid = 0;
+      let totalPending = 0;
       const dailyMap = new Map();
-      let total = 0;
       const servicesMap = new Map();
-
-      const appointmentsList = apps?.map((app: any) => ({
-        start_time: app.appointment_date,
-        client_name: app.profiles?.name || t('common.client', { defaultValue: 'Cliente' }), 
-        service_name: app.services?.name || '-',
-        price: app.services?.price || 0
-      })) || [];
 
       const interval = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
       interval.forEach(d => dailyMap.set(format(d, 'yyyy-MM-dd'), 0));
 
-      apps?.forEach((app: any) => {
-          const dayKey = app.appointment_date.split('T')[0];
+      const appointmentsList = validApps.map((app: any) => {
           const price = app.services?.price || 0;
+          const deposit = Number(app.deposit_paid) || 0;
+          const balance = Number(app.balance_paid) || 0;
           
-          if (dailyMap.has(dayKey)) {
-              dailyMap.set(dayKey, dailyMap.get(dayKey) + price);
-          } else {
-              dailyMap.set(dayKey, (dailyMap.get(dayKey) || 0) + price);
+          const paid = deposit + balance;
+          const pending = app.status === 'completed' ? 0 : Math.max(0, price - paid);
+
+          totalPaid += paid;
+          totalPending += pending;
+
+          const dayKey = app.appointment_date.split('T')[0];
+          if (paid > 0) {
+              if (dailyMap.has(dayKey)) dailyMap.set(dayKey, dailyMap.get(dayKey) + paid);
+              else dailyMap.set(dayKey, paid);
           }
-          
-          total += price;
 
           const sName = app.services?.name || 'Outros';
-          servicesMap.set(sName, (servicesMap.get(sName) || 0) + 1);
+          if (!servicesMap.has(sName)) servicesMap.set(sName, { count: 0, revenue: 0 });
+          const sData = servicesMap.get(sName);
+          sData.count += 1;
+          sData.revenue += paid; 
+
+          return {
+              start_time: app.appointment_date,
+              client_name: app.profiles?.name || t('common.client', { defaultValue: 'Cliente' }), 
+              service_name: app.services?.name || '-',
+              total_value: price,
+              paid_value: paid,
+              pending_value: pending,
+              status: app.status
+          };
       });
 
       const dailyRevenue = Array.from(dailyMap.entries())
@@ -121,19 +118,19 @@ export default function ReportsView() {
           }));
 
       const topServices = Array.from(servicesMap.entries())
-        .map(([name, count]) => ({ 
+        .map(([name, data]: any) => ({ 
             name, 
-            count,
-            value: apps?.filter((a: any) => a.services?.name === name).reduce((acc: number, curr: any) => acc + (curr.services?.price || 0), 0) || 0
+            count: data.count,
+            value: data.revenue
         }))
-        .sort((a, b) => b.count - a.count)
+        .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
       return { 
+          totalPaid, 
+          totalPending, 
+          count: validApps.length, 
           chartData: dailyRevenue, 
-          revenue: total, 
-          count: apps?.length || 0, 
-          ticket: apps?.length ? total / apps.length : 0,
           topServices,
           appointmentsList
       };
@@ -212,7 +209,6 @@ export default function ReportsView() {
                         </SelectContent>
                     </Select>
                     
-                    {/* BOTÃO NATIVO DE IMPRIMIR */}
                     <Button variant="outline" className="gap-2 text-slate-300 border-slate-600 hover:text-white hover:bg-slate-700" onClick={handlePrint}>
                         <Printer className="w-4 h-4" /> 
                     </Button>
@@ -222,24 +218,24 @@ export default function ReportsView() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className="p-6 bg-slate-800 border-slate-700">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('dashboard.reports.total_revenue', { defaultValue: 'Faturamento Total' })}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{i18n.language === 'pt' ? 'Em Caixa (Recebido)' : 'In Cash (Paid)'}</p>
                 <div className="flex items-center gap-2">
                     <DollarSign className="w-5 h-5 text-green-400" />
-                    <span className="text-2xl font-bold text-white">{currencyFormatter.format(stats?.revenue || 0)}</span>
+                    <span className="text-2xl font-bold text-white">{currencyFormatter.format(stats?.totalPaid || 0)}</span>
                 </div>
             </Card>
             <Card className="p-6 bg-slate-800 border-slate-700">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('dashboard.reports.appointments_count', { defaultValue: 'Atendimentos' })}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{i18n.language === 'pt' ? 'A Receber (Pendente)' : 'Pending (To Receive)'}</p>
                 <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-blue-400" />
-                    <span className="text-2xl font-bold text-white">{stats?.count || 0}</span>
+                    <Wallet className="w-5 h-5 text-amber-500" />
+                    <span className="text-2xl font-bold text-white">{currencyFormatter.format(stats?.totalPending || 0)}</span>
                 </div>
             </Card>
             <Card className="p-6 bg-slate-800 border-slate-700">
-                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t('dashboard.reports.ticket_avg', { defaultValue: 'Ticket Médio' })}</p>
+                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{i18n.language === 'pt' ? 'Volume Total' : 'Total Volume'}</p>
                  <div className="flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-emerald-400" />
-                    <span className="text-2xl font-bold text-white">{currencyFormatter.format(stats?.ticket || 0)}</span>
+                    <TrendingUp className="w-5 h-5 text-blue-400" />
+                    <span className="text-2xl font-bold text-white">{currencyFormatter.format((stats?.totalPaid || 0) + (stats?.totalPending || 0))}</span>
                  </div>
             </Card>
         </div>
@@ -291,29 +287,24 @@ export default function ReportsView() {
            </div>
         </div>
 
-        {/* --- O RELATÓRIO OFICIAL (Escondido da tela) --- */}
+        {/* --- O RELATÓRIO OFICIAL --- */}
         <div id="print-area" className="hidden">
             <FinancialReport 
                 data={stats?.appointmentsList || []} 
-                totalRevenue={stats?.revenue || 0} 
+                totalPaid={stats?.totalPaid || 0}
+                totalPending={stats?.totalPending || 0}
                 period={dateRange.display}
             />
         </div>
 
-        {/* --- O ANTÍDOTO DO CSS QUE RESOLVE TUDO --- */}
         <style>{`
           @media print {
-            /* 1. Cegueira Total: Esconde TODO o site, incluindo modais do Radix e Portals */
             body * {
               visibility: hidden !important;
             }
-
-            /* 2. Foco Único: Torna APENAS o relatório e o seu conteúdo visíveis */
             #print-area, #print-area * {
               visibility: visible !important;
             }
-
-            /* 3. Posicionamento Absoluto: Arranca o relatório do rodapé e cola-o no topo da folha */
             #print-area {
               display: block !important;
               position: absolute !important;
@@ -323,14 +314,11 @@ export default function ReportsView() {
               margin: 0 !important;
               padding: 0 !important;
             }
-
-            /* 4. Limpeza: Garante que o fundo da folha sai branco e não cinzento */
             body {
               background-color: white !important;
             }
           }
         `}</style>
-
     </div>
   );
 }

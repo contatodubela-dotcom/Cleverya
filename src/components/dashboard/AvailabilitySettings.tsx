@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
-import { usePlan } from '../../hooks/usePlan'; // <-- IMPORTANTE: Adicionado para ler o plano
+import { usePlan } from '../../hooks/usePlan'; 
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Switch } from '../ui/switch';
@@ -21,14 +21,13 @@ interface DaySchedule {
 export default function AvailabilitySettings() {
   const { t, i18n } = useTranslation();
   const { user } = useAuth();
-  const { plan } = usePlan(); // <-- Lendo o plano atual do usuário
+  const { plan } = usePlan(); 
   const queryClient = useQueryClient();
   
-  const isPremium = plan === 'pro' || plan === 'business'; // Verifica se pode usar o recurso
+  const isPremium = plan === 'pro' || plan === 'business'; 
 
   const [schedule, setSchedule] = useState<DaySchedule[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
   
   const [branding, setBranding] = useState({
     business_name: '',
@@ -39,13 +38,13 @@ export default function AvailabilitySettings() {
   });
 
   const days = [
-    { id: 0, label: i18n.language === 'pt' ? 'Domingo' : 'Sunday' },
-    { id: 1, label: i18n.language === 'pt' ? 'Segunda' : 'Monday' },
-    { id: 2, label: i18n.language === 'pt' ? 'Terça' : 'Tuesday' },
-    { id: 3, label: i18n.language === 'pt' ? 'Quarta' : 'Wednesday' },
-    { id: 4, label: i18n.language === 'pt' ? 'Quinta' : 'Thursday' },
-    { id: 5, label: i18n.language === 'pt' ? 'Sexta' : 'Friday' },
-    { id: 6, label: i18n.language === 'pt' ? 'Sábado' : 'Saturday' },
+    { id: 0, label: t('common.weekdays.0') },
+    { id: 1, label: t('common.weekdays.1') },
+    { id: 2, label: t('common.weekdays.2') },
+    { id: 3, label: t('common.weekdays.3') },
+    { id: 4, label: t('common.weekdays.4') },
+    { id: 5, label: t('common.weekdays.5') },
+    { id: 6, label: t('common.weekdays.6') },
   ];
 
   const getBusinessId = async () => {
@@ -247,47 +246,44 @@ export default function AvailabilitySettings() {
         </div>
       </div>
 
-      {/* --- NOVA SEÇÃO: PAGAMENTOS E PIX (BLOQUEIO PREMIUM) --- */}
+      {/* --- SEÇÃO DE PAGAMENTOS COM TRADUÇÃO INTELIGENTE --- */}
       <div className="border-t border-white/10 my-8"></div>
       <div>
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Wallet className="w-6 h-6 text-emerald-400" /> Integração Mercado Pago
+              <Wallet className="w-6 h-6 text-emerald-400" /> {t('dashboard.settings.payments.title')}
             </h2>
-            <p className="text-slate-400">Conecte sua conta para poder cobrar sinal nos seus serviços.</p>
+            <p className="text-slate-400">{t('dashboard.settings.payments.desc')}</p>
           </div>
         </div>
 
         {!isPremium ? (
-          /* BANNER DE BLOQUEIO PARA PLANO FREE */
           <Card className="p-8 bg-slate-800/50 border-amber-500/30 relative overflow-hidden text-center flex flex-col items-center shadow-xl">
             <div className="absolute top-0 right-0 bg-amber-500 text-slate-900 text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider flex items-center gap-1">
-              <Crown className="w-3 h-3" /> Recurso Premium
+              <Crown className="w-3 h-3" /> {t('common.premium_feature')}
             </div>
             <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mb-4">
               <Wallet className="w-8 h-8 text-amber-500" />
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Cobrança de Sinal via PIX</h3>
+            <h3 className="text-xl font-bold text-white mb-2">{t('dashboard.settings.payments.deposit_title')}</h3>
             <p className="text-sm text-slate-400 max-w-md mb-6">
-              Acabe com as faltas cobrando 50% de sinal automático no momento do agendamento. O dinheiro cai direto na sua conta. Exclusivo para assinantes PRO e Business.
+              {t('dashboard.settings.payments.deposit_lock_desc')}
             </p>
-            {/* Redireciona para o checkout ou aba de planos */}
             <Button onClick={() => window.open('https://wa.me/55XX000000000', '_blank')} className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-8 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-              Fazer Upgrade Agora
+              {t('dashboard.settings.payments.upgrade_now')}
             </Button>
           </Card>
         ) : (
-          /* FORMULÁRIO REAL PARA PLANOS PRO/BUSINESS */
           <Card className="p-6 bg-slate-800 border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.05)] space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 bg-slate-900/50 rounded-xl border border-white/5">
               <div>
-                <h3 className="text-lg font-bold text-white mb-1">Ativar Recebimentos via PIX</h3>
-                <p className="text-sm text-slate-400 max-w-md">Ao ativar, você poderá escolher na aba "Serviços" quais deles exigirão um sinal de 50% pago via PIX.</p>
+                <h3 className="text-lg font-bold text-white mb-1">{t('dashboard.settings.payments.enable_title')}</h3>
+                <p className="text-sm text-slate-400 max-w-md">{t('dashboard.settings.payments.enable_desc')}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`text-sm font-bold ${branding.require_deposit ? 'text-emerald-400' : 'text-slate-500'}`}>
-                  {branding.require_deposit ? 'ATIVADO' : 'DESATIVADO'}
+                  {branding.require_deposit ? t('common.activated') : t('common.deactivated')}
                 </span>
                 <Switch 
                   checked={branding.require_deposit}
@@ -300,7 +296,6 @@ export default function AvailabilitySettings() {
             <div className="animate-in slide-in-from-top-2 p-4 border border-emerald-500/20 bg-emerald-500/5 rounded-xl space-y-4">
               
               {branding.mp_access_token ? (
-                 /* TELA DE SUCESSO: CONTA JÁ CONECTADA */
                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 p-5 rounded-xl border border-emerald-500/30 shadow-lg">
                    <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center">
@@ -308,42 +303,40 @@ export default function AvailabilitySettings() {
                       </div>
                       <div>
                         <h4 className="text-white font-bold text-base flex items-center gap-2">
-                          Conta Conectada <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">Ativo</span>
+                          {t('dashboard.settings.payments.account_connected')} <span className="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">{t('common.active')}</span>
                         </h4>
-                        <p className="text-sm text-slate-400 mt-1">O seu Mercado Pago está pronto para receber o dinheiro dos sinais.</p>
+                        <p className="text-sm text-slate-400 mt-1">{t('dashboard.settings.payments.account_ready')}</p>
                       </div>
                    </div>
                    <Button 
                      variant="ghost" 
                      onClick={() => {
-                       if (confirm('Tem a certeza de que deseja desconectar o Mercado Pago? O recebimento de sinais será pausado.')) {
+                       if (confirm(t('toasts.confirm_disconnect'))) {
                          setBranding({...branding, mp_access_token: ''});
                        }
                      }} 
                      className="text-slate-400 hover:text-red-400 hover:bg-red-400/10 text-xs whitespace-nowrap"
                    >
-                      Desconectar Conta
+                      {t('dashboard.settings.payments.disconnect')}
                    </Button>
                  </div>
               ) : (
-                 /* TELA DE LOGIN: PEDIR PARA CONECTAR COM PASSO 1 E PASSO 2 */
                  <div className="bg-slate-900 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
                    <div className="p-6 text-center border-b border-slate-800 bg-slate-800/50">
                      <Wallet className="w-12 h-12 text-blue-500 mx-auto mb-3" />
-                     <h4 className="text-xl text-white font-bold mb-2">Configure os seus Recebimentos</h4>
+                     <h4 className="text-xl text-white font-bold mb-2">{t('dashboard.settings.payments.config_title')}</h4>
                      <p className="text-sm text-slate-400 max-w-md mx-auto">
-                        Para receber os sinais de agendamento via PIX automaticamente, siga os dois passos abaixo.
+                        {t('dashboard.settings.payments.config_desc')}
                      </p>
                    </div>
                    
                    <div className="p-6 space-y-6">
-                     {/* PASSO 1: INDICAÇÃO (SUA COMISSÃO) */}
                      <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl relative overflow-hidden">
                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
                        <div>
-                         <span className="bg-emerald-500 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-block">PASSO 1</span>
-                         <h4 className="text-base font-bold text-white">Não tem conta no Mercado Pago?</h4>
-                         <p className="text-xs text-slate-400 mt-1 max-w-sm">É obrigatório ter uma conta digital. Clique abaixo para criar a sua de forma 100% gratuita antes de prosseguir.</p>
+                         <span className="bg-emerald-500 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-block">{t('common.step_1')}</span>
+                         <h4 className="text-base font-bold text-white">{t('dashboard.settings.payments.no_account')}</h4>
+                         <p className="text-xs text-slate-400 mt-1 max-w-sm">{t('dashboard.settings.payments.no_account_desc')}</p>
                        </div>
                        <a 
                          href="https://mpago.li/2vLqmmX" 
@@ -351,24 +344,22 @@ export default function AvailabilitySettings() {
                          rel="noopener noreferrer"
                          className="whitespace-nowrap bg-emerald-500 hover:bg-emerald-600 text-slate-900 text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                        >
-                         Criar Conta Grátis
+                         {t('dashboard.settings.payments.btn_create_account')}
                        </a>
                      </div>
 
-                     {/* PASSO 2: CONECTAR (OAUTH) */}
                      <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl relative overflow-hidden">
                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#009EE3]"></div>
                        <div>
-                         <span className="bg-[#009EE3] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-block">PASSO 2</span>
-                         <h4 className="text-base font-bold text-white">Já tem a sua conta pronta?</h4>
-                         <p className="text-xs text-slate-400 mt-1 max-w-sm">Conecte-a ao Cleverya para automatizar os recebimentos. Você será redirecionado e voltará automaticamente.</p>
+                         <span className="bg-[#009EE3] text-white text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider mb-2 inline-block">{t('common.step_2')}</span>
+                         <h4 className="text-base font-bold text-white">{t('dashboard.settings.payments.have_account')}</h4>
+                         <p className="text-xs text-slate-400 mt-1 max-w-sm">{t('dashboard.settings.payments.have_account_desc')}</p>
                        </div>
                        <a 
-                         // LEMBRE-SE DE COLOCAR O SEU CLIENT_ID E O LINK DO SUPABASE ABAIXO
                          href={`https://auth.mercadopago.com.br/authorization?client_id=3643614535752953&response_type=code&platform_id=mp&state=${profileData?.id}&redirect_uri=https://bxglxltapbagjmmkagfm.supabase.co/functions/v1/mp-auth-callback`}
                          className="whitespace-nowrap bg-[#009EE3] hover:bg-[#0089c4] text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(0,158,227,0.2)]"
                        >
-                         Conectar Conta
+                         {t('dashboard.settings.payments.btn_connect')}
                        </a>
                      </div>
                    </div>
@@ -441,7 +432,7 @@ export default function AvailabilitySettings() {
                     </div>
                   ) : (
                     <div className="flex-1 text-right pr-12 text-sm font-medium text-slate-600 uppercase tracking-widest">
-                      {t('common.closed', { defaultValue: 'Fechado' })}
+                      {t('common.closed')}
                     </div>
                   )}
                 </div>

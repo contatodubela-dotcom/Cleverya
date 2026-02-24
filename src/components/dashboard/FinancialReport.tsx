@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 interface ReportProps {
   data: any[]; 
-  totalRevenue: number;
+  totalPaid: number;
+  totalPending: number;
   period: string;
 }
 
@@ -12,16 +13,12 @@ export const FinancialReport = forwardRef<HTMLDivElement, ReportProps>((props, r
   const { user } = useAuth();
   const { i18n } = useTranslation();
 
-  // O "Interruptor" Inteligente
   const isEN = i18n.language === 'en';
   const locale = isEN ? 'en-US' : 'pt-BR';
   const currencyCode = isEN ? 'USD' : 'BRL';
 
   const date = new Date().toLocaleDateString(locale);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat(locale, { style: 'currency', currency: currencyCode }).format(value);
-  };
+  const formatCurrency = (value: number) => new Intl.NumberFormat(locale, { style: 'currency', currency: currencyCode }).format(value);
 
   return (
     <div ref={ref} className="p-10 bg-white text-black font-sans w-full">
@@ -29,12 +26,8 @@ export const FinancialReport = forwardRef<HTMLDivElement, ReportProps>((props, r
       {/* Cabeçalho do Relatório */}
       <div className="flex justify-between items-center border-b-2 border-gray-800 pb-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isEN ? 'Financial Report' : 'Relatório Financeiro'}
-          </h1>
-          <p className="text-sm text-gray-600">
-            {isEN ? 'Generated via Cleverya App' : 'Gerado via Cleverya App'}
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">{isEN ? 'Financial Statement' : 'Extrato Financeiro'}</h1>
+          <p className="text-sm text-gray-600">{isEN ? 'Generated via Cleverya App' : 'Gerado via Cleverya App'}</p>
         </div>
         <div className="text-right">
           <h2 className="text-xl font-bold">{user?.user_metadata?.business_name || (isEN ? 'My Business' : 'Minha Empresa')}</h2>
@@ -43,34 +36,45 @@ export const FinancialReport = forwardRef<HTMLDivElement, ReportProps>((props, r
         </div>
       </div>
 
-      {/* Resumo */}
-      <div className="mb-8 p-4 bg-gray-100 rounded-lg border border-gray-300">
-        <h3 className="text-lg font-bold mb-2">{isEN ? 'Period Summary' : 'Resumo do Período'}</h3>
-        <div className="text-4xl font-bold text-green-700">
-          {formatCurrency(props.totalRevenue)}
+      {/* Resumo Financeiro */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+            <h3 className="text-sm font-bold mb-1 text-green-800 uppercase tracking-widest">{isEN ? 'In Cash (Paid)' : 'Em Caixa (Recebido)'}</h3>
+            <div className="text-3xl font-black text-green-700">{formatCurrency(props.totalPaid)}</div>
         </div>
-        <p className="text-sm text-gray-600">{isEN ? 'Total Confirmed Revenue' : 'Faturamento Total Confirmado'}</p>
+        <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <h3 className="text-sm font-bold mb-1 text-amber-800 uppercase tracking-widest">{isEN ? 'Pending (To Receive)' : 'A Receber (Pendente)'}</h3>
+            <div className="text-3xl font-black text-amber-700">{formatCurrency(props.totalPending)}</div>
+        </div>
       </div>
 
-      {/* Tabela de Dados */}
-      <table className="w-full text-left border-collapse">
+      {/* Tabela de Dados Completa */}
+      <table className="w-full text-left border-collapse text-sm">
         <thead>
-          <tr className="border-b border-gray-400">
+          <tr className="border-b-2 border-gray-800">
             <th className="py-2 font-bold">{isEN ? 'Date' : 'Data'}</th>
             <th className="py-2 font-bold">{isEN ? 'Customer' : 'Cliente'}</th>
             <th className="py-2 font-bold">{isEN ? 'Service' : 'Serviço'}</th>
-            <th className="py-2 font-bold text-right">{isEN ? 'Value' : 'Valor'}</th>
+            <th className="py-2 font-bold text-center">Status</th>
+            <th className="py-2 font-bold text-right">{isEN ? 'Total' : 'Total'}</th>
+            <th className="py-2 font-bold text-right text-green-700">{isEN ? 'Paid' : 'Recebido'}</th>
+            <th className="py-2 font-bold text-right text-amber-600">{isEN ? 'Pending' : 'Pendente'}</th>
           </tr>
         </thead>
         <tbody>
           {props.data.map((item, index) => (
-            <tr key={index} className="border-b border-gray-200">
-              <td className="py-2">{new Date(item.start_time).toLocaleDateString(locale)}</td>
-              <td className="py-2">{item.client_name}</td>
-              <td className="py-2">{item.service_name}</td>
-              <td className="py-2 text-right">
-                {formatCurrency(item.price)}
+            <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
+              <td className="py-3">{new Date(item.start_time).toLocaleDateString(locale)}</td>
+              <td className="py-3 font-medium">{item.client_name}</td>
+              <td className="py-3 text-gray-600">{item.service_name}</td>
+              <td className="py-3 text-center">
+                 <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${item.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
+                    {item.status === 'completed' ? (isEN ? 'Completed' : 'Realizado') : (isEN ? 'Confirmed' : 'Confirmado')}
+                 </span>
               </td>
+              <td className="py-3 text-right font-medium">{formatCurrency(item.total_value)}</td>
+              <td className="py-3 text-right font-bold text-green-700">{formatCurrency(item.paid_value)}</td>
+              <td className="py-3 text-right font-bold text-amber-600">{formatCurrency(item.pending_value)}</td>
             </tr>
           ))}
         </tbody>

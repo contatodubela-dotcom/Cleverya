@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet-async'; 
 import NotFound from './NotFound';
 
+
 interface BusinessInfo {
   id: string;
   owner_id: string;

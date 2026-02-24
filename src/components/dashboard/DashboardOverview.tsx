@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { WhatsAppButton } from '../WhatsAppButton'; 
 import { 
   Users, Calendar, DollarSign, TrendingUp, Clock, 
-  ArrowUpRight, ArrowDownRight, ArrowRight, X // <--- Import X
+  ArrowUpRight, ArrowDownRight, ArrowRight, X, Wallet
 } from 'lucide-react';
 import { format, isSameDay, startOfMonth, endOfMonth, parseISO, eachDayOfInterval } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -36,7 +36,7 @@ function StatCard({ title, value, icon: Icon, trend, color }: any) {
 export default function DashboardOverview() {
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
-  const [showBanner, setShowBanner] = useState(true); // <--- Estado do Banner
+  const [showBanner, setShowBanner] = useState(true); 
   
   const currencyCode = i18n.language === 'en' ? 'USD' : 'BRL';
   const currencyLocale = i18n.language === 'en' ? 'en-US' : 'pt-BR';
@@ -49,7 +49,6 @@ export default function DashboardOverview() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard-stats-overview', user?.id],
     queryFn: async () => {
-      // Alterado para buscar também o plano da empresa
       const { data: member } = await supabase
         .from('business_members')
         .select('business_id, business:businesses(plan_type)')
@@ -66,6 +65,7 @@ export default function DashboardOverview() {
       const firstDay = startOfMonth(now).toISOString();
       const lastDay = endOfMonth(now).toISOString();
 
+      // Buscando as colunas novas de pagamento real
       const { data: appointments, error } = await supabase
         .from('appointments')
         .select(`
@@ -73,12 +73,14 @@ export default function DashboardOverview() {
           appointment_date,
           appointment_time,
           status,
+          deposit_paid,
+          balance_paid,
           services ( price, name ),
           clients ( name, phone ),
           professionals ( name )
         `)
         .eq('business_id', businessId)
-        .neq('status', 'pending_payment') // <-- MÁGICA: Esconde os PIXs não pagos!
+        .neq('status', 'pending_payment') 
         .gte('appointment_date', firstDay)
         .lte('appointment_date', lastDay)
         .order('appointment_date', { ascending: true });
@@ -96,14 +98,29 @@ export default function DashboardOverview() {
   });
 
   const stats = useMemo(() => {
-    if (!dashboardData?.appointments) return { revenue: 0, appointments: 0, today: 0, clients: 0, todayApps: [], chartData: [], planType: 'free' };
+    if (!dashboardData?.appointments) return { totalPaid: 0, totalPending: 0, appointments: 0, today: 0, clients: 0, todayApps: [], chartData: [], planType: 'free' };
 
     const apps = dashboardData.appointments;
     const today = new Date();
     
-    const revenue = apps
-      .filter((app: any) => app.status === 'confirmed' || app.status === 'completed')
-      .reduce((acc: number, app: any) => acc + (app.services?.price || 0), 0);
+    // --- LÓGICA FINANCEIRA FATO REAL ---
+    let totalPaid = 0;
+    let totalPending = 0;
+
+    const validApps = apps.filter((app: any) => app.status === 'confirmed' || app.status === 'completed');
+
+    validApps.forEach((app: any) => {
+        const price = app.services?.price || 0;
+        const deposit = Number(app.deposit_paid) || 0;
+        const balance = Number(app.balance_paid) || 0;
+
+        const currentPaid = deposit + balance;
+        totalPaid += currentPaid;
+
+        if (app.status === 'confirmed') {
+            totalPending += Math.max(0, price - currentPaid); // O que falta pagar
+        }
+    });
 
     const todayApps = apps.filter((app: any) => isSameDay(parseISO(app.appointment_date), today) && app.status !== 'cancelled');
 
@@ -113,25 +130,27 @@ export default function DashboardOverview() {
 
     const dailyData = daysInterval.map(day => {
         const dateKey = format(day, 'yyyy-MM-dd');
-        const dayValue = apps
-            .filter((app: any) => app.appointment_date === dateKey && (app.status === 'confirmed' || app.status === 'completed'))
-            .reduce((acc: number, app: any) => acc + (app.services?.price || 0), 0);
+        // O gráfico diário soma apenas o dinheiro real do dia
+        const dayPaid = validApps
+            .filter((app: any) => app.appointment_date === dateKey)
+            .reduce((acc: number, app: any) => acc + (Number(app.deposit_paid) || 0) + (Number(app.balance_paid) || 0), 0);
         
         return {
             name: format(day, 'dd'),
             fullDate: format(day, "d 'de' MMMM", { locale: dateLocale }),
-            value: dayValue
+            value: dayPaid
         };
     });
 
     return {
-      revenue,
+      totalPaid,
+      totalPending,
       appointments: apps.length,
       today: todayApps.length,
       clients: dashboardData.clientsCount || 0,
       todayApps,
       chartData: dailyData,
-      planType: dashboardData.planType // Passando o plano
+      planType: dashboardData.planType 
     };
   }, [dashboardData, dateLocale]);
 
@@ -147,7 +166,6 @@ export default function DashboardOverview() {
         <p className="text-slate-400">{t('dashboard.overview.subtitle', { defaultValue: 'Resumo financeiro e operacional deste mês.' })}</p>
       </div>
 
-      {/* BANNER INTELIGENTE: SÓ APARECE SE FOR FREE E NÃO TIVER FECHADO */}
       {(stats.planType === 'free' && showBanner) && (
         <div className="relative bg-gradient-to-r from-[#240b3b] to-[#4c1d95] rounded-2xl p-6 mb-8 border border-purple-500/30 shadow-[0_0_20px_rgba(88,28,135,0.3)] overflow-hidden group">
           
@@ -182,11 +200,16 @@ export default function DashboardOverview() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title={t('dashboard.overview.revenue', { defaultValue: 'Faturamento (Mês)' })}
-          value={new Intl.NumberFormat(currencyLocale, { style: 'currency', currency: currencyCode }).format(stats.revenue)}
+          title={i18n.language === 'pt' ? 'Em Caixa (Recebido)' : 'In Cash (Paid)'}
+          value={new Intl.NumberFormat(currencyLocale, { style: 'currency', currency: currencyCode }).format(stats.totalPaid)}
           icon={DollarSign}
           color="bg-green-500 text-green-500"
-          trend={12} 
+        />
+        <StatCard 
+          title={i18n.language === 'pt' ? 'A Receber (Pendente)' : 'Pending (To Receive)'}
+          value={new Intl.NumberFormat(currencyLocale, { style: 'currency', currency: currencyCode }).format(stats.totalPending)}
+          icon={Wallet}
+          color="bg-amber-500 text-amber-500"
         />
         <StatCard 
           title={t('dashboard.calendar.total', { defaultValue: 'Agendamentos' })}
@@ -202,12 +225,6 @@ export default function DashboardOverview() {
           color="bg-purple-500 text-purple-500"
           trend={5}
         />
-        <StatCard 
-          title={t('dashboard.overview.today', { defaultValue: 'Agenda Hoje' })}
-          value={stats.today}
-          icon={Clock}
-          color="bg-orange-500 text-orange-500"
-        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -219,10 +236,10 @@ export default function DashboardOverview() {
                     <TrendingUp className="w-5 h-5 text-green-400" />
                     {t('dashboard.overview.financial_performance', { defaultValue: 'Desempenho Financeiro' })}
                 </h3>
-                <p className="text-xs text-slate-400">{t('dashboard.overview.daily_revenue', { defaultValue: 'Receita diária confirmada' })}</p>
+                <p className="text-xs text-slate-400">{i18n.language === 'pt' ? 'Evolução de valores que realmente entraram em caixa' : 'Daily evolution of actual cash received'}</p>
              </div>
              <span className="text-2xl font-bold text-green-400">
-                {new Intl.NumberFormat(currencyLocale, { style: 'currency', currency: currencyCode }).format(stats.revenue)}
+                {new Intl.NumberFormat(currencyLocale, { style: 'currency', currency: currencyCode }).format(stats.totalPaid)}
              </span>
           </div>
           
@@ -282,7 +299,7 @@ export default function DashboardOverview() {
               .map((app: any) => (
                 <div key={app.id} className="flex items-center justify-between p-3 bg-slate-700/30 hover:bg-slate-700/50 rounded-xl border border-slate-600/50 transition-colors group">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${app.status === 'confirmed' ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-yellow-400'}`}></div>
+                    <div className={`w-2 h-2 rounded-full ${app.status === 'confirmed' ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]' : 'bg-yellow-400'}`}></div>
                     <div>
                       <p className="text-white text-sm font-medium">
                         {app.clients?.name || t('common.client', {defaultValue: 'Cliente'})}
@@ -302,7 +319,7 @@ export default function DashboardOverview() {
                         time={app.appointment_time.slice(0, 5)}
                         variant="icon"
                     />
-                    {app.services?.price && (
+                    {app.services?.price !== undefined && (
                         <span className="text-xs font-bold text-slate-300 bg-slate-800 px-2 py-1 rounded-md border border-slate-600">
                             {new Intl.NumberFormat(currencyLocale, { style: 'currency', currency: currencyCode }).format(app.services.price)}
                         </span>
