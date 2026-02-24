@@ -11,15 +11,12 @@ export default function InstallPrompt() {
   const [showManualAndroid, setShowManualAndroid] = useState(false);
 
   useEffect(() => {
-    // 1. Já instalou? Não faz nada.
     const isAppMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     if (isAppMode) return; 
 
-    // 2. Já fechou no passado? Não incomoda.
     const dismissed = localStorage.getItem('cleverya-pwa-dismissed');
     if (dismissed) return;
 
-    // 3. Detetar Mobile
     const userAgent = window.navigator.userAgent.toLowerCase();
     const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
     const isAndroidDevice = /android/.test(userAgent);
@@ -27,12 +24,10 @@ export default function InstallPrompt() {
     setIsIOS(isIOSDevice);
     setIsAndroid(isAndroidDevice);
 
-    // MÁGICA: Só aparece se for celular. Espera 2 segundos para ficar elegante e ABRE SEMPRE.
     if (isIOSDevice || isAndroidDevice) {
        setTimeout(() => setIsVisible(true), 2000);
     }
 
-    // Tenta apanhar o botão automático do Android (se ele aparecer)
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -47,7 +42,7 @@ export default function InstallPrompt() {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Abre a janelinha automática do Android
+      // O CENÁRIO IDEAL: O botão OnClick funciona e chama o sistema nativo.
       deferredPrompt.prompt(); 
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
@@ -55,7 +50,7 @@ export default function InstallPrompt() {
       }
       setDeferredPrompt(null);
     } else {
-      // Se clicou em instalar mas o Android não gerou o evento, ensina onde clicar.
+      // O PLANO B: O navegador bloqueou a automação. Mostramos o guia detalhado.
       setShowManualAndroid(true);
     }
   };
@@ -93,9 +88,15 @@ export default function InstallPrompt() {
       ) : showManualAndroid ? (
          <div className="bg-slate-800 p-3 rounded-xl text-xs text-slate-300 flex items-start gap-3 mt-1 animate-in zoom-in-95">
             <MoreVertical className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
-            <p>
-              Clique nos <strong>3 pontinhos</strong> do navegador no canto superior direito e selecione <strong>Adicionar à tela inicial</strong> ou <strong>Instalar</strong>.
-            </p>
+            <div className="space-y-1">
+              <p className="font-bold text-white mb-1">O seu navegador bloqueou o atalho.</p>
+              <p>Clique nos <strong>3 pontinhos</strong> do navegador (acima ou abaixo) e procure por uma destas opções:</p>
+              <ul className="list-disc pl-4 mt-1 text-[11px] text-slate-400 space-y-0.5">
+                 <li><strong>Adicionar à tela inicial</strong></li>
+                 <li><strong>Adicionar aplicativo à tela...</strong></li>
+                 <li><strong>Instalar aplicativo</strong></li>
+              </ul>
+            </div>
          </div>
       ) : (
          <button 
