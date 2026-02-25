@@ -4,7 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Ban, Search, UserX, Loader2 } from 'lucide-react';
+import { Ban, Search, UserX, Loader2, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -15,13 +15,11 @@ export default function ClientsManager() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 1. Busca Business ID
   const getBusinessId = async () => {
     const { data } = await supabase.from('business_members').select('business_id').eq('user_id', user?.id).single();
     return data?.business_id;
   }
 
-  // 2. Busca Clientes e Estatísticas
   const { data: clients, isLoading } = useQuery({
     queryKey: ['clients-business', user?.id],
     queryFn: async () => {
@@ -54,7 +52,7 @@ export default function ClientsManager() {
         const client = clientMap.get(clientId);
         client.total_appointments++;
         if (apt.status === 'no_show') client.no_shows++;
-        if (apt.status === 'confirmed') client.confirmed++;
+        if (apt.status === 'confirmed' || apt.status === 'completed') client.confirmed++;
       });
 
       return Array.from(clientMap.values());
@@ -62,7 +60,6 @@ export default function ClientsManager() {
     enabled: !!user?.id,
   });
 
-  // 3. Busca Bloqueios
   const { data: blockedClients } = useQuery({
     queryKey: ['blocked-clients', user?.id],
     queryFn: async () => {
@@ -80,7 +77,6 @@ export default function ClientsManager() {
     enabled: !!user?.id,
   });
 
-  // 4. Bloquear Cliente
   const blockMutation = useMutation({
     mutationFn: async ({ client_id, no_show_count }: { client_id: string; no_show_count: number }) => {
       const businessId = await getBusinessId();
@@ -101,7 +97,6 @@ export default function ClientsManager() {
     onError: () => toast.error(t('toasts.error_block')),
   });
 
-  // 5. Desbloquear Cliente
   const unblockMutation = useMutation({
     mutationFn: async (client_id: string) => {
       const businessId = await getBusinessId();
@@ -133,9 +128,9 @@ export default function ClientsManager() {
   if (isLoading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-10">
       <div>
-        <h2 className="text-2xl font-display font-bold mb-1 text-white">{t('dashboard.clients.title', {defaultValue: 'Clientes'})}</h2>
+        <h2 className="text-2xl font-bold mb-1 text-white">{t('dashboard.clients.title', {defaultValue: 'Clientes'})}</h2>
         <p className="text-slate-400">{t('dashboard.clients.subtitle', {defaultValue: 'Histórico de quem já agendou.'})}</p>
       </div>
 
@@ -145,7 +140,7 @@ export default function ClientsManager() {
           placeholder={t('common.search_placeholder', {defaultValue: 'Buscar nome ou telefone...'})} 
           value={searchTerm} 
           onChange={(e) => setSearchTerm(e.target.value)} 
-          className="pl-10 bg-white text-slate-900 border-slate-200 focus:border-primary" 
+          className="pl-10 bg-slate-800 border-slate-700 text-white focus:border-primary placeholder:text-slate-500" 
         />
       </div>
 
@@ -158,7 +153,7 @@ export default function ClientsManager() {
           </h3>
           <div className="space-y-3">
             {blockedClients.map((bc: any) => (
-              <div key={bc.id} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-red-500/10">
+              <div key={bc.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 bg-slate-900/50 rounded-xl border border-red-500/10">
                 <div>
                   <p className="font-medium text-red-200">{bc.clients?.name}</p>
                   <p className="text-xs text-red-400/70">
@@ -174,32 +169,72 @@ export default function ClientsManager() {
         </Card>
       )}
 
-      {/* Lista Geral */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredClients?.map((client: any) => {
-          const blocked = isBlocked(client.id);
-          return (
-            <Card key={client.id} className={`p-4 bg-[#1e293b] border-white/10 ${blocked ? 'opacity-50 border-red-500/30' : ''}`}>
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white">{client.name}</h3>
-                  <p className="text-sm text-slate-400">{client.phone}</p>
+      {/* NOVO LAYOUT: Lista Geral Vertical (Estilo Equipe) */}
+      <div className="grid gap-3">
+        {filteredClients?.length === 0 ? (
+           <div className="text-center py-12 text-slate-500 bg-slate-800/50 rounded-xl border border-dashed border-slate-700">
+              <p>Nenhum cliente encontrado.</p>
+           </div>
+        ) : (
+          filteredClients?.map((client: any) => {
+            const blocked = isBlocked(client.id);
+            return (
+              <Card 
+                key={client.id} 
+                className={`p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-primary/30 transition-all group border-white/10 bg-slate-800/50 ${blocked ? 'opacity-50 border-red-500/30' : ''}`}
+              >
+                
+                {/* Lado Esquerdo: Ícone, Nome e Telefone */}
+                <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
+                   <div className="w-12 h-12 rounded-xl bg-slate-700 text-slate-300 flex items-center justify-center shrink-0 group-hover:bg-slate-600 transition-colors">
+                      <User className="w-6 h-6" />
+                   </div>
+                   <div>
+                     <div className="flex items-center gap-2">
+                       <h3 className="font-bold text-white text-base">{client.name}</h3>
+                       {blocked && <Ban className="w-4 h-4 text-red-500" />}
+                     </div>
+                     <p className="text-sm text-slate-400">{client.phone}</p>
+                   </div>
                 </div>
-                {blocked && <Ban className="w-5 h-5 text-red-500" />}
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-sm mb-3">
-                <div className="bg-slate-800 rounded p-1"><p className="text-slate-500 text-xs">{t('dashboard.clients.stats_total')}</p><p className="font-semibold text-white">{client.total_appointments}</p></div>
-                <div className="bg-slate-800 rounded p-1"><p className="text-slate-500 text-xs">{t('dashboard.clients.stats_ok')}</p><p className="font-semibold text-green-400">{client.confirmed}</p></div>
-                <div className="bg-slate-800 rounded p-1"><p className="text-slate-500 text-xs">{t('dashboard.clients.stats_faults')}</p><p className="font-semibold text-red-400">{client.no_shows}</p></div>
-              </div>
-              {!blocked && client.no_shows >= 2 && (
-                <Button size="sm" variant="outline" className="w-full text-red-400 border-red-900/50 hover:bg-red-950/30" onClick={() => blockMutation.mutate({ client_id: client.id, no_show_count: client.no_shows })}>
-                  <Ban className="w-4 h-4 mr-2" /> {t('dashboard.clients.btn_block', {defaultValue: 'Bloquear'})}
-                </Button>
-              )}
-            </Card>
-          );
-        })}
+
+                {/* Meio/Direita: Estatísticas e Botões */}
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-4 shrink-0 w-full md:w-auto mt-2 md:mt-0 pt-3 md:pt-0 border-t border-white/5 md:border-t-0">
+                    
+                    {/* Bloco de Estatísticas */}
+                    <div className="flex items-center gap-4 bg-slate-900/50 p-2 px-4 rounded-xl border border-white/5 flex-1 md:flex-auto justify-center shadow-inner">
+                       <div className="text-center">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">{t('dashboard.clients.stats_total')}</p>
+                          <p className="font-bold text-white leading-none">{client.total_appointments}</p>
+                       </div>
+                       <div className="w-px h-6 bg-slate-700" />
+                       <div className="text-center">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">{t('dashboard.clients.stats_ok')}</p>
+                          <p className="font-bold text-green-400 leading-none">{client.confirmed}</p>
+                       </div>
+                       <div className="w-px h-6 bg-slate-700" />
+                       <div className="text-center">
+                          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-0.5">{t('dashboard.clients.stats_faults')}</p>
+                          <p className="font-bold text-red-400 leading-none">{client.no_shows}</p>
+                       </div>
+                    </div>
+
+                    {/* Botão de Bloqueio Automático */}
+                    {!blocked && client.no_shows >= 2 && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="w-full md:w-auto text-red-400 border-red-900/50 hover:bg-red-950/30 hover:text-red-300 shrink-0" 
+                        onClick={() => blockMutation.mutate({ client_id: client.id, no_show_count: client.no_shows })}
+                      >
+                        <Ban className="w-4 h-4 mr-2" /> {t('dashboard.clients.btn_block', {defaultValue: 'Bloquear'})}
+                      </Button>
+                    )}
+                </div>
+              </Card>
+            );
+          })
+        )}
       </div>
     </div>
   );

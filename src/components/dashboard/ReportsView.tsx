@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -7,7 +6,7 @@ import { usePlan } from '../../hooks/usePlan';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Loader2, TrendingUp, Calendar, DollarSign, Lock, Wallet, CreditCard, Printer } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, DollarSign, Lock, Wallet, CreditCard, Printer, FileText, ArrowLeft } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -22,6 +21,9 @@ export default function ReportsView() {
   const [selectedMonth, setSelectedMonth] = useState('0');
   const [customStart, setCustomStart] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [customEnd, setCustomEnd] = useState(format(new Date(), 'yyyy-MM-dd'));
+  
+  // NOVO: Estado para controlar a visualização do relatório
+  const [showPreview, setShowPreview] = useState(false);
 
   const handlePrint = () => {
     document.title = `Relatorio_Financeiro_${format(new Date(), 'yyyy-MM')}`;
@@ -176,6 +178,51 @@ export default function ReportsView() {
 
   if (isLoading) return <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-white w-8 h-8" /></div>;
 
+  // --- MODO DE PRÉ-VISUALIZAÇÃO DE IMPRESSÃO ---
+  if (showPreview) {
+    return (
+      <div className="space-y-6 animate-in fade-in pb-12">
+        
+        {/* Barra de Ferramentas Superior */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg print:hidden">
+          <Button variant="ghost" onClick={() => setShowPreview(false)} className="text-slate-400 hover:text-white bg-slate-900/50">
+             <ArrowLeft className="w-4 h-4 mr-2" /> {t('common.back', {defaultValue: 'Voltar'})}
+          </Button>
+          <h2 className="text-lg font-bold text-white hidden md:block">
+            {i18n.language === 'pt' ? 'Pré-visualização do Relatório' : 'Report Preview'}
+          </h2>
+          <Button onClick={handlePrint} className="bg-primary text-slate-900 font-bold w-full md:w-auto shadow-[0_0_15px_rgba(246,173,85,0.3)]">
+             <Printer className="w-4 h-4 mr-2" /> {t('common.print', {defaultValue: 'Imprimir'})}
+          </Button>
+        </div>
+        
+        {/* A "Folha de Papel" na Tela */}
+        <div className="overflow-x-auto bg-slate-900 p-4 md:p-8 rounded-2xl border border-slate-700 print:hidden shadow-inner">
+            <div className="min-w-[800px] bg-white rounded-xl shadow-2xl overflow-hidden mx-auto border border-gray-300 pointer-events-none">
+               <FinancialReport 
+                   data={stats?.appointmentsList || []} 
+                   totalPaid={stats?.totalPaid || 0}
+                   totalPending={stats?.totalPending || 0}
+                   period={dateRange.display}
+               />
+            </div>
+        </div>
+        
+        {/* Área Oculta para a Impressora Real */}
+        <div id="print-area" className="hidden">
+            <FinancialReport 
+                data={stats?.appointmentsList || []} 
+                totalPaid={stats?.totalPaid || 0}
+                totalPending={stats?.totalPending || 0}
+                period={dateRange.display}
+            />
+        </div>
+        <style>{`@media print { body * { visibility: hidden !important; } #print-area, #print-area * { visibility: visible !important; } #print-area { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; } body { background-color: white !important; } }`}</style>
+      </div>
+    );
+  }
+
+  // --- MODO NORMAL DO DASHBOARD ---
   return (
     <div className="space-y-6 pb-12 animate-in fade-in">
         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -209,7 +256,13 @@ export default function ReportsView() {
                         </SelectContent>
                     </Select>
                     
-                    <Button variant="outline" className="gap-2 text-slate-300 border-slate-600 hover:text-white hover:bg-slate-700" onClick={handlePrint}>
+                    {/* NOVO: Botão de Visualizar */}
+                    <Button variant="outline" className="gap-2 text-primary border-primary/50 hover:bg-primary/10" onClick={() => setShowPreview(true)}>
+                        <FileText className="w-4 h-4" /> 
+                        <span className="hidden md:inline">{i18n.language === 'pt' ? 'Ver Relatório' : 'View Report'}</span>
+                    </Button>
+
+                    <Button variant="outline" className="gap-2 text-slate-300 border-slate-600 hover:text-white hover:bg-slate-700" onClick={handlePrint} title={t('common.print', {defaultValue: 'Imprimir'})}>
                         <Printer className="w-4 h-4" /> 
                     </Button>
                 </div>
@@ -252,7 +305,7 @@ export default function ReportsView() {
                         <Tooltip
                             formatter={(value: number) => [currencyFormatter.format(value), t('dashboard.reports.revenue_label', { defaultValue: 'Receita' })]}
                             contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
-                            itemStyle={{ color: '#f8fafc' }} labelStyle={{ color: '#94a3b8' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                            itemStyle={{ color: '#4ade80' }} labelStyle={{ color: '#94a3b8' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
                         />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             {stats?.chartData?.map((entry: any, index: number) => (
@@ -287,7 +340,7 @@ export default function ReportsView() {
            </div>
         </div>
 
-        {/* --- O RELATÓRIO OFICIAL --- */}
+        {/* Área Oculta para a Impressora Direta */}
         <div id="print-area" className="hidden">
             <FinancialReport 
                 data={stats?.appointmentsList || []} 
@@ -297,28 +350,7 @@ export default function ReportsView() {
             />
         </div>
 
-        <style>{`
-          @media print {
-            body * {
-              visibility: hidden !important;
-            }
-            #print-area, #print-area * {
-              visibility: visible !important;
-            }
-            #print-area {
-              display: block !important;
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            body {
-              background-color: white !important;
-            }
-          }
-        `}</style>
+        <style>{`@media print { body * { visibility: hidden !important; } #print-area, #print-area * { visibility: visible !important; } #print-area { display: block !important; position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; margin: 0 !important; padding: 0 !important; } body { background-color: white !important; } }`}</style>
     </div>
   );
 }
