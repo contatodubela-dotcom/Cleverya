@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'; // Ajuste o caminho se necessário
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'; 
 import { Button } from '../ui/button';
 import { 
   ClipboardList, 
@@ -72,7 +72,7 @@ export default function TutorialManual({ open, onOpenChange }: TutorialManualPro
 
   return (
     <>
-      {/* CSS DE IMPRESSÃO (Mantido para garantir o PDF perfeito) */}
+      {/* CSS DE IMPRESSÃO */}
       <style>{`
         @media print {
           body * { visibility: hidden; }
@@ -91,7 +91,7 @@ export default function TutorialManual({ open, onOpenChange }: TutorialManualPro
         }
       `}</style>
 
-      {/* ÁREA DE IMPRESSÃO (Oculta na tela) */}
+      {/* ÁREA DE IMPRESSÃO */}
       <div id="printable-content" className="hidden">
         <div className="mb-8 border-b pb-4 border-gray-300">
             <h1 className="text-3xl font-bold text-black mb-2 flex items-center gap-2">
@@ -135,6 +135,21 @@ export default function TutorialManual({ open, onOpenChange }: TutorialManualPro
           </div>
 
           <div className="p-6 space-y-6">
+            
+            {/* --- VÍDEO TUTORIAL INCORPORADO NO MANUAL --- */}
+            <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-900">
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/raqvaVPqCgs?si=X7qLOgaZz-TaFE2h" 
+                title="Tutorial Cleverya" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+                className="border-0"
+              ></iframe>
+            </div>
+            {/* ------------------------------------------- */}
+
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (

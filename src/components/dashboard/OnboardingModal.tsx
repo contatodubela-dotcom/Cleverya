@@ -53,8 +53,7 @@ export default function OnboardingModal() {
           bannerUrl: business.banner_url || ''
         }));
 
-        // TRAVA DE SEGURANÇA:
-        // Se não tiver WhatsApp válido, ABRE O MODAL IMEDIATAMENTE (sem timeout)
+        // TRAVA DE SEGURANÇA
         if (!business.whatsapp || business.whatsapp.trim().length < 8) {
            setOpen(true);
         }
@@ -66,7 +65,6 @@ export default function OnboardingModal() {
   }, []);
 
   const handleClose = () => {
-    // Só permite fechar se chegou no passo final (5)
     if (step === 5) {
       setOpen(false);
       window.location.reload();
@@ -122,7 +120,6 @@ export default function OnboardingModal() {
 
       if (error) throw error;
 
-      // Cria Profissional Automaticamente para não travar a agenda
       const { count } = await supabase
         .from('professionals')
         .select('*', { count: 'exact', head: true })
@@ -210,6 +207,20 @@ export default function OnboardingModal() {
               <h2 className="text-2xl font-bold text-white tracking-tight">{t('wizard.step1_title')}</h2>
               <p className="text-slate-400 text-sm mt-1">{t('wizard.step1_subtitle')}</p>
             </div>
+
+            {/* --- VÍDEO TUTORIAL INCORPORADO NO ONBOARDING --- */}
+            <div className="w-full aspect-video rounded-xl overflow-hidden shadow-lg border border-white/10 mb-6 bg-slate-900">
+              <iframe 
+                width="100%" 
+                height="100%" 
+                src="https://www.youtube.com/embed/raqvaVPqCgs?si=X7qLOgaZz-TaFE2h" 
+                title="Tutorial Cleverya" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+                className="border-0"
+              ></iframe>
+            </div>
+            {/* ----------------------------------------------- */}
 
             <div className="space-y-4">
               <div>
@@ -416,7 +427,6 @@ export default function OnboardingModal() {
   };
 
   return (
-    // ADICIONEI: onPointerDownOutside e onEscapeKeyDown para impedir fechamento
     <Dialog open={open} onOpenChange={() => { /* Bloqueado */ }}>
       <DialogContent 
         className="sm:max-w-[420px] p-0 overflow-hidden bg-[#0f172a] border border-white/10 text-white shadow-2xl [&>button]:hidden"
