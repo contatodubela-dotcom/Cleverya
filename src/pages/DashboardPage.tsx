@@ -198,13 +198,13 @@ export default function DashboardPage() {
             <div className="flex items-center gap-1 md:gap-3 shrink-0">
               
               <Button 
-                onClick={handleOpenHelp}
-                variant="ghost" 
-                size="icon" 
-                className="h-9 w-9 text-gray-400 hover:text-white hover:bg-white/10 hidden md:flex"
-                title={t('common.help', { defaultValue: 'Ajuda / Manual' })}
+              onClick={handleOpenHelp}
+              variant="ghost" 
+              size="icon" 
+              className="h-9 w-9 text-gray-400 hover:text-white hover:bg-white/10 flex shrink-0"
+              title={t('common.help', { defaultValue: 'Ajuda / Manual' })}
               >
-                <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-5 h-5" />
               </Button>
 
               <Button onClick={toggleLanguage} variant="ghost" size="sm" className="px-2 text-xs font-bold text-gray-400 hover:text-white">
