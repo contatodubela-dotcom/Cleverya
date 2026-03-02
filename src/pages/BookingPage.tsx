@@ -382,19 +382,19 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
       </div>
 
-      <div className="w-full max-w-lg px-4 -mt-32 relative z-10">
+      <div className="w-full max-w-lg px-4 -mt-12 relative z-10">
         
-        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-x1 p-4 mb-8 text-center border border-white/50 relative overflow-hidden">
-          <div className="w-28 h-28 bg-white rounded-full mx-auto -mt-20 flex items-center justify-center shadow-2xl border-4 border-white">
-             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-lg -mt-10 relative z-10 overflow-hidden">
-             <img src="/logo.png" className="w-12 h-12 object-contain" />
-          </div>
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-xl p-5 mb-6 text-center border border-white/50 relative">
+          
+          {/* FOTO/LOGO MENOR E MAIS DISCRETA */}
+          <div className="w-20 h-20 bg-white rounded-full mx-auto -mt-14 flex items-center justify-center shadow-lg border-4 border-white relative z-10">
+             <img src="/logo.5.png" className="w-10 h-10 object-contain" alt="Logo" />
           </div>
 
-          <div className="mt-4">
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight leading-tight">{businessName}</h1>
+          <div className="mt-2">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight">{businessName}</h1>
             {isPremium && (
-                <div className="flex items-center justify-center gap-1 mt-2 text-[#d4af37] font-bold text-xs uppercase tracking-widest animate-pulse">
+                <div className="flex items-center justify-center gap-1 mt-1.5 text-[#d4af37] font-bold text-[10px] uppercase tracking-widest animate-pulse">
                     <Crown className="w-3 h-3 fill-current" />
                     <span>{t('booking.premium_exp', { defaultValue: 'Experiência Premium' })}</span>
                 </div>
@@ -402,8 +402,8 @@ function BookingContent({ business }: { business: BusinessInfo }) {
           </div>
 
           {step !== 'success' && step !== 'service' && (
-            <button onClick={handleBack} className="absolute top-4 left-4 text-slate-400 hover:text-[#d4af37] transition-colors bg-white/80 p-2 rounded-full hover:bg-white shadow-sm">
-              <ArrowLeft className="w-5 h-5" />
+            <button onClick={handleBack} className="absolute top-4 left-4 text-slate-400 hover:text-[#d4af37] transition-colors bg-slate-50 p-2 rounded-full hover:bg-slate-100 shadow-sm">
+              <ArrowLeft className="w-4 h-4" />
             </button>
           )}
         </div>
