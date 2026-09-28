@@ -72,7 +72,7 @@ export default function DashboardPage() {
         throw new Error('URL de redirecionamento não encontrada.');
       }
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.dismiss(loadingToast);
       console.error("Erro detalhado:", err);
       toast.error(t('toasts.error_portal', { defaultValue: 'Erro ao abrir portal' }));

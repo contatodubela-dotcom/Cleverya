@@ -18,7 +18,19 @@ export const formatPhoneForWhatsapp = (phone: string) => {
   return cleanPhone;
 };
 
-export const createMessage = (type: 'confirm' | 'cancel' | 'reminder' | 'hello', data: any) => {
+interface WhatsAppMessageData {
+  date?: string | Date | null;
+  time?: string | null;
+  clientName?: string | null;
+  serviceName?: string | null;
+  professionalName?: string | null;
+  businessName?: string | null;
+}
+
+export const createMessage = (
+  type: 'confirm' | 'cancel' | 'reminder' | 'hello',
+  data: WhatsAppMessageData,
+) => {
   // Garante que os dados existam para não quebrar
   const date = data.date ? format(new Date(data.date), "dd 'de' MMMM", { locale: ptBR }) : '';
   const time = data.time ? data.time.slice(0, 5) : '';

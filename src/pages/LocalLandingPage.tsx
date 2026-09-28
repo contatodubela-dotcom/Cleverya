@@ -5,6 +5,17 @@ import { CheckCircle, MapPin, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 
+interface LocalizedContent {
+  title: string;
+  pain: string;
+  benefit: string;
+}
+
+interface ProfessionContent {
+  pt: LocalizedContent;
+  en: LocalizedContent;
+}
+
 export default function LocalLandingPage() {
   const { profession, city } = useParams();
   const { i18n } = useTranslation();
@@ -37,7 +48,7 @@ export default function LocalLandingPage() {
   
   // Dicionário de Conteúdo (PT e EN)
   // Mapeamos tanto as chaves em PT quanto as chaves em EN para o mesmo conteúdo
-  const contentMap: Record<string, any> = {
+  const contentMap: Record<string, ProfessionContent> = {
     // --- BARBEARIA / BARBER ---
     'barbearia': {
       pt: { title: 'Sistema para Barbearias', pain: 'Cansado de clientes furando horário?', benefit: 'Reduza o No-Show com lembretes automáticos.' },

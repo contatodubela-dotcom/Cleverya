@@ -6,6 +6,16 @@ import { toast } from 'sonner';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+declare global {
+  interface Window {
+    fbq?: (
+      action: string,
+      eventName: string,
+      parameters?: Record<string, string>,
+    ) => void;
+  }
+}
+
 // ⚠️ ATENÇÃO: ESTES SÃO LINKS DE TESTE (Modo Dev).
 // QUANDO FOR VENDER DE VERDADE, TROQUE PELOS LINKS DE PRODUÇÃO DO STRIPE.
 const STRIPE_LINKS = {
@@ -85,8 +95,8 @@ export default function SignupPage() {
       
       if (authData.user) {
           // --- RASTREIO DO FACEBOOK PIXEL ---
-          if ((window as any).fbq) {
-            (window as any).fbq('track', 'CompleteRegistration', {
+          if (window.fbq) {
+            window.fbq('track', 'CompleteRegistration', {
               content_name: planIntent || 'free_signup',
               status: 'success'
             }); 
@@ -177,9 +187,10 @@ export default function SignupPage() {
       setSuccess(true);
       toast.success(i18n.language === 'pt' ? 'Conta criada com sucesso!' : 'Account created successfully!');
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro fatal no cadastro:", error);
-      toast.error(error.message || t('auth.error_generic'));
+      const message = error instanceof Error ? error.message : t('auth.error_generic');
+      toast.error(message);
     } finally {
       setLoading(false);
     }

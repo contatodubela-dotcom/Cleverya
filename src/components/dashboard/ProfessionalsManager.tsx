@@ -117,8 +117,13 @@ export default function ProfessionalsManager() {
       resetForm();
       toast.success(editingId ? 'Atualizado com sucesso!' : t('toasts.pro_created', {defaultValue: 'Profissional adicionado!'}));
     },
-    onError: (err: any) => {
-      toast.error(err.message === "Limite do plano atingido" ? t('toasts.plan_limit', {defaultValue: 'Limite do plano atingido'}) : t('toasts.error_generic', {defaultValue: 'Erro ao processar'}));
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : '';
+      toast.error(
+        message === "Limite do plano atingido"
+          ? t('toasts.plan_limit', {defaultValue: 'Limite do plano atingido'})
+          : t('toasts.error_generic', {defaultValue: 'Erro ao processar'})
+      );
     }
   });
 

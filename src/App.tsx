@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import { SEO } from './components/SEO';
+import EsteticaLanding from './pages/EsteticaLanding';
 
 // Componentes Carregados sob Demanda (Lazy)
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -55,6 +56,7 @@ function App() {
         
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/estetica" element={<EsteticaLanding />} />
           
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />

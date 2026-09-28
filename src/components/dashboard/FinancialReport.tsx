@@ -2,8 +2,18 @@ import React, { forwardRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 
+export interface FinancialReportRow {
+  start_time: string;
+  client_name: string;
+  service_name: string;
+  status: string;
+  total_value: number;
+  paid_value: number;
+  pending_value: number;
+}
+
 interface ReportProps {
-  data: any[]; 
+  data: FinancialReportRow[];
   totalPaid: number;
   totalPending: number;
   period: string;

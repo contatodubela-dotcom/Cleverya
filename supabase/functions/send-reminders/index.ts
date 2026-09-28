@@ -1,65 +1,114 @@
 // supabase/functions/send-reminders/index.ts
-// deno-lint-ignore-file no-import-prefix no-explicit-any ban-ts-comment
+// deno-lint-ignore-file no-import-prefix
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+declare const Deno: {
+  env: {
+    get(key: string): string | undefined
+  }
+  serve(handler: (req: Request) => Promise<Response> | Response): void
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// @ts-ignore: Deno types are handled by the runtime
+interface ReminderClient {
+  name: string | null
+  phone: string | null
+  email: string | null
+}
+
+interface ReminderService {
+  name: string | null
+}
+
+interface ReminderAppointment {
+  id: string
+  appointment_date: string
+  appointment_time: string
+  status: string
+  clients: ReminderClient[] | null
+  services: ReminderService[] | null
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Erro desconhecido'
+}
+
+function firstRelation<T>(value: T[] | T | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null
+  return value ?? null
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // @ts-ignore: Deno is available in the runtime
-    const supabase = createClient(
-      // @ts-ignore
-      Deno.env.get('SUPABASE_URL') ?? '',
-      // @ts-ignore
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error('Configuração do Supabase incompleta.')
+    }
 
-    const now = new Date()
-    const tomorrowStart = new Date(now)
-    tomorrowStart.setDate(tomorrowStart.getDate() + 1)
-    tomorrowStart.setMinutes(0, 0, 0)
-    
-    const tomorrowEnd = new Date(tomorrowStart)
-    tomorrowEnd.setHours(tomorrowEnd.getHours() + 1)
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-    const { data: appointments, error } = await supabase
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const targetDate = tomorrow.toISOString().slice(0, 10)
+
+    const { data, error } = await supabase
       .from('appointments')
       .select(`
-        *,
-      services:service_id (name)
+        id,
+        appointment_date,
+        appointment_time,
+        status,
+        clients (name, phone, email),
+        services (name)
       `)
-      .gte('start_time', tomorrowStart.toISOString())
-      .lt('start_time', tomorrowEnd.toISOString())
+      .eq('appointment_date', targetDate)
       .eq('status', 'confirmed')
+      .order('appointment_time', { ascending: true })
 
     if (error) throw error
 
-    console.log(`Encontrados ${appointments.length} agendamentos para lembrar.`)
+    const appointments = (data || []) as unknown as ReminderAppointment[]
 
-    const results = []
-    
+    console.log(`Encontrados ${appointments.length} agendamentos para lembrar em ${targetDate}.`)
+
+    const results: Array<{
+      id: string
+      status: string
+      recipient: string | null
+      message: string
+    }> = []
+
     for (const appointment of appointments) {
-      const clientName = appointment.client_name.split(' ')[0]
-      const serviceName = appointment.services?.name
-      const time = new Date(appointment.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      
-      const message = `Oi ${clientName}! ✨ Passando para confirmar nosso encontro amanhã às ${time} para fazer seu ${serviceName}. Já deixei tudo preparado. Até lá!`
+      const client = firstRelation(appointment.clients)
+      const service = firstRelation(appointment.services)
 
-      console.log(`[SIMULAÇÃO WHATSAPP] Para: ${appointment.client_phone} | Msg: ${message}`)
-      
+      const firstName = client?.name?.trim().split(/\s+/)[0] || 'Cliente'
+      const serviceName = service?.name || 'seu serviço'
+      const time = appointment.appointment_time?.slice(0, 5) || ''
+
+      const message =
+        `Oi ${firstName}! ✨ Passando para lembrar do seu agendamento amanhã às ${time} ` +
+        `para ${serviceName}. Até lá!`
+
+      // IMPORTANTE: ainda é simulação. A integração real com WhatsApp deve ser
+      // feita através de um provedor autorizado antes do lançamento comercial.
+      console.log(`[SIMULAÇÃO WHATSAPP] Para: ${client?.phone || 'sem telefone'} | Msg: ${message}`)
+
       results.push({
         id: appointment.id,
-        status: 'reminder_sent',
-        message: message
+        status: 'simulated',
+        recipient: client?.phone || null,
+        message,
       })
     }
 
@@ -67,9 +116,8 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
-
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message || 'Erro desconhecido' }), {
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ error: getErrorMessage(error) }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })

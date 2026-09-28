@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,7 +37,7 @@ export default function AvailabilitySettings() {
     mp_access_token: ''
   });
 
-  const days = [
+  const days = useMemo(() => [
     { id: 0, label: t('common.weekdays.0') },
     { id: 1, label: t('common.weekdays.1') },
     { id: 2, label: t('common.weekdays.2') },
@@ -45,7 +45,7 @@ export default function AvailabilitySettings() {
     { id: 4, label: t('common.weekdays.4') },
     { id: 5, label: t('common.weekdays.5') },
     { id: 6, label: t('common.weekdays.6') },
-  ];
+  ], [t]);
 
   const getBusinessId = async () => {
     const { data: bizData } = await supabase.from('businesses').select('id').eq('owner_id', user?.id).maybeSingle();
@@ -107,7 +107,7 @@ export default function AvailabilitySettings() {
       });
       setSchedule(mergedSchedule);
     }
-  }, [serverSettings, i18n.language]);
+  }, [serverSettings, days]);
 
   const saveBrandingMutation = useMutation({
     mutationFn: async () => {
@@ -162,8 +162,16 @@ export default function AvailabilitySettings() {
     }
   });
 
-  const updateDay = (dayId: number, field: keyof DaySchedule, value: any) => {
-    setSchedule(prev => prev.map(day => day.day_of_week === dayId ? { ...day, [field]: value } : day));
+  const updateDay = <K extends keyof DaySchedule>(
+    dayId: number,
+    field: K,
+    value: DaySchedule[K],
+  ) => {
+    setSchedule(prev =>
+      prev.map(day =>
+        day.day_of_week === dayId ? { ...day, [field]: value } : day,
+      ),
+    );
     setHasChanges(true);
   };
 

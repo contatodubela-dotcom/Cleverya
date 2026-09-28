@@ -4,8 +4,9 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { WhatsAppButton } from '../WhatsAppButton'; 
 import { 
-  Users, Calendar, DollarSign, TrendingUp, Clock, 
-  ArrowUpRight, ArrowDownRight, ArrowRight, X, Wallet
+  Users, Calendar, DollarSign, TrendingUp,
+  ArrowUpRight, ArrowDownRight, ArrowRight, X, Wallet,
+  type LucideIcon
 } from 'lucide-react';
 import { format, isSameDay, startOfMonth, endOfMonth, parseISO, eachDayOfInterval } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -13,7 +14,63 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-function StatCard({ title, value, icon: Icon, trend, color }: any) {
+
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  trend?: number;
+  color: string;
+}
+
+interface BusinessPlanRelation {
+  plan_type: string | null;
+}
+
+interface DashboardService {
+  price: number | null;
+  name: string | null;
+}
+
+interface DashboardClient {
+  name: string | null;
+  phone: string | null;
+}
+
+interface DashboardProfessional {
+  name: string | null;
+}
+
+interface RawDashboardAppointment {
+  id: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
+  deposit_paid: number | string | null;
+  balance_paid: number | string | null;
+  services: DashboardService[] | null;
+  clients: DashboardClient[] | null;
+  professionals: DashboardProfessional[] | null;
+}
+
+interface DashboardAppointment {
+  id: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
+  deposit_paid: number | string | null;
+  balance_paid: number | string | null;
+  services: DashboardService | null;
+  clients: DashboardClient | null;
+  professionals: DashboardProfessional | null;
+}
+
+function firstRelation<T>(value: T[] | T | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
+function StatCard({ title, value, icon: Icon, trend, color }: StatCardProps) {
   return (
     <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 hover:border-slate-600 transition-all shadow-lg">
       <div className="flex justify-between items-start mb-4">
@@ -56,8 +113,10 @@ export default function DashboardOverview() {
         .single();
         
       const businessId = member?.business_id;
-      // @ts-ignore
-      const planType = member?.business?.plan_type || 'free';
+      const businessRelation = firstRelation(
+        member?.business as BusinessPlanRelation[] | BusinessPlanRelation | null | undefined,
+      );
+      const planType = businessRelation?.plan_type || 'free';
 
       if (!businessId) return null;
 
@@ -87,12 +146,21 @@ export default function DashboardOverview() {
 
       if (error) throw error;
 
+      const normalizedAppointments: DashboardAppointment[] = (
+        (appointments || []) as unknown as RawDashboardAppointment[]
+      ).map((appointment) => ({
+        ...appointment,
+        services: firstRelation(appointment.services),
+        clients: firstRelation(appointment.clients),
+        professionals: firstRelation(appointment.professionals),
+      }));
+
       const { count: clientsCount } = await supabase
         .from('clients')
         .select('*', { count: 'exact', head: true })
         .eq('business_id', businessId);
 
-      return { appointments, clientsCount, planType };
+      return { appointments: normalizedAppointments, clientsCount, planType };
     },
     enabled: !!user?.id,
   });
@@ -107,9 +175,9 @@ export default function DashboardOverview() {
     let totalPaid = 0;
     let totalPending = 0;
 
-    const validApps = apps.filter((app: any) => app.status === 'confirmed' || app.status === 'completed');
+    const validApps = apps.filter((app) => app.status === 'confirmed' || app.status === 'completed');
 
-    validApps.forEach((app: any) => {
+    validApps.forEach((app) => {
         const price = app.services?.price || 0;
         const deposit = Number(app.deposit_paid) || 0;
         const balance = Number(app.balance_paid) || 0;
@@ -122,7 +190,7 @@ export default function DashboardOverview() {
         }
     });
 
-    const todayApps = apps.filter((app: any) => isSameDay(parseISO(app.appointment_date), today) && app.status !== 'cancelled');
+    const todayApps = apps.filter((app) => isSameDay(parseISO(app.appointment_date), today) && app.status !== 'cancelled');
 
     const start = startOfMonth(today);
     const end = endOfMonth(today);
@@ -132,8 +200,8 @@ export default function DashboardOverview() {
         const dateKey = format(day, 'yyyy-MM-dd');
         // O gráfico diário soma apenas o dinheiro real do dia
         const dayPaid = validApps
-            .filter((app: any) => app.appointment_date === dateKey)
-            .reduce((acc: number, app: any) => acc + (Number(app.deposit_paid) || 0) + (Number(app.balance_paid) || 0), 0);
+            .filter((app) => app.appointment_date === dateKey)
+            .reduce((acc, app) => acc + (Number(app.deposit_paid) || 0) + (Number(app.balance_paid) || 0), 0);
         
         return {
             name: format(day, 'dd'),
@@ -295,8 +363,8 @@ export default function DashboardOverview() {
                 </div>
             )}
 
-            {(stats.todayApps.length > 0 ? stats.todayApps : (dashboardData?.appointments?.filter((a: any) => new Date(a.appointment_date) > new Date()).slice(0, 5) || []))
-              .map((app: any) => (
+            {(stats.todayApps.length > 0 ? stats.todayApps : (dashboardData?.appointments?.filter((appointment) => new Date(appointment.appointment_date) > new Date()).slice(0, 5) || []))
+              .map((app) => (
                 <div key={app.id} className="flex items-center justify-between p-3 bg-slate-700/30 hover:bg-slate-700/50 rounded-xl border border-slate-600/50 transition-colors group">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${app.status === 'confirmed' ? 'bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]' : 'bg-yellow-400'}`}></div>

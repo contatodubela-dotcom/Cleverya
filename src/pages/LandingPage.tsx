@@ -1,550 +1,160 @@
-import { Link } from 'react-router-dom';
-import { 
-  CheckCircle, Clock, DollarSign, 
-  Menu, X, Star, AlertCircle, Smartphone,
-  Briefcase, Brain, Scissors, Dumbbell,
-  TrendingUp, Bell, Share2, MousePointerClick,
-  XCircle 
-} from 'lucide-react';
-import { useState } from 'react';
-import { m, LazyMotion, domAnimation } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../hooks/useAuth';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card } from '../components/ui/card';
+import { Sparkles, Loader2, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
-export default function LandingPage() {
-  const { t, i18n } = useTranslation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+export default function LoginPage() {
+  const { t, i18n } = useTranslation(); // Pegamos o i18n para trocar o idioma
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+  // Schema de validação com tradução
+  const loginSchema = z.object({
+    email: z.string().email(t('auth.validation_email', { defaultValue: 'E-mail inválido' })),
+    password: z.string().min(6, t('auth.validation_password_min', { defaultValue: 'A senha deve ter no mínimo 6 caracteres' })),
+  });
+
+  type LoginForm = z.infer<typeof loginSchema>;
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
     }
-    setIsMenuOpen(false);
-  };
+  }, [user, navigate]);
 
-  const changeLanguage = (lang: string) => {
-    i18n.changeLanguage(lang);
-    setIsMenuOpen(false); 
-  };
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const nichesCards = [
-    { 
-      icon: Scissors, 
-      title: t('landing.niches.barber_title'), 
-      desc: t('landing.niches.barber_desc'),
-      color: "text-orange-400",
-      bg: "bg-orange-500/10",
-      border: "border-orange-500/20"
-    },
-    { 
-      icon: Brain, 
-      title: t('landing.niches.health_title'), 
-      desc: t('landing.niches.health_desc'),
-      color: "text-purple-400",
-      bg: "bg-purple-500/10",
-      border: "border-purple-500/20"
-    },
-    { 
-      icon: Dumbbell, 
-      title: t('landing.niches.trainer_title'), 
-      desc: t('landing.niches.trainer_desc'),
-      color: "text-green-400",
-      bg: "bg-green-500/10",
-      border: "border-green-500/20"
-    },
-    { 
-      icon: Briefcase, 
-      title: t('landing.niches.consultant_title'), 
-      desc: t('landing.niches.consultant_desc'),
-      color: "text-blue-400",
-      bg: "bg-blue-500/10",
-      border: "border-blue-500/20"
-    },
-  ];
+  const onSubmit = async (data: LoginForm) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (error) throw error;
+      
+    } catch (error: unknown) {
+      console.error('Erro ao fazer login:', error);
+      let msg = t('auth.error_login_generic', { defaultValue: 'Erro ao entrar. Verifique suas credenciais.' });
+      const errorMessage = error instanceof Error ? error.message : '';
+
+      if (errorMessage.includes('Invalid login')) {
+        msg = t('auth.error_login_invalid', { defaultValue: 'E-mail ou senha incorretos.' });
+      }
+      if (errorMessage.includes('Email not confirmed')) {
+        msg = t('auth.error_login_unconfirmed', { defaultValue: 'E-mail não confirmado.' });
+      }
+
+      toast.error(msg);
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <LazyMotion features={domAnimation}>
-      <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-primary selection:text-slate-950 overflow-x-hidden">
-        
-        {/* --- HEADER --- */}
-        <nav className="fixed w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
-              
-              {/* LOGO */}
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-[0_0_10px_rgba(250,204,21,0.3)]">
-                  <Star className="w-5 h-5 text-slate-950 fill-slate-950" />
-                </div>
-                <span className="font-bold text-xl tracking-tight">Cleverya</span>
-              </div>
-              
-              {/* MENU DESKTOP */}
-              <div className="flex items-center gap-4 md:gap-8">
-                <div className="hidden md:flex items-center gap-8">
-                  <button onClick={() => scrollToSection('como-funciona')} className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-                    {t('landing.nav.how')}
-                  </button>
-                  <button onClick={() => scrollToSection('beneficios')} className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-                    {t('landing.nav.benefits')}
-                  </button>
-                  <button onClick={() => scrollToSection('planos')} className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
-                    {t('landing.nav.plans')}
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-                  <button 
-                    onClick={() => changeLanguage('pt')}
-                    aria-label="Mudar para Português"
-                    className={`text-xs font-bold transition-colors ${i18n.language.includes('pt') ? 'text-primary' : 'text-gray-400 hover:text-white'}`}
-                  >
-                    PT
-                  </button>
-                  <span className="text-gray-700 text-xs">|</span>
-                  <button 
-                    onClick={() => changeLanguage('en')}
-                    aria-label="Switch to English"
-                    className={`text-xs font-bold transition-colors ${i18n.language.includes('en') ? 'text-primary' : 'text-gray-400 hover:text-white'}`}
-                  >
-                    EN
-                  </button>
-                </div>
-
-                <div className="hidden md:flex items-center gap-4">
-                  <Link to="/login" className="text-sm font-medium text-white hover:text-primary transition-colors">
-                    {t('landing.nav.login')}
-                  </Link>
-                  <Link to="/signup">
-                    <button className="bg-primary hover:bg-primary/90 text-slate-950 px-5 py-2 rounded-full font-bold text-sm transition-all shadow-[0_0_15px_rgba(250,204,21,0.3)] hover:shadow-[0_0_25px_rgba(250,204,21,0.5)]">
-                      {t('landing.nav.start')}
-                    </button>
-                  </Link>
-                </div>
-
-                <button 
-                  onClick={() => setIsMenuOpen(!isMenuOpen)} 
-                  className="md:hidden text-gray-300 p-1"
-                  aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
-                >
-                  {isMenuOpen ? <X /> : <Menu />}
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          {isMenuOpen && (
-            <div className="md:hidden bg-slate-900 border-b border-white/10 shadow-2xl absolute w-full left-0 z-40">
-              <div className="px-4 pt-4 pb-6 space-y-3">
-                <button onClick={() => scrollToSection('como-funciona')} className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg font-medium">{t('landing.nav.how')}</button>
-                <button onClick={() => scrollToSection('planos')} className="block w-full text-left px-4 py-3 text-gray-300 hover:bg-white/5 rounded-lg font-medium">{t('landing.nav.plans')}</button>
-                <div className="border-t border-white/10 my-2 pt-2"></div>
-                <Link to="/login" className="block w-full px-4 py-3 text-gray-300 hover:text-white text-center font-medium">{t('landing.nav.login')}</Link>
-                <Link to="/signup" className="block w-full">
-                  <button className="w-full bg-primary text-slate-900 py-3 rounded-xl font-bold text-center">
-                    {t('landing.nav.start')}
-                  </button>
-                </Link>
-              </div>
-            </div>
-          )}
-        </nav>
-
-        {/* --- HERO SECTION --- */}
-        <section className="pt-32 pb-20 relative overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-10 opacity-50" />
-          
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-primary mb-6">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-              </span>
-              {t('landing.hero.badge')}
-            </div>
-
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6 leading-tight">
-              {t('landing.hero.title_1')} <br className="hidden md:block"/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-yellow-200">
-                {t('landing.hero.title_highlight')}
-              </span> {t('landing.hero.title_2')}
-            </h1>
-
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
-              {t('landing.hero.subtitle')}
-            </p>
-
-            <div className="flex flex-col items-center gap-4">
-              <Link to="/signup">
-                <button className="bg-primary hover:bg-primary/90 text-slate-950 text-lg px-8 py-4 rounded-full font-bold transition-all shadow-[0_0_20px_rgba(250,204,21,0.4)] hover:shadow-[0_0_30px_rgba(250,204,21,0.6)] flex items-center gap-2">
-                  👉 {t('landing.hero.cta')}
-                </button>
-              </Link>
-              <p className="text-sm text-gray-400 flex items-center gap-2">
-                <Clock className="w-4 h-4" /> {t('landing.hero.micro')}
-              </p>
-            </div>
-
-            {/* VISUAL MOCKUP HERO */}
-            <div className="mt-16 relative mx-auto max-w-5xl">
-              
-              <m.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
-                transition={{ 
-                  opacity: { duration: 0.5, delay: 0.5 }, 
-                  y: { repeat: Infinity, duration: 4, ease: "easeInOut" } 
-                }}
-                className="absolute -top-6 -left-4 md:-left-12 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4 max-w-[200px] md:max-w-none"
-              >
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-green-500" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs text-gray-400 font-bold">{t('landing.floating.new_app')}</p>
-                    <p className="text-sm text-white font-bold">{t('landing.floating.confirmed')} ✅</p>
-                  </div>
-              </m.div>
-
-              <m.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1, y: [0, 10, 0] }}
-                transition={{ 
-                  opacity: { duration: 0.5, delay: 0.7 },
-                  y: { repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 } 
-                }}
-                className="absolute -bottom-6 -right-4 md:-right-8 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4"
-              >
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs text-gray-400 font-bold">{t('landing.floating.revenue_week')}</p>
-                    <p className="text-lg text-white font-bold text-primary">+ R$ 5.450,00</p>
-                  </div>
-              </m.div>
-
-              {/* IMAGEM PRINCIPAL (HERO) - TAG PICTURE PARA CONTROLE TOTAL */}
-              <div className="rounded-xl border border-white/10 shadow-2xl overflow-hidden bg-slate-900 relative z-10">
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent z-10 pointer-events-none"></div>
-                  
-                  {/* Uso de <picture> para forçar a imagem mobile em telas pequenas */}
-                  <picture>
-                    <source media="(max-width: 640px)" srcSet="/dashboard-mobile.webp" />
-                    <source media="(min-width: 641px)" srcSet="/dashboard-print.webp" />
-                    <img 
-                      src="/dashboard-print.webp" 
-                      alt={t('landing.hero.alt_image', { defaultValue: 'Painel administrativo Cleverya' })}
-                      width="1200"
-                      height="675"
-                      // @ts-ignore
-                      fetchpriority="high"
-                      loading="eager"
-                      className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
-                    />
-                  </picture>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- DEMAIS SEÇÕES --- */}
-        <section className="py-20 bg-slate-950 border-y border-white/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-16">
-              <span className="text-primary font-bold uppercase tracking-wider text-sm">{t('landing.versatility.badge')}</span>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">
-                {t('landing.versatility.title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-400">{t('landing.versatility.title_highlight')}</span>
-              </h2>
-              <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
-                {t('landing.versatility.subtitle')}
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {nichesCards.map((niche, index) => (
-                <m.div key={index} whileHover={{ y: -10 }} className={`p-8 rounded-3xl border transition-all ${niche.bg} ${niche.border} hover:bg-opacity-20 flex flex-col items-center text-center`}>
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 bg-slate-950 shadow-inner`}><niche.icon className={`w-8 h-8 ${niche.color}`} /></div>
-                  <h3 className="font-bold text-xl text-white mb-3">{niche.title}</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">{niche.desc}</p>
-                </m.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-20 bg-slate-900">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-16">
-                <span className="text-red-400 font-bold uppercase tracking-wider text-sm">{t('landing.pain.badge')}</span>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mt-2">{t('landing.pain.title')}</h2>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { icon: Smartphone, text: t('landing.pain.item_1'), color: "text-red-400" }, 
-                  { icon: AlertCircle, text: t('landing.pain.item_2'), color: "text-orange-400" }, 
-                  { icon: Clock, text: t('landing.pain.item_3'), color: "text-yellow-400" }, 
-                  { icon: DollarSign, text: t('landing.pain.item_4'), color: "text-rose-400" }, 
-                ].map((item, index) => (
-                  <m.div key={index} whileHover={{ y: -5 }} className="bg-slate-950 p-6 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
-                    <item.icon className={`w-10 h-10 ${item.color} mb-4`} />
-                    <p className="font-medium text-gray-300 text-lg">{item.text}</p>
-                  </m.div>
-                ))}
-              </div>
-          </div>
-        </section>
-
-        {/* --- COMO FUNCIONA --- */}
-        <section id="como-funciona" className="py-20 bg-slate-950 border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold text-white">{t('landing.how.title')}</h2>
-              <p className="text-gray-400 mt-2">{t('landing.how.subtitle')}</p>
-            </div>
-            <div className="grid md:grid-cols-3 gap-8 relative">
-                <div className="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary/30 to-transparent -z-10" />
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10"><span className="text-4xl font-bold text-primary">1</span></div>
-                  <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_1_title')}</h3>
-                  <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_1_desc')}</p>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10"><Share2 className="w-10 h-10 text-primary" /></div>
-                  <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_2_title')}</h3>
-                  <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_2_desc')}</p>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-24 h-24 bg-slate-900 border border-white/10 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.1)] relative z-10"><MousePointerClick className="w-10 h-10 text-primary" /></div>
-                  <h3 className="text-xl font-bold text-white mb-2">{t('landing.how.step_3_title')}</h3>
-                  <p className="text-gray-400 text-sm max-w-xs">{t('landing.how.step_3_desc')}</p>
-                </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- BENEFÍCIOS --- */}
-        <section id="beneficios" className="py-20 bg-slate-950 border-t border-white/5">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-6">{t('landing.benefits.title_1')} <span className="text-primary">{t('landing.benefits.title_highlight')}</span></h2>
-                <div className="space-y-4">
-                  {[t('landing.benefits.item_1'), t('landing.benefits.item_2'), t('landing.benefits.item_3'), t('landing.benefits.item_4')].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="min-w-[24px] min-h-[24px] rounded-full bg-primary/20 flex items-center justify-center"><CheckCircle className="w-4 h-4 text-primary" /></div>
-                      <span className="text-gray-300">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-2xl blur-3xl opacity-20" />
-                <div className="bg-slate-900 border border-white/10 rounded-2xl p-2 relative shadow-2xl rotate-1 hover:rotate-0 transition-transform duration-500">
-                    <img 
-                      src="/finance-card.webp" 
-                      alt="Controle Financeiro Cleverya" 
-                      width="600"  
-                      height="400" 
-                      loading="lazy" 
-                      className="w-full h-auto rounded-xl shadow-inner"
-                    />
-                </div>
-
-                <m.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }} className="absolute -top-6 -left-4 md:-left-12 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4 max-w-[200px] md:max-w-none">
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><Bell className="w-5 h-5 text-green-500" /></div>
-                    <div className="text-left"><p className="text-xs text-gray-400 font-bold">{t('landing.floating.new_app')}</p><p className="text-sm text-white font-bold">{t('landing.floating.confirmed')} ✅</p></div>
-                </m.div>
-                <m.div animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }} className="absolute -bottom-6 -right-4 md:-right-8 z-20 bg-slate-800 p-4 rounded-xl border border-white/10 shadow-2xl flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-green-500" /></div>
-                    <div className="text-left"><p className="text-xs text-gray-400 font-bold">{t('landing.floating.revenue_today')}</p><p className="text-lg font-bold text-green-400">+ R$ 450,00</p></div>
-                </m.div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- PLANOS --- */}
-        <section id="planos" className="py-20 bg-slate-900 border-t border-white/5">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-white">{t('landing.plans.title')}</h2>
-                <p className="text-gray-400 mt-2 max-w-2xl mx-auto">{t('landing.plans.subtitle')}</p>
-              </div>
-              <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
-                {/* Grátis */}
-                <div className="bg-slate-950 p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gray-500 to-white/20" />
-                  <h3 className="text-xl font-bold text-white">{t('landing.plans.free.title')}</h3>
-                  <div className="mt-4 mb-2"><span className="text-4xl font-bold text-white">R$ 0</span><span className="text-gray-400">{t('landing.plans.per_month')}</span></div>
-                  <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.free.desc')}</p>
-                  <ul className="space-y-3 mb-8 flex-1">
-                    <li className="flex items-center gap-2 text-sm text-gray-300 font-medium"><CheckCircle className="w-4 h-4 text-green-500" /> {t('landing.plans.free.item_1')}</li>
-                  </ul>
-                  <Link to="/signup"><button className="w-full py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">{t('landing.plans.free.cta')}</button></Link>
-                </div>
-                {/* Pro */}
-                <div className="bg-slate-800 p-8 rounded-2xl border-2 border-primary relative transform md:-translate-y-4 shadow-[0_0_30px_rgba(250,204,21,0.15)] flex flex-col">
-                  <div className="absolute top-0 right-0 bg-primary text-slate-950 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">{t('landing.plans.pro.badge')}</div>
-                  <h3 className="text-xl font-bold text-white">{t('landing.plans.pro.title')}</h3>
-                  <div className="mt-4 mb-2"><span className="text-4xl font-bold text-white">R$ 29,90</span><span className="text-gray-400">{t('landing.plans.per_month')}</span></div>
-                  <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.pro.desc')}</p>
-                  <Link to="/signup?plan=pro&cycle=monthly"><button className="w-full mt-auto py-3 rounded-xl bg-primary text-slate-950 font-bold hover:bg-primary/90 transition-all shadow-lg">{t('landing.plans.pro.cta')}</button></Link>
-                </div>
-                {/* Business */}
-                <div className="bg-slate-950 p-8 rounded-2xl border border-white/10 hover:border-white/20 transition-all flex flex-col">
-                  <h3 className="text-xl font-bold text-white">{t('landing.plans.business.title')}</h3>
-                  <div className="mt-4 mb-2"><span className="text-4xl font-bold text-white">R$ 59,90</span><span className="text-gray-400">{t('landing.plans.per_month')}</span></div>
-                  <p className="text-sm text-gray-400 mb-6 font-medium">{t('landing.plans.business.desc')}</p>
-                  <Link to="/signup?plan=business&cycle=monthly"><button className="w-full mt-auto py-3 rounded-xl border border-white/20 text-white font-bold hover:bg-white/5 transition-all">{t('landing.plans.business.cta')}</button></Link>
-                </div>
-              </div>
-              <div className="max-w-3xl mx-auto bg-slate-950 rounded-xl border border-white/10 p-6">
-                <h4 className="text-center font-bold text-white mb-6">{t('landing.plans.compare.title')}</h4>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div className="col-span-1 text-gray-400 font-medium flex items-center">{t('landing.plans.compare.feature')}</div>
-                  <div className="col-span-1 text-center font-bold text-primary">Cleverya ({t('landing.plans.compare.all')})</div>
-                  <div className="col-span-1 text-center text-gray-500">{t('landing.plans.compare.others')}</div>
-                  <div className="col-span-3 h-px bg-white/5 my-1" />
-                  <div className="col-span-1 text-gray-300">Link 24h</div>
-                  <div className="col-span-1 text-center text-primary"><CheckCircle className="w-4 h-4 mx-auto" /></div>
-                  <div className="col-span-1 text-center text-gray-600"><XCircle className="w-4 h-4 mx-auto" /></div>
-                  <div className="col-span-3 h-px bg-white/5 my-1" />
-                  <div className="col-span-1 text-gray-300">{t('landing.benefits.item_2')}</div>
-                  <div className="col-span-1 text-center text-primary"><CheckCircle className="w-4 h-4 mx-auto" /></div>
-                  <div className="col-span-1 text-center text-gray-600 text-xs md:text-sm">{t('landing.plans.compare.charged_separately')}</div>
-                </div>
-              </div>
-            </div>
-        </section>
-
-        {/* --- CTA FINAL --- */}
-        <section className="py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-primary/10 -z-10" />
-          <div className="max-w-4xl mx-auto px-4 text-center">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">{t('landing.cta_final.title')}</h2>
-            <Link to="/signup"><button className="bg-primary hover:bg-primary/90 text-slate-950 text-xl px-10 py-5 rounded-full font-bold transition-all shadow-[0_0_30px_rgba(250,204,21,0.5)] hover:scale-105 transform duration-200">👉 {t('landing.cta_final.btn')}</button></Link>
-            <p className="mt-6 text-gray-400">{t('landing.cta_final.subtitle')}</p>
-          </div>
-        </section>
-
-        <footer className="bg-slate-950 py-12 border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            {/* --- NOVO: LINKS DE SEO (O Google ama isso) --- */}
-            <div className="grid md:grid-cols-4 gap-8 mb-12 border-b border-white/5 pb-12">
-              <div>
-                {/* Coluna 1: */}
-                <h4 className="text-white font-bold mb-4">Barbearias</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/solucoes/barbearia/sao-paulo" className="hover:text-primary">Barbearia em São Paulo</Link></li>
-                  <li><Link to="/solucoes/barbearia/rio-de-janeiro" className="hover:text-primary">Barbearia no Rio de Janeiro</Link></li>
-                  <li><Link to="/solucoes/barbearia/belo-horizonte" className="hover:text-primary">Barbearia em BH</Link></li>
-                  <li><Link to="/solucoes/barbearia/curitiba" className="hover:text-primary">Barbearia em Curitiba</Link></li>
-                </ul>
-              </div>
-              
-              {/* Coluna 2: USA - Barbers & Salons */}
-              {/* CORREÇÃO: Usei 'nail-salon' e 'barber' para garantir Modo Inglês */}
-              <div>
-                <h4 className="text-white font-bold mb-4 flex items-center gap-2">🇺🇸 United States</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/solucoes/Manicurist/orlando" className="hover:text-primary">Manicurist in Orlando</Link></li>
-                  <li><Link to="/solucoes/nail-salon/minnesota" className="hover:text-primary">Salon in Minnesota</Link></li>
-                  <li><Link to="/solucoes/Eyebrows/california" className="hover:text-primary">Eyebrows in California</Link></li>
-                  <li><Link to="/solucoes/barber/arizona" className="hover:text-primary">Hairdresser in Arizona</Link></li>
-                </ul>
-              </div>
-
-              {/* Coluna 3: */}
-              <div>
-                <h4 className="text-white font-bold mb-4">Salões e Manicures</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/solucoes/manicure/sao-paulo" className="hover:text-primary">Manicure em São Paulo</Link></li>
-                  <li><Link to="/solucoes/salao-de-beleza/salvador" className="hover:text-primary">Salão em Salvador</Link></li>
-                  <li><Link to="/solucoes/designer-de-sobrancelhas/fortaleza" className="hover:text-primary">Sobrancelhas em Fortaleza</Link></li>
-                  <li><Link to="/solucoes/cabeleireira/brasilia" className="hover:text-primary">Cabeleireira em Brasília</Link></li>
-                </ul>
-              </div>
-
-              {/* Coluna 4: USA - Salons and Manicurists (LINKS NOVOS) */}
-              
-              <div>
-                <h4 className="text-white font-bold mb-4 flex items-center gap-2">🇺🇸 United States</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/solucoes/manicurist/Brooklin" className="hover:text-primary">Manicurist in Brooklin</Link></li>
-                  <li><Link to="/solucoes/nail-salon/Minnesota" className="hover:text-primary">Salon in Minnesota</Link></li>
-                  <li><Link to="/solucoes/eyebrows/California" className="hover:text-primary">Eyebrows in California</Link></li>
-                  <li><Link to="/solucoes/barber/Arizona" className="hover:text-primary">Hairdresser in Arizona</Link></li>
-                </ul>
-              </div>
-
-              
-              {/* Coluna 5: USA */}
-              <div>
-                <h4 className="text-white font-bold mb-4">Saúde e Bem-estar</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/solucoes/psicologo/sao-paulo" className="hover:text-primary">Psicólogo em São Paulo</Link></li>
-                  <li><Link to="/solucoes/fisioterapeuta/porto-alegre" className="hover:text-primary">Fisioterapeuta em Porto Alegre</Link></li>
-                  <li><Link to="/solucoes/dentista/recife" className="hover:text-primary">Dentista em Recife</Link></li>
-                  <li><Link to="/solucoes/personal-trainer/goiania" className="hover:text-primary">Personal em Goiânia</Link></li>
-                </ul>
-              </div>
-              
-              {/* Coluna 6 */}
-              <div>
-                <h4 className="text-white font-bold mb-4 flex items-center gap-2">🇺🇸 United States</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/solucoes/Psychologist/Mississippi" className="hover:text-primary">Psychologist in Mississippi</Link></li>
-                  <li><Link to="/solucoes/Physical Therapist/New Jersey" className="hover:text-primary">Physical Therapist in New Jersey</Link></li>
-                  <li><Link to="/solucoes/Dentist/Ohio" className="hover:text-primary">Dentist in Ohio</Link></li>
-                  <li><Link to="/solucoes/Personal Trainer/Tennessee" className="hover:text-primary">Personal Trainer in Tennessee</Link></li>
-                </ul>
-              </div>
-
-              {/* Coluna 7: Institucional */}
-              <div>
-                <h4 className="text-white font-bold mb-4">{t('landing.footer.terms')}</h4>
-                <ul className="space-y-2 text-sm text-gray-400">
-                  <li><Link to="/terms" className="hover:text-primary">{t('landing.footer.terms')}</Link></li>
-                  <li><Link to="/privacy" className="hover:text-primary">{t('landing.footer.privacy')}</Link></li>
-                  <li><a href="mailto:support@cleverya.com" className="hover:text-primary">Help Center</a></li>
-                </ul>
-              </div>
-
-              {/* Coluna 8: Sobre */}
-              <div>
-                <h4 className="text-white font-bold mb-4">Sobre</h4>
-                <p className="text-gray-400 text-sm mb-4">
-                  O Cleverya é a plataforma de agendamento mais simples para profissionais independentes do Brasil.
-                </p>
-                <div className="flex gap-4">
-                  <a href="https://instagram.com/cleverya" target="_blank" className="text-gray-400 hover:text-white">Instagram</a>
-                  <a href="mailto:contato@cleverya.com" className="text-gray-400 hover:text-white">Contato</a>
-                </div>
-              </div>
-            </div>
-
-            {/* Rodapé Original (Copyright) */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-                    <Star className="w-3 h-3 text-slate-950 fill-slate-950" />
-                  </div>
-                  <span className="font-bold text-lg text-white">Cleverya</span>
-                </div>
-                <div className="text-gray-500 text-sm hidden md:block">|</div>
-                <div className="text-gray-400 text-sm">{t('landing.footer.copy')}</div>
-              </div>
-              <div className="flex gap-6">
-                <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.terms')}</Link>
-                <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-sm">{t('landing.footer.privacy')}</Link>
-              </div>
-            </div>
-          </div>
-        </footer>
+    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4 relative overflow-hidden">
+      
+      {/* SELETOR DE IDIOMA (NOVO) */}
+      <div className="absolute top-4 right-4 z-50 flex gap-2 animate-in fade-in slide-in-from-top-4 duration-700">
+         <button 
+           onClick={() => i18n.changeLanguage('pt')} 
+           className={`text-xs font-bold py-2 px-3 rounded-full transition-all border ${i18n.language === 'pt' ? 'bg-primary text-slate-900 border-primary' : 'bg-slate-800/50 text-slate-400 hover:text-white border-slate-700 hover:border-slate-500'}`}
+         >
+           PT
+         </button>
+         <button 
+           onClick={() => i18n.changeLanguage('en')} 
+           className={`text-xs font-bold py-2 px-3 rounded-full transition-all border ${i18n.language === 'en' ? 'bg-primary text-slate-900 border-primary' : 'bg-slate-800/50 text-slate-400 hover:text-white border-slate-700 hover:border-slate-500'}`}
+         >
+           EN
+         </button>
       </div>
-    </LazyMotion>
+
+      {/* Background Effects */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10 animate-in fade-in zoom-in duration-500">
+        <Link 
+          to="/" 
+          className="inline-flex items-center text-slate-400 hover:text-white mb-8 transition-colors hover:-translate-x-1 duration-200"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {t('common.back_home', { defaultValue: 'Voltar para Home' })}
+        </Link>
+
+        
+         <div className="text-center mb-8">
+          {/* VERSÃO ANTIGA (COM SPARKLES) */}
+          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-[0_0_20px_rgba(249,115,22,0.3)]">
+          <img src="/logo.3.png" className="w-16 h-16 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('auth.login_title')}</h1>
+          <p className="text-slate-400">{t('auth.login_subtitle')}</p>
+        </div>
+
+        <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-xl p-8 shadow-2xl">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300 uppercase tracking-wider text-[11px]">{t('auth.label_email')}</label>
+              <Input 
+                {...register('email')}
+                type="email" 
+                placeholder={t('auth.placeholder_email', { defaultValue: 'seu@email.com' })}
+                className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-600 focus:border-primary focus:ring-primary/20 h-11"
+              />
+              {errors.email && <span className="text-red-400 text-xs">{errors.email.message}</span>}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-slate-300 uppercase tracking-wider text-[11px]">{t('auth.label_password')}</label>
+                <a href="#" className="text-xs text-primary hover:text-primary/80 transition-colors">
+                    {t('auth.forgot_password', { defaultValue: 'Esqueceu a senha?' })}
+                </a>
+              </div>
+              <Input 
+                {...register('password')}
+                type="password" 
+                placeholder="••••••"
+                className="bg-slate-900/50 border-slate-700 text-white placeholder:text-slate-600 focus:border-primary focus:ring-primary/20 h-11"
+              />
+              {errors.password && <span className="text-red-400 text-xs">{errors.password.message}</span>}
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90 text-slate-900 font-bold h-11 shadow-lg shadow-primary/20"
+              disabled={isLoading}
+            >
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('auth.btn_login')}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-slate-400 text-sm">
+              {t('auth.no_account_question', { defaultValue: 'Não tem uma conta?' })}{' '}
+              <Link to="/signup" className="text-primary hover:text-primary/80 font-bold transition-colors">
+                {t('auth.signup_link_text', { defaultValue: 'Cadastre-se' })}
+              </Link>
+            </p>
+          </div>
+        </Card>
+      </div>
+    </div>
   );
 }

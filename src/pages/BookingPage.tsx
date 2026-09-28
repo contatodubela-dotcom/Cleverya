@@ -49,6 +49,12 @@ interface AvailabilitySetting {
   is_active: boolean;
 }
 
+interface ExistingClient {
+  id: string;
+  name: string;
+  email: string | null;
+}
+
 export default function BookingPage() {
   const params = useParams();
   const paramId = params.userId; 
@@ -166,17 +172,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
-  const [existingClient, setExistingClient] = useState<any>(null);
-
-  if (isLimitReached) {
-    return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6"><AlertTriangle className="w-10 h-10 text-red-500" /></div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">{t('booking.limit_title', { defaultValue: 'Agendamentos Pausados' })}</h1>
-            <p className="text-slate-600 max-w-md mb-8">{t('booking.limit_desc', { defaultValue: 'Este estabelecimento atingiu o limite mensal de agendamentos.' })}</p>
-        </div>
-    );
-  }
+  const [existingClient, setExistingClient] = useState<ExistingClient | null>(null);
 
   const { data: services } = useQuery({
     queryKey: ['public-services', business.id],
@@ -195,7 +191,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       acc[cat].push(service);
       return acc;
     }, {} as Record<string, Service[]>);
-  }, [services, t, i18n.language]);
+  }, [services, t]);
 
   const { data: professionals } = useQuery({
     queryKey: ['public-professionals', business.id],
@@ -333,12 +329,29 @@ function BookingContent({ business }: { business: BusinessInfo }) {
             setStep('success');
         }
     },
-    onError: (err: any) => {
-        if (err.message === 'Blocked') toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
-        else if (err.message === 'PaymentLinkError') toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
+    onError: (err: unknown) => {
+        const message = err instanceof Error ? err.message : '';
+        if (message === 'Blocked') toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
+        else if (message === 'PaymentLinkError') toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
         else toast.error(t('auth.error_generic', { defaultValue: 'Erro ao agendar.' }));
     },
   });
+
+  if (isLimitReached) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center font-sans">
+        <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
+          <AlertTriangle className="w-10 h-10 text-red-500" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          {t('booking.limit_title', { defaultValue: 'Agendamentos Pausados' })}
+        </h1>
+        <p className="text-slate-600 max-w-md mb-8">
+          {t('booking.limit_desc', { defaultValue: 'Este estabelecimento atingiu o limite mensal de agendamentos.' })}
+        </p>
+      </div>
+    );
+  }
 
   const getAvailableDates = () => {
     const dates = [];

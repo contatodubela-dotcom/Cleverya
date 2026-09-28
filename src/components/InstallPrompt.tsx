@@ -2,16 +2,25 @@ import { useState, useEffect } from 'react';
 import { X, Download, Share, PlusSquare, MoreVertical } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 export default function InstallPrompt() {
   const { t } = useTranslation();
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [showManualAndroid, setShowManualAndroid] = useState(false);
 
   useEffect(() => {
-    const isAppMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    const isAppMode = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as NavigatorWithStandalone).standalone;
     if (isAppMode) return; 
 
     const dismissed = localStorage.getItem('cleverya-pwa-dismissed');
@@ -28,9 +37,10 @@ export default function InstallPrompt() {
        setTimeout(() => setIsVisible(true), 2000);
     }
 
-    const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
+    const handleBeforeInstallPrompt = (e: Event) => {
+      const installEvent = e as BeforeInstallPromptEvent;
+      installEvent.preventDefault();
+      setDeferredPrompt(installEvent);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

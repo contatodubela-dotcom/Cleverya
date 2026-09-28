@@ -11,9 +11,44 @@ import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import { createMessage, openWhatsApp } from '../../lib/whatsapp';
 
+interface RangeCalendarProps {
+  startDate: string;
+  endDate: string;
+  onStartChange: (value: string) => void;
+  onEndChange: (value: string) => void;
+  onQuickSelect: (type: 'today' | 'week') => void;
+}
+
+interface AppointmentClient {
+  name: string | null;
+  phone: string | null;
+}
+
+interface AppointmentService {
+  name: string | null;
+  duration_minutes: number | null;
+  price: number | null;
+}
+
+interface AppointmentProfessional {
+  name: string | null;
+}
+
+interface Appointment {
+  id: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
+  deposit_paid: number | string | null;
+  balance_paid?: number | string | null;
+  clients: AppointmentClient | null;
+  services: AppointmentService | null;
+  professionals: AppointmentProfessional | null;
+}
+
 function RangeCalendar({ 
   startDate, endDate, onStartChange, onEndChange, onQuickSelect 
-}: any) {
+}: RangeCalendarProps) {
   const { t } = useTranslation();
   return (
     <div className="p-4 bg-[#1e293b] rounded-xl border border-white/10 shadow-sm space-y-4">
@@ -79,7 +114,7 @@ export default function CalendarView() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data || []) as Appointment[];
     },
     enabled: !!user?.id,
   });
@@ -95,7 +130,7 @@ export default function CalendarView() {
     }
   };
 
-  const handleConfirm = async (app: any) => {
+  const handleConfirm = async (app: Appointment) => {
     await supabase.from('appointments').update({ status: 'confirmed' }).eq('id', app.id);
     toast.success(t('toasts.confirmed'));
     refetch();
@@ -114,7 +149,7 @@ export default function CalendarView() {
     }
   };
 
-  const handleComplete = async (app: any) => {
+  const handleComplete = async (app: Appointment) => {
     const price = app.services?.price || 0;
     const depositPaid = Number(app.deposit_paid) || 0;
     const balanceToPay = Math.max(0, price - depositPaid);
@@ -128,7 +163,7 @@ export default function CalendarView() {
     refetch();
   };
 
-  const handleCancel = async (app: any) => {
+  const handleCancel = async (app: Appointment) => {
     if(!confirm(t('toasts.confirm_cancel_app'))) return;
     await supabase.from('appointments').update({ 
         status: 'cancelled',
@@ -138,7 +173,7 @@ export default function CalendarView() {
     refetch();
   };
 
-  const handleUndo = async (app: any) => {
+  const handleUndo = async (app: Appointment) => {
     const newStatus = Number(app.deposit_paid) > 0 ? 'confirmed' : 'pending';
     await supabase.from('appointments').update({ 
         status: newStatus,
@@ -148,7 +183,7 @@ export default function CalendarView() {
     refetch();
   };
 
-  const handleDeleteAbandoned = async (app: any) => {
+  const handleDeleteAbandoned = async (app: Appointment) => {
     if(!confirm(t('toasts.confirm_delete_abandoned'))) return;
     await supabase.from('appointments').delete().eq('id', app.id);
     toast.success(t('toasts.abandoned_deleted'));
@@ -175,9 +210,9 @@ export default function CalendarView() {
           <h3 className="font-semibold text-primary mb-2">{t('dashboard.calendar.summary')}</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.total')}:</span><span className="font-bold">{appointments?.length || 0}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.pending')}:</span><span className="font-bold text-yellow-500">{appointments?.filter((a:any) => a.status === 'pending').length}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.confirmed')}:</span><span className="font-bold text-blue-400">{appointments?.filter((a:any) => a.status === 'confirmed').length}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.completed')}:</span><span className="font-bold text-green-500">{appointments?.filter((a:any) => a.status === 'completed').length}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.pending')}:</span><span className="font-bold text-yellow-500">{appointments?.filter((a) => a.status === 'pending').length}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.confirmed')}:</span><span className="font-bold text-blue-400">{appointments?.filter((a) => a.status === 'confirmed').length}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">{t('dashboard.calendar.completed')}:</span><span className="font-bold text-green-500">{appointments?.filter((a) => a.status === 'completed').length}</span></div>
           </div>
         </Card>
       </div>
@@ -207,7 +242,7 @@ export default function CalendarView() {
           </div>
         ) : (
           <div className="space-y-3">
-            {appointments?.map((app: any) => (
+            {appointments?.map((app) => (
               <Card 
                 key={app.id} 
                 className={`p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center transition-all bg-[#1e293b] border hover:bg-slate-800 ${app.status === 'cancelled' ? 'border-red-900/30 opacity-60' : app.status === 'completed' ? 'border-green-900/50' : 'border-white/10'}`}

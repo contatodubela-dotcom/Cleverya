@@ -1,10 +1,14 @@
-// deno-lint-ignore-file no-import-prefix no-explicit-any
+// deno-lint-ignore-file no-import-prefix
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // MUDANÇA AQUI: Usando NPM nativo para evitar erros de polyfill do Deno
 import Stripe from 'npm:stripe@^14.21.0'
 
 console.log("🚀 Create Portal Session: Iniciando...")
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Erro desconhecido';
+}
 
 serve(async (req: Request) => {
   const corsHeaders = {
@@ -79,9 +83,10 @@ serve(async (req: Request) => {
       status: 200,
     })
 
-  } catch (error: any) {
-    console.error("❌ ERRO FATAL NA FUNÇÃO:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: unknown) {
+    const message = getErrorMessage(error);
+    console.error("❌ ERRO FATAL NA FUNÇÃO:", message);
+    return new Response(JSON.stringify({ error: message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })

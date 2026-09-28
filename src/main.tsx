@@ -11,11 +11,17 @@ import { HelmetProvider } from 'react-helmet-async';
 // REMOVIDO O PRE-FETCH MANUAL QUE TRAVAVA A REDE
 // Deixamos o App.tsx gerenciar o carregamento via Lazy Load natural
 
+declare global {
+  interface Window {
+    posthog?: unknown;
+  }
+}
+
 // --- POSTHOG OTIMIZADO ---
 if (typeof window !== 'undefined') {
   setTimeout(() => {
     import('posthog-js').then(({ default: posthog }) => {
-        if (!(window as any).posthog) { 
+        if (!window.posthog) { 
             posthog.init('phc_xZtmAqykzTZZPmzIGL7ODp3nLbhsgKcwLIolcowrOb8', {
               api_host: 'https://us.i.posthog.com',
               person_profiles: 'identified_only', 

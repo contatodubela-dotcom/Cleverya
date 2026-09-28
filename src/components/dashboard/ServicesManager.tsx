@@ -17,7 +17,17 @@ interface ServiceForm {
   price: string;
   category: string;
   description: string;
-  require_deposit: boolean; 
+  require_deposit: boolean;
+}
+
+interface ServiceRecord {
+  id: string;
+  name: string;
+  duration_minutes: number;
+  price: number | null;
+  category: string | null;
+  description: string | null;
+  require_deposit: boolean | null;
 }
 
 export default function ServicesManager() {
@@ -64,7 +74,7 @@ export default function ServicesManager() {
         .order('name');
 
       if (error) throw error;
-      return data;
+      return (data || []) as ServiceRecord[];
     },
     enabled: !!user?.id,
   });
@@ -75,7 +85,7 @@ export default function ServicesManager() {
     setForm({ name: '', duration: '30', price: '', category: 'Geral', description: '', require_deposit: false });
   };
 
-  const handleEditClick = (service: any) => {
+  const handleEditClick = (service: ServiceRecord) => {
     setForm({
       name: service.name,
       duration: service.duration_minutes.toString(),

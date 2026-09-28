@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -46,14 +46,14 @@ export default function LoginPage() {
 
       if (error) throw error;
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao fazer login:', error);
       let msg = t('auth.error_login_generic', { defaultValue: 'Erro ao entrar. Verifique suas credenciais.' });
       
-      if (error.message.includes('Invalid login')) {
+      if ((error instanceof Error ? error.message : '').includes('Invalid login')) {
           msg = t('auth.error_login_invalid', { defaultValue: 'E-mail ou senha incorretos.' });
       }
-      if (error.message.includes('Email not confirmed')) {
+      if ((error instanceof Error ? error.message : '').includes('Email not confirmed')) {
           msg = t('auth.error_login_unconfirmed', { defaultValue: 'E-mail não confirmado.' });
       }
       

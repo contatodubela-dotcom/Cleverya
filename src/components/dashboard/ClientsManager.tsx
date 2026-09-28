@@ -9,6 +9,35 @@ import { toast } from 'sonner';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+
+interface AppointmentClient {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+interface AppointmentClientRow {
+  client_id: string | null;
+  clients: AppointmentClient[] | null;
+  status: string | null;
+}
+
+interface ClientSummary extends AppointmentClient {
+  total_appointments: number;
+  no_shows: number;
+  confirmed: number;
+}
+
+interface BlockedClient {
+  id: string;
+  client_id: string;
+  no_show_count: number;
+  blocked_at: string;
+  clients: {
+    name: string | null;
+  } | null;
+}
+
 export default function ClientsManager() {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -37,22 +66,30 @@ export default function ClientsManager() {
 
       if (error) throw error;
 
-      const clientMap = new Map();
-      data.forEach((apt: any) => {
-        if (!apt.clients) return;
-        const clientId = apt.clients.id;
+      const clientMap = new Map<string, ClientSummary>();
+      (data as AppointmentClientRow[]).forEach((apt) => {
+        const appointmentClient = apt.clients?.[0];
+        if (!appointmentClient) return;
+
+        const clientId = appointmentClient.id;
+
         if (!clientMap.has(clientId)) {
           clientMap.set(clientId, {
-            ...apt.clients,
+            ...appointmentClient,
             total_appointments: 0,
             no_shows: 0,
             confirmed: 0,
           });
         }
+
         const client = clientMap.get(clientId);
-        client.total_appointments++;
-        if (apt.status === 'no_show') client.no_shows++;
-        if (apt.status === 'confirmed' || apt.status === 'completed') client.confirmed++;
+        if (!client) return;
+
+        client.total_appointments += 1;
+        if (apt.status === 'no_show') client.no_shows += 1;
+        if (apt.status === 'confirmed' || apt.status === 'completed') {
+          client.confirmed += 1;
+        }
       });
 
       return Array.from(clientMap.values());
@@ -72,7 +109,7 @@ export default function ClientsManager() {
         .eq('business_id', businessId);
       
       if (error) throw error;
-      return data;
+      return (data || []) as BlockedClient[];
     },
     enabled: !!user?.id,
   });
@@ -118,12 +155,13 @@ export default function ClientsManager() {
   });
 
   const filteredClients = clients?.filter(
-    (client: any) =>
+    (client) =>
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone.includes(searchTerm)
   );
 
-  const isBlocked = (clientId: string) => blockedClients?.some((bc: any) => bc.client_id === clientId);
+  const isBlocked = (clientId: string) =>
+    blockedClients?.some((bc) => bc.client_id === clientId);
 
   if (isLoading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-primary" /></div>;
 
@@ -152,7 +190,7 @@ export default function ClientsManager() {
             {t('dashboard.clients.blocked_title', {defaultValue: 'Bloqueados'})} ({blockedClients.length})
           </h3>
           <div className="space-y-3">
-            {blockedClients.map((bc: any) => (
+            {blockedClients.map((bc) => (
               <div key={bc.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-3 bg-slate-900/50 rounded-xl border border-red-500/10">
                 <div>
                   <p className="font-medium text-red-200">{bc.clients?.name}</p>
@@ -176,7 +214,7 @@ export default function ClientsManager() {
               <p>Nenhum cliente encontrado.</p>
            </div>
         ) : (
-          filteredClients?.map((client: any) => {
+          filteredClients?.map((client) => {
             const blocked = isBlocked(client.id);
             return (
               <Card 

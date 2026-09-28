@@ -11,7 +11,49 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, startOfDay, endOfDay, parseISO } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
-import { FinancialReport } from './FinancialReport'; 
+import { FinancialReport, type FinancialReportRow } from './FinancialReport'; 
+
+
+interface ReportServiceRelation {
+  name: string | null;
+  price: number | null;
+}
+
+interface ReportClientRelation {
+  name: string | null;
+}
+
+interface RawReportAppointment {
+  id: string;
+  appointment_date: string;
+  status: string;
+  deposit_paid: number | string | null;
+  balance_paid: number | string | null;
+  services: ReportServiceRelation[] | ReportServiceRelation | null;
+  profiles: ReportClientRelation[] | ReportClientRelation | null;
+}
+
+interface ServiceAggregate {
+  count: number;
+  revenue: number;
+}
+
+interface ChartDataPoint {
+  name: string;
+  fullDate: string;
+  value: number;
+}
+
+interface TopService {
+  name: string;
+  count: number;
+  value: number;
+}
+
+function firstRelation<T>(value: T[] | T | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
 
 export default function ReportsView() {
   const { t, i18n } = useTranslation();
@@ -68,17 +110,19 @@ export default function ReportsView() {
       
       if (error) throw error;
 
-      const validApps = apps || [];
+      const validApps = (apps || []) as unknown as RawReportAppointment[];
       let totalPaid = 0;
       let totalPending = 0;
-      const dailyMap = new Map();
-      const servicesMap = new Map();
+      const dailyMap = new Map<string, number>();
+      const servicesMap = new Map<string, ServiceAggregate>();
 
       const interval = eachDayOfInterval({ start: dateRange.start, end: dateRange.end });
       interval.forEach(d => dailyMap.set(format(d, 'yyyy-MM-dd'), 0));
 
-      const appointmentsList = validApps.map((app: any) => {
-          const price = app.services?.price || 0;
+      const appointmentsList: FinancialReportRow[] = validApps.map((app) => {
+          const service = firstRelation(app.services);
+          const client = firstRelation(app.profiles);
+          const price = service?.price || 0;
           const deposit = Number(app.deposit_paid) || 0;
           const balance = Number(app.balance_paid) || 0;
           
@@ -94,16 +138,18 @@ export default function ReportsView() {
               else dailyMap.set(dayKey, paid);
           }
 
-          const sName = app.services?.name || 'Outros';
+          const sName = service?.name || 'Outros';
           if (!servicesMap.has(sName)) servicesMap.set(sName, { count: 0, revenue: 0 });
           const sData = servicesMap.get(sName);
-          sData.count += 1;
-          sData.revenue += paid; 
+          if (sData) {
+            sData.count += 1;
+            sData.revenue += paid;
+          }
 
           return {
               start_time: app.appointment_date,
-              client_name: app.profiles?.name || t('common.client', { defaultValue: 'Cliente' }), 
-              service_name: app.services?.name || '-',
+              client_name: client?.name || t('common.client', { defaultValue: 'Cliente' }),
+              service_name: service?.name || '-',
               total_value: price,
               paid_value: paid,
               pending_value: pending,
@@ -111,7 +157,7 @@ export default function ReportsView() {
           };
       });
 
-      const dailyRevenue = Array.from(dailyMap.entries())
+      const dailyRevenue: ChartDataPoint[] = Array.from(dailyMap.entries())
           .sort((a, b) => a[0].localeCompare(b[0]))
           .map(([date, value]) => ({
               name: format(parseISO(date), 'dd/MM'),
@@ -119,9 +165,9 @@ export default function ReportsView() {
               value
           }));
 
-      const topServices = Array.from(servicesMap.entries())
-        .map(([name, data]: any) => ({ 
-            name, 
+      const topServices: TopService[] = Array.from(servicesMap.entries())
+        .map(([name, data]) => ({
+            name,
             count: data.count,
             value: data.revenue
         }))
@@ -308,7 +354,7 @@ export default function ReportsView() {
                             itemStyle={{ color: '#4ade80' }} labelStyle={{ color: '#94a3b8' }} cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
                         />
                         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            {stats?.chartData?.map((entry: any, index: number) => (
+                            {stats?.chartData?.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.value > 0 ? '#4ade80' : '#334155'} />
                             ))}
                         </Bar>
@@ -323,7 +369,7 @@ export default function ReportsView() {
                 {!stats?.topServices || stats.topServices.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-8">{t('dashboard.reports.no_data', { defaultValue: 'Nenhum dado ainda.' })}</p>
                 ) : (
-                  stats.topServices.map((service: any, idx: number) => (
+                  stats.topServices.map((service, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-slate-900/50 border border-white/5 hover:border-white/10 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center text-xs font-bold">{idx + 1}</div>

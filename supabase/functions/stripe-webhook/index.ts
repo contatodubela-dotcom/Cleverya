@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-import-prefix no-explicit-any
+// deno-lint-ignore-file no-import-prefix
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@^14.21.0'
@@ -14,13 +14,17 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 console.log('✅ Stripe Webhook Loaded (NPM Version - Fixed Date & Logic)')
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Erro desconhecido'
+}
+
 serve(async (req: Request) => {
   const signature = req.headers.get('Stripe-Signature')
   
   // Passo 1: Ler o corpo da requisição como texto
   const body = await req.text()
 
-  let event
+  let event: Stripe.Event
   try {
     // Passo 2: Validar se foi a Stripe mesmo que mandou (Assinatura)
     event = await stripe.webhooks.constructEventAsync(
@@ -28,9 +32,10 @@ serve(async (req: Request) => {
       signature!,
       Deno.env.get('STRIPE_WEBHOOK_SIGNING_SECRET')!
     )
-  } catch (err: any) {
-    console.error(`❌ Webhook signature failed:`, err.message)
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 })
+  } catch (err: unknown) {
+    const message = getErrorMessage(err)
+    console.error(`❌ Webhook signature failed:`, message)
+    return new Response(`Webhook Error: ${message}`, { status: 400 })
   }
 
   console.log(`🔔 Evento recebido: ${event.type}`)
@@ -113,7 +118,7 @@ serve(async (req: Request) => {
       default:
         console.log(`🤷‍♂️ Evento não tratado: ${event.type}`);
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('❌ Erro CRÍTICO no processamento:', err)
     return new Response('Webhook handler failed inside logic', { status: 400 })
   }
@@ -132,7 +137,7 @@ function getPlanTypeFromAmount(amount: number | null): string {
     return 'free';
 }
 
-function getPlanTypeFromProduct(subscription: any): string {
+function getPlanTypeFromProduct(subscription: Stripe.Subscription): string {
   // Tenta pegar do primeiro item da assinatura
   const priceAmount = subscription.items?.data[0]?.price?.unit_amount || 0
   if (priceAmount >= 5900) return 'business'
