@@ -1,6 +1,12 @@
-import { useContext, useState, useEffect, createContext } from 'react';
+import {
+  useContext,
+  useState,
+  useEffect,
+  createContext,
+  useCallback,
+} from 'react';
 import { supabase } from '../lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 
 export interface UserWithSubscription extends User {
   subscription_status?: string;
@@ -11,14 +17,14 @@ interface AuthContextType {
   session: Session | null;
   user: UserWithSubscription | null;
   loading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
   loading: true,
-  logout: () => {},
+  logout: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -26,9 +32,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserWithSubscription | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserStatus = async (currentUser: User) => {
+  const fetchUserStatus = useCallback(async (currentUser: User) => {
     try {
-      // 1. Busca o vínculo com a empresa (business_members)
       const { data: memberData, error: memberError } = await supabase
         .from('business_members')
         .select('business_id')
@@ -36,13 +41,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
 
       if (memberError || !memberData) {
-        // Se não encontrar, assume Free
-        console.warn("Usuário sem empresa vinculada:", memberError);
-        setUser({ ...currentUser, subscription_status: 'active', plan_type: 'free' });
+        console.warn('Usuário sem empresa vinculada:', memberError);
+
+        setUser({
+          ...currentUser,
+          subscription_status: 'active',
+          plan_type: 'free',
+        });
+
         return;
       }
 
-      // 2. Busca os dados da empresa (businesses)
       const { data: businessData, error: businessError } = await supabase
         .from('businesses')
         .select('plan_type, subscription_status')
@@ -50,65 +59,103 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
 
       if (businessError) {
-         console.warn("Erro ao buscar dados da empresa:", businessError);
-         setUser({ ...currentUser, subscription_status: 'active', plan_type: 'free' });
-      } else {
-         setUser({ 
-            ...currentUser, 
-            subscription_status: businessData?.subscription_status || 'active', 
-            plan_type: businessData?.plan_type || 'free' 
-         });
+        console.warn('Erro ao buscar dados da empresa:', businessError);
+
+        setUser({
+          ...currentUser,
+          subscription_status: 'active',
+          plan_type: 'free',
+        });
+
+        return;
       }
 
-    } catch (err) {
-      console.error("Erro fatal no useAuth:", err);
-      setUser({ ...currentUser, subscription_status: 'active', plan_type: 'free' });
+      setUser({
+        ...currentUser,
+        subscription_status:
+          businessData?.subscription_status || 'active',
+        plan_type: businessData?.plan_type || 'free',
+      });
+    } catch (error: unknown) {
+      console.error('Erro fatal no useAuth:', error);
+
+      setUser({
+        ...currentUser,
+        subscription_status: 'active',
+        plan_type: 'free',
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
 
-    // Verifica sessão inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      setSession(session);
-      if (session?.user) {
-        fetchUserStatus(session.user);
-      } else {
-        setLoading(false);
-      }
-    });
+    const initializeSession = async () => {
+      try {
+        const {
+          data: { session: initialSession },
+        } = await supabase.auth.getSession();
 
-    // Ouve mudanças de login
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!mounted) return;
+
+        setSession(initialSession);
+
+        if (initialSession?.user) {
+          await fetchUserStatus(initialSession.user);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      } catch (error: unknown) {
+        console.error('Erro ao carregar sessão inicial:', error);
+
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+        }
+      }
+    };
+
+    void initializeSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
-      setSession(session);
-      
-      if (session?.user) {
-        setUser(prev => {
-            if (prev?.id === session.user.id) return prev;
-            fetchUserStatus(session.user);
-            return prev; 
-        });
-      } else {
+
+      setSession(nextSession);
+
+      if (!nextSession?.user) {
         setUser(null);
         setLoading(false);
+        return;
       }
+
+      setLoading(true);
+
+      // Executa fora do callback interno do Supabase Auth.
+      setTimeout(() => {
+        if (!mounted) return;
+        void fetchUserStatus(nextSession.user);
+      }, 0);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserStatus]);
 
   const logout = async () => {
     await supabase.auth.signOut();
+
     setSession(null);
     setUser(null);
+    setLoading(false);
+
     localStorage.clear();
   };
 
