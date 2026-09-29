@@ -33,8 +33,7 @@ export default function AvailabilitySettings() {
     business_name: '',
     slug: '',
     banner_url: '',
-    require_deposit: false,
-    mp_access_token: ''
+    require_deposit: false
   });
 
   const days = useMemo(() => [
@@ -60,7 +59,7 @@ export default function AvailabilitySettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('businesses')
-        .select('*')
+        .select('id, name, slug, banner_url, require_deposit')
         .eq('owner_id', user?.id)
         .maybeSingle();
       
@@ -68,6 +67,56 @@ export default function AvailabilitySettings() {
       return data;
     },
     enabled: !!user?.id
+  });
+
+  const { data: mpConnection } = useQuery({
+    queryKey: ['mp-connection', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke('mp-account', {
+        body: { action: 'status' }
+      });
+
+      if (error) throw error;
+      return { connected: Boolean(data?.connected) };
+    },
+    enabled: !!user?.id && isPremium,
+  });
+
+  const connectMpMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke('mp-account', {
+        body: { action: 'start' }
+      });
+
+      if (error) throw error;
+      if (!data?.authorization_url) throw new Error('URL de autorização não recebida.');
+      return data.authorization_url as string;
+    },
+    onSuccess: (authorizationUrl) => {
+      window.location.href = authorizationUrl;
+    },
+    onError: (err) => {
+      console.error('Erro ao iniciar conexão Mercado Pago:', err);
+      toast.error(t('toasts.profile_error'));
+    },
+  });
+
+  const disconnectMpMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.functions.invoke('mp-account', {
+        body: { action: 'disconnect' }
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mp-connection'] });
+      toast.success(t('toasts.profile_updated'));
+    },
+    onError: (err) => {
+      console.error('Erro ao desconectar Mercado Pago:', err);
+      toast.error(t('toasts.profile_error'));
+    },
   });
 
   const { data: serverSettings, isLoading } = useQuery({
@@ -93,8 +142,7 @@ export default function AvailabilitySettings() {
         business_name: profileData.name || '',
         slug: profileData.slug || '',
         banner_url: profileData.banner_url || '',
-        require_deposit: profileData.require_deposit || false,
-        mp_access_token: profileData.mp_access_token || ''
+        require_deposit: profileData.require_deposit || false
       });
     }
   }, [profileData]);
@@ -115,8 +163,7 @@ export default function AvailabilitySettings() {
         name: branding.business_name,
         slug: branding.slug.toLowerCase(),
         banner_url: branding.banner_url,
-        require_deposit: branding.require_deposit,
-        mp_access_token: branding.mp_access_token
+        require_deposit: branding.require_deposit
       }).eq('owner_id', user?.id);
 
       if (error) throw error;
@@ -303,7 +350,7 @@ export default function AvailabilitySettings() {
             {branding.require_deposit && (
             <div className="animate-in slide-in-from-top-2 p-4 border border-emerald-500/20 bg-emerald-500/5 rounded-xl space-y-4">
               
-              {branding.mp_access_token ? (
+              {mpConnection?.connected ? (
                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 p-5 rounded-xl border border-emerald-500/30 shadow-lg">
                    <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-emerald-500/20 rounded-full flex items-center justify-center">
@@ -320,9 +367,10 @@ export default function AvailabilitySettings() {
                      variant="ghost" 
                      onClick={() => {
                        if (confirm(t('toasts.confirm_disconnect'))) {
-                         setBranding({...branding, mp_access_token: ''});
+                         disconnectMpMutation.mutate();
                        }
-                     }} 
+                     }}
+                     disabled={disconnectMpMutation.isPending} 
                      className="text-slate-400 hover:text-red-400 hover:bg-red-400/10 text-xs whitespace-nowrap"
                    >
                       {t('dashboard.settings.payments.disconnect')}
@@ -363,12 +411,16 @@ export default function AvailabilitySettings() {
                          <h4 className="text-base font-bold text-white">{t('dashboard.settings.payments.have_account')}</h4>
                          <p className="text-xs text-slate-400 mt-1 max-w-sm">{t('dashboard.settings.payments.have_account_desc')}</p>
                        </div>
-                       <a 
-                         href={`https://auth.mercadopago.com.br/authorization?client_id=3643614535752953&response_type=code&platform_id=mp&state=${profileData?.id}&redirect_uri=https://bxglxltapbagjmmkagfm.supabase.co/functions/v1/mp-auth-callback`}
+                       <Button
+                         type="button"
+                         onClick={() => connectMpMutation.mutate()}
+                         disabled={connectMpMutation.isPending}
                          className="whitespace-nowrap bg-[#009EE3] hover:bg-[#0089c4] text-white text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-[0_0_15px_rgba(0,158,227,0.2)]"
                        >
-                         {t('dashboard.settings.payments.btn_connect')}
-                       </a>
+                         {connectMpMutation.isPending
+                           ? <Loader2 className="w-4 h-4 animate-spin" />
+                           : t('dashboard.settings.payments.btn_connect')}
+                       </Button>
                      </div>
                    </div>
                  </div>

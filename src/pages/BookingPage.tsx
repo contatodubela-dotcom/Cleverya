@@ -303,11 +303,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
       if (selectedService?.require_deposit) {
           const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
               body: {
-                  appointment_id: newApp.id,
-                  business_id: business.id,
-                  service_id: selectedService!.id,
-                  client_name: clientName,
-                  client_email: clientEmail
+                  appointment_id: newApp.id
               }
           });
 
@@ -544,11 +540,11 @@ function BookingContent({ business }: { business: BusinessInfo }) {
              <Card className="p-8 text-center animate-fade-in bg-white border-0 shadow-2xl rounded-3xl">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold mb-2">
-                   {isSuccessReturn ? 'Pagamento Aprovado!' : t('booking.success_title', { defaultValue: 'Agendado!' })}
+                   {isSuccessReturn ? 'Pagamento aprovado!' : t('booking.success_title', { defaultValue: 'Agendado!' })}
                 </h2>
                 <p className="text-slate-500 mb-6">
                    {isSuccessReturn 
-                     ? 'O seu pagamento foi recebido e o seu horário está 100% garantido na nossa agenda.' 
+                     ? 'O pagamento foi aprovado. A confirmação do agendamento está sendo processada.' 
                      : t('booking.success_msg', { defaultValue: 'Tudo certo com o seu agendamento.' })
                    }
                 </p>
