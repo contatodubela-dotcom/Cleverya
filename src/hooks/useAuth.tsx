@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserWithSubscription | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserStatus = useCallback(async (currentUser: User) => {
+  const enrichUser = useCallback(async (currentUser: User) => {
     try {
       const { data: memberData, error: memberError } = await supabase
         .from('business_members')
@@ -42,13 +42,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (memberError || !memberData) {
         console.warn('Usuário sem empresa vinculada:', memberError);
-
-        setUser({
-          ...currentUser,
-          subscription_status: 'active',
-          plan_type: 'free',
-        });
-
         return;
       }
 
@@ -60,13 +53,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (businessError) {
         console.warn('Erro ao buscar dados da empresa:', businessError);
-
-        setUser({
-          ...currentUser,
-          subscription_status: 'active',
-          plan_type: 'free',
-        });
-
         return;
       }
 
@@ -74,23 +60,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ...currentUser,
         subscription_status:
           businessData?.subscription_status || 'active',
-        plan_type: businessData?.plan_type || 'free',
+        plan_type:
+          businessData?.plan_type || 'free',
       });
     } catch (error: unknown) {
-      console.error('Erro fatal no useAuth:', error);
-
-      setUser({
-        ...currentUser,
-        subscription_status: 'active',
-        plan_type: 'free',
-      });
-    } finally {
-      setLoading(false);
+      console.error('Erro ao enriquecer usuário:', error);
     }
   }, []);
 
   useEffect(() => {
     let mounted = true;
+
+    const applySession = (nextSession: Session | null) => {
+      if (!mounted) return;
+
+      setSession(nextSession);
+
+      if (!nextSession?.user) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      // Libera imediatamente o usuário autenticado.
+      setUser({
+        ...nextSession.user,
+        subscription_status: 'active',
+        plan_type: 'free',
+      });
+
+      setLoading(false);
+
+      // Busca plano/assinatura depois, sem bloquear login/dashboard.
+      setTimeout(() => {
+        if (!mounted) return;
+        void enrichUser(nextSession.user);
+      }, 0);
+    };
 
     const initializeSession = async () => {
       try {
@@ -98,16 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           data: { session: initialSession },
         } = await supabase.auth.getSession();
 
-        if (!mounted) return;
-
-        setSession(initialSession);
-
-        if (initialSession?.user) {
-          await fetchUserStatus(initialSession.user);
-        } else {
-          setUser(null);
-          setLoading(false);
-        }
+        applySession(initialSession);
       } catch (error: unknown) {
         console.error('Erro ao carregar sessão inicial:', error);
 
@@ -124,30 +121,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!mounted) return;
-
-      setSession(nextSession);
-
-      if (!nextSession?.user) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-
-      // Executa fora do callback interno do Supabase Auth.
-      setTimeout(() => {
-        if (!mounted) return;
-        void fetchUserStatus(nextSession.user);
-      }, 0);
+      applySession(nextSession);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserStatus]);
+  }, [enrichUser]);
 
   const logout = async () => {
     await supabase.auth.signOut();
