@@ -48,10 +48,12 @@ async function hmacHex(secret: string, value: string): Promise<string> {
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
+
   let result = 0;
   for (let index = 0; index < a.length; index += 1) {
     result |= a.charCodeAt(index) ^ b.charCodeAt(index);
   }
+
   return result === 0;
 }
 
@@ -78,18 +80,6 @@ async function verifyWebhookSignature(
   }
 
   if (!timestamp || !receivedHash) return false;
-
-  const timestampNumber = Number(timestamp);
-  if (!Number.isFinite(timestampNumber)) return false;
-
-  const timestampMs =
-    timestampNumber < 10_000_000_000
-      ? timestampNumber * 1000
-      : timestampNumber;
-
-  if (Math.abs(Date.now() - timestampMs) > 10 * 60 * 1000) {
-    return false;
-  }
 
   const normalizedId = dataId.toLowerCase();
   const manifest =
@@ -124,19 +114,30 @@ serve(async (req: Request) => {
       url.searchParams.get("type") ||
       "";
 
-    const paymentId = String(
-      body.data?.id ||
-      url.searchParams.get("data.id") ||
-      url.searchParams.get("id") ||
-      "",
-    );
+    const queryPaymentId = url.searchParams.get("data.id")?.trim() || "";
+    const bodyPaymentId =
+      body.data?.id === undefined || body.data?.id === null
+        ? ""
+        : String(body.data.id).trim();
+
+    if (!action.includes("payment") || !queryPaymentId) {
+      return new Response("Ignorado", { headers: corsHeaders, status: 200 });
+    }
+
+    if (bodyPaymentId && bodyPaymentId !== queryPaymentId) {
+      console.warn("Webhook Mercado Pago rejeitado: data.id divergente.");
+      return new Response(
+        "Identificador de pagamento divergente",
+        { headers: corsHeaders, status: 401 },
+      );
+    }
 
     const appointmentHint =
       url.searchParams.get("app_id") ||
       url.searchParams.get("external_reference") ||
       "";
 
-    if (!action.includes("payment") || !paymentId || !appointmentHint) {
+    if (!appointmentHint) {
       return new Response("Ignorado", { headers: corsHeaders, status: 200 });
     }
 
@@ -147,7 +148,7 @@ serve(async (req: Request) => {
 
     const signatureOk = await verifyWebhookSignature(
       req,
-      paymentId,
+      queryPaymentId,
       webhookSecret,
     );
 
@@ -171,7 +172,7 @@ serve(async (req: Request) => {
     const { data: appointment, error: appointmentError } = await supabase
       .from("appointments")
       .select(
-        "id, business_id, client_id, service_id, status, appointment_date, appointment_time",
+        "id, business_id, client_id, service_id, status, appointment_date, appointment_time, deposit_expected_amount, payment_currency, mp_payment_id",
       )
       .eq("id", appointmentHint)
       .single();
@@ -183,7 +184,10 @@ serve(async (req: Request) => {
       );
     }
 
-    if (appointment.status === "confirmed") {
+    if (
+      appointment.status === "confirmed" &&
+      appointment.mp_payment_id === queryPaymentId
+    ) {
       return new Response(
         "Já processado",
         { headers: corsHeaders, status: 200 },
@@ -209,7 +213,7 @@ serve(async (req: Request) => {
         .single(),
       supabase
         .from("services")
-        .select("id, business_id, name, price, require_deposit")
+        .select("id, business_id, name")
         .eq("id", appointment.service_id)
         .single(),
       supabase
@@ -233,7 +237,7 @@ serve(async (req: Request) => {
     }
 
     const mpVerify = await fetch(
-      `https://api.mercadopago.com/v1/payments/${encodeURIComponent(paymentId)}`,
+      `https://api.mercadopago.com/v1/payments/${encodeURIComponent(queryPaymentId)}`,
       {
         headers: {
           Authorization: `Bearer ${credentials.mp_access_token}`,
@@ -262,22 +266,22 @@ serve(async (req: Request) => {
       );
     }
 
-    const price = Number(service.price);
+    const expectedAmount = Number(appointment.deposit_expected_amount);
     const amountPaid = Number(mpData.transaction_amount);
-    const expectedAmount = Number((price / 2).toFixed(2));
+    const expectedCurrency = appointment.payment_currency || "BRL";
 
     if (
-      !service.require_deposit ||
-      !Number.isFinite(price) ||
-      price <= 0 ||
+      !Number.isFinite(expectedAmount) ||
+      expectedAmount <= 0 ||
       !Number.isFinite(amountPaid) ||
       Math.abs(amountPaid - expectedAmount) > 0.009 ||
-      mpData.currency_id !== "BRL"
+      mpData.currency_id !== expectedCurrency
     ) {
       console.error("Pagamento aprovado com dados incompatíveis:", {
         appointmentId: appointment.id,
         expectedAmount,
         amountPaid,
+        expectedCurrency,
         currency: mpData.currency_id,
       });
 
@@ -287,16 +291,46 @@ serve(async (req: Request) => {
       );
     }
 
-    const { error: updateError } = await supabase
+    const { data: updatedAppointment, error: updateError } = await supabase
       .from("appointments")
       .update({
         status: "confirmed",
         deposit_paid: amountPaid,
+        mp_payment_id: queryPaymentId,
       })
       .eq("id", appointment.id)
-      .eq("status", "pending_payment");
+      .eq("status", "pending_payment")
+      .is("mp_payment_id", null)
+      .select("id")
+      .maybeSingle();
 
     if (updateError) throw updateError;
+
+    if (!updatedAppointment) {
+      const { data: currentAppointment, error: currentAppointmentError } =
+        await supabase
+          .from("appointments")
+          .select("status, mp_payment_id")
+          .eq("id", appointment.id)
+          .single();
+
+      if (currentAppointmentError) throw currentAppointmentError;
+
+      if (
+        currentAppointment?.status === "confirmed" &&
+        currentAppointment?.mp_payment_id === queryPaymentId
+      ) {
+        return new Response(
+          "Já processado",
+          { headers: corsHeaders, status: 200 },
+        );
+      }
+
+      return new Response(
+        "Conflito de processamento",
+        { headers: corsHeaders, status: 409 },
+      );
+    }
 
     if (client.email) {
       const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {

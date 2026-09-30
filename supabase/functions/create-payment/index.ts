@@ -11,6 +11,11 @@ type CreatePaymentPayload = {
   appointment_id?: string;
 };
 
+type MercadoPagoPreference = {
+  id?: string;
+  init_point?: string;
+};
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Erro inesperado.";
 }
@@ -39,7 +44,7 @@ serve(async (req: Request) => {
 
     const { data: appointment, error: appointmentError } = await supabase
       .from("appointments")
-      .select("id, business_id, client_id, service_id, professional_id, status")
+      .select("id, business_id, client_id, service_id, professional_id, status, mp_payment_id")
       .eq("id", appointmentId)
       .single();
 
@@ -49,6 +54,10 @@ serve(async (req: Request) => {
 
     if (appointment.status !== "pending_payment") {
       throw new Error("Este agendamento não está aguardando pagamento.");
+    }
+
+    if (appointment.mp_payment_id) {
+      throw new Error("Este agendamento já possui um pagamento associado.");
     }
 
     const [
@@ -148,11 +157,29 @@ serve(async (req: Request) => {
       },
     );
 
-    const mpData = await mpResponse.json();
+    const mpData = (await mpResponse.json()) as MercadoPagoPreference;
 
-    if (!mpResponse.ok || !mpData?.init_point) {
+    if (!mpResponse.ok || !mpData?.id || !mpData?.init_point) {
       console.error("Mercado Pago recusou a criação da preferência:", mpData);
       throw new Error("Erro ao gerar o link de pagamento.");
+    }
+
+    const { data: snapshot, error: snapshotError } = await supabase
+      .from("appointments")
+      .update({
+        deposit_expected_amount: depositValue,
+        payment_currency: "BRL",
+        mp_preference_id: String(mpData.id),
+      })
+      .eq("id", appointment.id)
+      .eq("status", "pending_payment")
+      .is("mp_payment_id", null)
+      .select("id")
+      .maybeSingle();
+
+    if (snapshotError || !snapshot) {
+      console.error("Falha ao persistir snapshot do pagamento:", snapshotError);
+      throw new Error("Não foi possível preparar o pagamento com segurança.");
     }
 
     return new Response(
@@ -160,7 +187,7 @@ serve(async (req: Request) => {
       { headers: corsHeaders, status: 200 },
     );
   } catch (error: unknown) {
-    console.error("create-payment:", error);
+    console.error("create-payment:", errorMessage(error));
     return new Response(
       JSON.stringify({ error: errorMessage(error) }),
       { headers: corsHeaders, status: 400 },
