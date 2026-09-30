@@ -132,15 +132,6 @@ serve(async (req: Request) => {
       );
     }
 
-    const appointmentHint =
-      url.searchParams.get("app_id") ||
-      url.searchParams.get("external_reference") ||
-      "";
-
-    if (!appointmentHint) {
-      return new Response("Ignorado", { headers: corsHeaders, status: 200 });
-    }
-
     const webhookSecret = Deno.env.get("MP_WEBHOOK_SECRET");
     if (!webhookSecret) {
       throw new Error("MP_WEBHOOK_SECRET não configurado.");
@@ -158,6 +149,14 @@ serve(async (req: Request) => {
         "Assinatura inválida",
         { headers: corsHeaders, status: 401 },
       );
+    }
+    const appointmentHint =
+      url.searchParams.get("app_id") ||
+      url.searchParams.get("external_reference") ||
+      "";
+
+    if (!appointmentHint) {
+      return new Response("Ignorado", { headers: corsHeaders, status: 200 });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
