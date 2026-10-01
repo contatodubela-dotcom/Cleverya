@@ -1,9 +1,10 @@
--- Cleverya - Mercado Pago hardening Fase 1A (FINALIZE) - REV 2
+-- Cleverya - Mercado Pago hardening Fase 1A (FINALIZE) - REV 3
 -- EXECUTAR SOMENTE DEPOIS de:
 -- 1) novas Edge Functions estarem deployadas;
 -- 2) mp-account/status funcionar;
 -- 3) create-payment usar business_payment_credentials;
--- 4) OAuth novo ser validado.
+-- 4) OAuth novo ser validado;
+-- 5) webhook oficial estar homologado.
 --
 -- Mantém a coluna mp_access_token em businesses por compatibilidade temporária,
 -- mas remove seus valores do local antigo.
@@ -12,39 +13,40 @@ begin;
 
 do $$
 declare
-  old_tokens integer;
-  migrated_tokens integer;
+  missing_businesses integer;
 begin
   select count(*)
-    into old_tokens
-  from public.businesses
-  where mp_access_token is not null
-    and btrim(mp_access_token) <> '';
+    into missing_businesses
+  from public.businesses b
+  where b.mp_access_token is not null
+    and btrim(b.mp_access_token) <> ''
+    and not exists (
+      select 1
+      from public.business_payment_credentials c
+      where c.business_id = b.id
+        and c.mp_access_token is not null
+        and btrim(c.mp_access_token) <> ''
+    );
 
-  select count(*)
-    into migrated_tokens
-  from public.business_payment_credentials
-  where mp_access_token is not null
-    and btrim(mp_access_token) <> '';
-
-  if migrated_tokens < old_tokens then
+  if missing_businesses > 0 then
     raise exception
-      'Abortando: há % tokens em businesses e apenas % em business_payment_credentials.',
-      old_tokens,
-      migrated_tokens;
+      'Abortando FINALIZE: existem % empresas com token legado sem credencial migrada.',
+      missing_businesses;
   end if;
 end
 $$;
 
 update public.businesses
 set mp_access_token = null
-where mp_access_token is not null;
+where mp_access_token is not null
+  and btrim(mp_access_token) <> '';
 
 commit;
 
 -- VALIDAÇÃO READ-ONLY:
 -- select
 --   count(*) filter (
---     where mp_access_token is not null and btrim(mp_access_token) <> ''
+--     where mp_access_token is not null
+--       and btrim(mp_access_token) <> ''
 --   ) as old_tokens_remaining
 -- from public.businesses;
