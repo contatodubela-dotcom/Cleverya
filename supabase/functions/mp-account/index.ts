@@ -159,8 +159,8 @@ serve(async (req: Request) => {
     const state = `${payloadEncoded}.${signature}`;
 
     const redirectUri =
-      Deno.env.get("MP_REDIRECT_URI_V2") ||
-      `${supabaseUrl}/functions/v1/mp-auth-callback-v2`;
+      Deno.env.get("MP_REDIRECT_URI") ||
+      `${supabaseUrl}/functions/v1/mp-auth-callback`;
 
     const authorizationUrl = new URL(
       "https://auth.mercadopago.com.br/authorization",
