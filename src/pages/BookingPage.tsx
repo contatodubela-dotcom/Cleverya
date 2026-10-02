@@ -61,48 +61,29 @@ export default function BookingPage() {
     async function resolveProfile() {
       setLoadingProfile(true);
       try {
-        if (paramSlug) {
-          const { data } = await supabase
-            .from('businesses')
-            .select('*')
-            .eq('slug', paramSlug.toLowerCase())
-            .maybeSingle();
-            
-          if (data) {
-            setBusinessData({
-                id: data.id,
-                owner_id: data.owner_id,
-                name: data.name,
-                slug: data.slug,
-                plan_type: data.plan_type,
-                banner_url: data.banner_url
-            });
-            setLoadingProfile(false);
-            return;
-          }
-        }
+        const ownerId =
+          !paramSlug && paramId && /^[0-9a-f-]{36}$/i.test(paramId)
+            ? paramId
+            : null;
 
-        let query = supabase.from('businesses').select('*');
-        if (paramSlug) query = query.eq('slug', paramSlug.toLowerCase());
-        else if (paramId) query = query.eq('user_id', paramId);
-        
-        const { data: oldProfile } = await query.maybeSingle();
-        
-        if (oldProfile) {
-            const { data: newBiz } = await supabase
-                .from('businesses')
-                .select('id, plan_type, banner_url')
-                .eq('owner_id', oldProfile.user_id)
-                .maybeSingle();
-            
-            setBusinessData({
-                id: newBiz?.id || oldProfile.user_id,
-                owner_id: oldProfile.user_id,
-                name: oldProfile.business_name,
-                banner_url: newBiz?.banner_url || oldProfile.banner_url,
-                slug: oldProfile.slug,
-                plan_type: newBiz?.plan_type
-            });
+        const { data, error } = await supabase.rpc('get_public_business', {
+          p_slug: paramSlug?.toLowerCase() || null,
+          p_owner_id: ownerId,
+        });
+
+        if (error) throw error;
+
+        const publicBusiness = Array.isArray(data) ? data[0] : data;
+
+        if (publicBusiness) {
+          setBusinessData({
+            id: publicBusiness.id,
+            owner_id: publicBusiness.owner_id,
+            name: publicBusiness.name,
+            slug: publicBusiness.slug,
+            plan_type: publicBusiness.plan_type,
+            banner_url: publicBusiness.banner_url,
+          });
         }
       } catch (err) {
         console.error("Erro ao carregar perfil:", err);
@@ -166,7 +147,6 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
-  const [existingClient, setExistingClient] = useState<any>(null);
 
   if (isLimitReached) {
     return (
@@ -257,19 +237,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
 
     setIsCheckingPhone(true);
     try {
-        const { data } = await supabase.from('clients').select('*').eq('phone', clientPhone).eq('business_id', business.id).limit(1).maybeSingle();
-        if (data) {
-            setExistingClient(data);
-            setClientName(data.name);
-            setClientEmail(data.email || '');
-        } else {
-            setExistingClient(null);
-            setClientName('');
-            setClientEmail('');
-        }
         setStep('confirmation');
-    } catch (err) {
-        toast.error(t('booking.error_verify', { defaultValue: 'Erro ao verificar' }));
     } finally {
         setIsCheckingPhone(false);
     }
@@ -277,53 +245,64 @@ function BookingContent({ business }: { business: BusinessInfo }) {
 
   const createAppointmentMutation = useMutation({
     mutationFn: async () => {
-      let clientId = existingClient?.id;
-
-      if (existingClient) {
-         if (clientEmail !== existingClient.email) await supabase.from('clients').update({ email: clientEmail }).eq('id', clientId);
-      } else {
-         const { data: newClient, error } = await supabase.from('clients').insert({ name: clientName, phone: clientPhone, email: clientEmail || null, business_id: business.id }).select().single();
-         if (error) throw error;
-         clientId = newClient.id;
+      if (!selectedService || !selectedProfessional) {
+        throw new Error('BookingDataInvalid');
       }
 
-      const { data: blocked } = await supabase.from('blocked_clients').select('id').eq('client_id', clientId).maybeSingle();
-      if (blocked) throw new Error('Blocked');
+      const { data: bookingData, error: bookingError } = await supabase.rpc(
+        'create_public_booking',
+        {
+          p_business_id: business.id,
+          p_service_id: selectedService.id,
+          p_professional_id: selectedProfessional.id,
+          p_appointment_date: selectedDate,
+          p_appointment_time: selectedTime,
+          p_client_name: clientName,
+          p_client_phone: clientPhone,
+          p_client_email: clientEmail || null,
+        },
+      );
 
-      const initialStatus = selectedService?.require_deposit ? 'pending_payment' : 'pending';
+      if (bookingError) {
+        if (bookingError.message?.includes('CLIENT_BLOCKED')) {
+          throw new Error('Blocked');
+        }
+        throw bookingError;
+      }
 
-      const { data: newApp, error: appError } = await supabase.from('appointments').insert({ 
-          business_id: business.id, 
-          client_id: clientId, 
-          service_id: selectedService!.id, 
-          professional_id: selectedProfessional!.id, 
-          appointment_date: selectedDate, 
-          appointment_time: selectedTime, 
-          status: initialStatus 
-      }).select().single();
-      
-      if (appError) throw appError;
+      const booking = Array.isArray(bookingData) ? bookingData[0] : bookingData;
+      if (!booking?.appointment_id) {
+        throw new Error('BookingCreateError');
+      }
 
-      if (selectedService?.require_deposit) {
-          const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
-              body: {
-                  appointment_id: newApp.id,
-                  business_id: business.id,
-                  service_id: selectedService!.id,
-                  client_name: clientName,
-                  client_email: clientEmail
-              }
-          });
-
-          if (paymentError || !paymentData?.init_point) {
-              throw new Error('PaymentLinkError');
+      if (selectedService.require_deposit) {
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke('create-payment', {
+          body: {
+            appointment_id: booking.appointment_id
           }
+        });
 
-          return { requiresPayment: true, url: paymentData.init_point };
+        if (paymentError || !paymentData?.init_point) {
+          throw new Error('PaymentLinkError');
+        }
+
+        return { requiresPayment: true, url: paymentData.init_point };
       }
 
-      if (clientEmail) supabase.functions.invoke('send-email', { body: { to: clientEmail, subject: `Confirmação`, clientName, serviceName: selectedService!.name, date: selectedDate, time: selectedTime, type: 'confirmation' }});
-      
+      if (clientEmail) {
+        supabase.functions.invoke('send-email', {
+          body: {
+            to: clientEmail,
+            subject: `Confirmação`,
+            clientName,
+            serviceName: selectedService.name,
+            date: selectedDate,
+            time: selectedTime,
+            type: 'confirmation'
+          }
+        });
+      }
+
       return { requiresPayment: false };
     },
     onSuccess: (data) => {
@@ -333,9 +312,10 @@ function BookingContent({ business }: { business: BusinessInfo }) {
             setStep('success');
         }
     },
-    onError: (err: any) => {
-        if (err.message === 'Blocked') toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
-        else if (err.message === 'PaymentLinkError') toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
+    onError: (err: unknown) => {
+        const message = err instanceof Error ? err.message : '';
+        if (message === 'Blocked') toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
+        else if (message === 'PaymentLinkError') toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
         else toast.error(t('auth.error_generic', { defaultValue: 'Erro ao agendar.' }));
     },
   });
