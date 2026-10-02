@@ -321,7 +321,7 @@ with check (public.is_business_member(business_id));
 create policy services_public_read_active
 on public.services
 for select
-to anon
+to anon, authenticated
 using (is_active = true);
 
 create policy services_members_all
@@ -335,7 +335,7 @@ with check (public.is_business_member(business_id));
 create policy professionals_public_read_active
 on public.professionals
 for select
-to anon
+to anon, authenticated
 using (is_active = true);
 
 create policy professionals_members_all
@@ -349,7 +349,7 @@ with check (public.is_business_member(business_id));
 create policy availability_public_read_active
 on public.availability_settings
 for select
-to anon
+to anon, authenticated
 using (is_active = true);
 
 create policy availability_members_all
