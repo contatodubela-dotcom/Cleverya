@@ -111,7 +111,7 @@ Trilha dos estados enviados pelo provedor:
 - read;
 - failed.
 
-Serve para auditoria e painel futuro.
+Serve para auditoria e painel futuro. O payload bruto do provedor permanece `service_role`-only; o painel futuro deverá consumir somente uma view/RPC sanitizada.
 
 ## 5. Fluxo de envio
 
