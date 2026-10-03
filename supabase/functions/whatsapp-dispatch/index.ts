@@ -28,11 +28,30 @@ function getEnv(name: string): string {
   return value;
 }
 
-function normalizePhone(value: string): string {
-  let phone = value.replace(/\D/g, "");
-  if (phone.startsWith("0")) phone = phone.slice(1);
-  if (phone.length <= 11) phone = `55${phone}`;
-  return phone;
+function normalizePhone(value: string, defaultCountryCallingCode: string): string {
+  const raw = value.trim();
+  let digits = raw.replace(/\D/g, "");
+
+  if (!digits) throw new Error("WHATSAPP_RECIPIENT_PHONE_INVALID");
+
+  if (raw.startsWith("+")) {
+    return digits;
+  }
+
+  while (digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+
+  if (!digits) throw new Error("WHATSAPP_RECIPIENT_PHONE_INVALID");
+
+  const callingCode = defaultCountryCallingCode.replace(/\D/g, "");
+  if (!callingCode) throw new Error("WHATSAPP_COUNTRY_CALLING_CODE_INVALID");
+
+  if (digits.startsWith(callingCode) && digits.length >= callingCode.length + 8) {
+    return digits;
+  }
+
+  return `${callingCode}${digits}`;
 }
 
 function buildComponents(templateParams: unknown) {
@@ -89,23 +108,33 @@ serve(async (req: Request) => {
 
     for (const row of rows) {
       try {
-        const [{ data: connection, error: connectionError }, { data: credential, error: credentialError }] =
-          await Promise.all([
-            supabase
-              .from("whatsapp_connections")
-              .select("phone_number_id, status")
-              .eq("business_id", row.business_id)
-              .single(),
-            supabase
-              .from("whatsapp_credentials")
-              .select("access_token, token_expires_at")
-              .eq("business_id", row.business_id)
-              .single(),
-          ]);
+        const [
+          { data: connection, error: connectionError },
+          { data: credential, error: credentialError },
+          { data: settings, error: settingsError },
+        ] = await Promise.all([
+          supabase
+            .from("whatsapp_connections")
+            .select("phone_number_id, status")
+            .eq("business_id", row.business_id)
+            .single(),
+          supabase
+            .from("whatsapp_credentials")
+            .select("access_token, token_expires_at")
+            .eq("business_id", row.business_id)
+            .single(),
+          supabase
+            .from("whatsapp_automation_settings")
+            .select("enabled, default_country_calling_code")
+            .eq("business_id", row.business_id)
+            .single(),
+        ]);
 
         if (connectionError || !connection) throw new Error("WHATSAPP_CONNECTION_NOT_FOUND");
         if (credentialError || !credential?.access_token) throw new Error("WHATSAPP_CREDENTIAL_NOT_FOUND");
+        if (settingsError || !settings) throw new Error("WHATSAPP_SETTINGS_NOT_FOUND");
         if (connection.status !== "active") throw new Error("WHATSAPP_CONNECTION_NOT_ACTIVE");
+        if (!settings.enabled) throw new Error("WHATSAPP_AUTOMATION_DISABLED");
 
         if (
           credential.token_expires_at &&
@@ -118,7 +147,10 @@ serve(async (req: Request) => {
         const payload = {
           messaging_product: "whatsapp",
           recipient_type: "individual",
-          to: normalizePhone(row.recipient_phone),
+          to: normalizePhone(
+            row.recipient_phone,
+            settings.default_country_calling_code,
+          ),
           type: "template",
           template: {
             name: row.template_name,
