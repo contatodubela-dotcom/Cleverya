@@ -215,3 +215,18 @@ Antes de produção:
 - Falha do WhatsApp nunca reverte agendamento/pagamento.
 - Templates e janela de atendimento são tratados explicitamente.
 - IA somente em fase posterior e sempre subordinada às regras da agenda.
+
+
+## 13. Bilinguismo
+
+A Cleverya já opera em Português e Inglês. A integração WhatsApp deve manter essa capacidade desde a fundação.
+
+Regras:
+- idiomas suportados inicialmente: `pt_BR` e `en_US`;
+- `whatsapp_automation_settings.default_language` define o padrão por empresa;
+- cada item da `whatsapp_outbox` persiste `template_language`;
+- templates Meta serão cadastrados por evento e idioma;
+- fallback futuro: idioma do cliente → idioma padrão da empresa → `pt_BR`;
+- nenhuma mensagem transacional deve ser montada somente a partir do idioma momentâneo do frontend.
+
+WA1C deverá expor a seleção do idioma padrão no painel.
