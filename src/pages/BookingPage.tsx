@@ -196,7 +196,7 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     },
   });
 
- const { data: availableSlots, isLoading: isLoadingSlots } = useQuery({
+ const { data: availableSlots, isLoading: isLoadingSlots, refetch: refetchSlots } = useQuery({
     queryKey: ['available-slots', selectedProfessional?.id, selectedDate, selectedService?.id],
     queryFn: async () => {
       if (!selectedProfessional?.id || !selectedDate) return [];
@@ -261,6 +261,9 @@ function BookingContent({ business }: { business: BusinessInfo }) {
         if (bookingError.message?.includes('CLIENT_BLOCKED')) {
           throw new Error('Blocked');
         }
+        if (bookingError.message?.includes('SLOT_CAPACITY_EXCEEDED')) {
+          throw new Error('SlotTaken');
+        }
         throw bookingError;
       }
 
@@ -277,6 +280,16 @@ function BookingContent({ business }: { business: BusinessInfo }) {
           });
 
           if (paymentError || !paymentData?.init_point) {
+              const paymentMessage =
+                typeof paymentData?.error === 'string' ? paymentData.error : '';
+
+              if (paymentMessage.includes('PAYMENT_RESERVATION_EXPIRED')) {
+                throw new Error('PaymentExpired');
+              }
+              if (paymentMessage.includes('PAYMENT_CREATION_IN_PROGRESS')) {
+                throw new Error('PaymentPreparing');
+              }
+
               throw new Error('PaymentLinkError');
           }
 
@@ -296,9 +309,25 @@ function BookingContent({ business }: { business: BusinessInfo }) {
     },
     onError: (err: unknown) => {
         const message = err instanceof Error ? err.message : '';
-        if (message === 'Blocked') toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
-        else if (message === 'PaymentLinkError') toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
-        else toast.error(t('auth.error_generic', { defaultValue: 'Erro ao agendar.' }));
+        if (message === 'Blocked') {
+          toast.error(t('booking.blocked_error', { defaultValue: 'Você não pode agendar aqui.' }));
+        } else if (message === 'SlotTaken') {
+          toast.error('Este horário acabou de ser ocupado. Escolha outro horário.');
+          setSelectedTime('');
+          setStep('datetime');
+          refetchSlots();
+        } else if (message === 'PaymentExpired') {
+          toast.error('O tempo para pagamento desta reserva expirou. Escolha o horário novamente.');
+          setSelectedTime('');
+          setStep('datetime');
+          refetchSlots();
+        } else if (message === 'PaymentPreparing') {
+          toast.info('O pagamento já está sendo preparado. Aguarde alguns segundos e tente novamente.');
+        } else if (message === 'PaymentLinkError') {
+          toast.error('Ocorreu um problema ao gerar o pagamento. Tente novamente.');
+        } else {
+          toast.error(t('auth.error_generic', { defaultValue: 'Erro ao agendar.' }));
+        }
     },
   });
 
