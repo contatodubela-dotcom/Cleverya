@@ -44,7 +44,7 @@ create table if not exists public.whatsapp_automation_settings (
   payment_expiration_enabled boolean not null default false,
   cancellation_enabled boolean not null default false,
   reminder_24h_enabled boolean not null default false,
-  default_language text not null default 'pt_BR',
+  default_language text not null default 'pt_BR'\n    check (default_language in ('pt_BR','en_US')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -65,7 +65,7 @@ create table if not exists public.whatsapp_outbox (
     )),
   recipient_phone text not null,
   template_name text not null,
-  template_language text not null default 'pt_BR',
+  template_language text not null default 'pt_BR'\n    check (template_language in ('pt_BR','en_US')),
   template_params jsonb not null default '{}'::jsonb,
   dedupe_key text not null unique,
   status text not null default 'queued'
