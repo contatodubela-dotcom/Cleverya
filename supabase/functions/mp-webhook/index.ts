@@ -171,7 +171,7 @@ serve(async (req: Request) => {
     const { data: appointment, error: appointmentError } = await supabase
       .from("appointments")
       .select(
-        "id, business_id, client_id, service_id, status, appointment_date, appointment_time, deposit_expected_amount, payment_currency, mp_payment_id",
+        "id, business_id, client_id, service_id, status, appointment_date, appointment_time, deposit_expected_amount, payment_currency, mp_payment_id, payment_expires_at",
       )
       .eq("id", appointmentHint)
       .single();
@@ -184,7 +184,7 @@ serve(async (req: Request) => {
     }
 
     if (
-      appointment.status === "confirmed" &&
+      (appointment.status === "confirmed" || appointment.status === "payment_conflict") &&
       appointment.mp_payment_id === queryPaymentId
     ) {
       return new Response(
@@ -193,7 +193,10 @@ serve(async (req: Request) => {
       );
     }
 
-    if (appointment.status !== "pending_payment") {
+    if (
+      appointment.status !== "pending_payment" &&
+      appointment.status !== "payment_expired"
+    ) {
       return new Response(
         "Status incompatível",
         { headers: corsHeaders, status: 409 },
@@ -298,12 +301,42 @@ serve(async (req: Request) => {
         mp_payment_id: queryPaymentId,
       })
       .eq("id", appointment.id)
-      .eq("status", "pending_payment")
+      .in("status", ["pending_payment", "payment_expired"])
       .is("mp_payment_id", null)
       .select("id")
       .maybeSingle();
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      const updateMessage =
+        typeof updateError.message === "string" ? updateError.message : "";
+
+      if (updateMessage.includes("SLOT_CAPACITY_EXCEEDED")) {
+        console.error("Pagamento aprovado após perda da vaga:", {
+          appointmentId: appointment.id,
+          paymentId: queryPaymentId,
+        });
+
+        const { error: conflictError } = await supabase
+          .from("appointments")
+          .update({
+            status: "payment_conflict",
+            deposit_paid: amountPaid,
+            mp_payment_id: queryPaymentId,
+          })
+          .eq("id", appointment.id)
+          .in("status", ["pending_payment", "payment_expired"])
+          .is("mp_payment_id", null);
+
+        if (conflictError) throw conflictError;
+
+        return new Response(
+          "Pagamento recebido com conflito de agenda",
+          { headers: corsHeaders, status: 200 },
+        );
+      }
+
+      throw updateError;
+    }
 
     if (!updatedAppointment) {
       const { data: currentAppointment, error: currentAppointmentError } =
@@ -316,7 +349,8 @@ serve(async (req: Request) => {
       if (currentAppointmentError) throw currentAppointmentError;
 
       if (
-        currentAppointment?.status === "confirmed" &&
+        (currentAppointment?.status === "confirmed" ||
+          currentAppointment?.status === "payment_conflict") &&
         currentAppointment?.mp_payment_id === queryPaymentId
       ) {
         return new Response(
