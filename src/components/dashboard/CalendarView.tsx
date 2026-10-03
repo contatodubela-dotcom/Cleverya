@@ -109,7 +109,9 @@ export default function CalendarView() {
         .order('appointment_time', { ascending: true });
 
       if (!showAbandoned) {
-        query = query.neq('status', 'pending_payment');
+        query = query
+          .neq('status', 'pending_payment')
+          .neq('status', 'payment_expired');
       }
 
       const { data, error } = await query;
@@ -251,7 +253,9 @@ export default function CalendarView() {
                   <div className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg min-w-[90px] text-center border ${getStatusColor(app.status)}`}>
                     <span className="text-xs font-bold uppercase opacity-80">{format(parseISO(app.appointment_date), 'dd MMM', { locale: dateLocale })}</span>
                     <span className="text-xl font-bold">{app.appointment_time?.slice(0, 5)}</span>
-                    <span className="text-[10px] uppercase font-bold mt-1 tracking-wide">{t(`status.${app.status}`)}</span>
+                    <span className="text-[10px] uppercase font-bold mt-1 tracking-wide">
+                      {app.status === 'payment_expired' ? 'EXPIRADO' : t(`status.${app.status}`)}
+                    </span>
                   </div>
                   <div>
                     <h3 className={`font-bold text-lg ${app.status === 'cancelled' ? 'text-gray-500 line-through' : 'text-white'}`}>{app.clients?.name || t('common.client_deleted')}</h3>
@@ -292,7 +296,7 @@ export default function CalendarView() {
                     </Button>
                   )}
 
-                  {app.status === 'pending_payment' && (
+                  {(app.status === 'pending_payment' || app.status === 'payment_expired') && (
                     <Button size="sm" variant="outline" className="text-red-400 hover:bg-red-950/30 border-red-900/50" onClick={() => handleDeleteAbandoned(app)}>
                         <Trash2 className="w-4 h-4 mr-2" /> {t('common.delete')}
                     </Button>
