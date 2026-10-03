@@ -119,13 +119,15 @@ function BookingContent({ business }: { business: BusinessInfo }) {
   const bannerUrl = business.banner_url || 'https://bxglxltapbagjmmkagfm.supabase.co/storage/v1/object/public/salon-images/Cleverya.link.webp';
 
   const { data: usageMetrics } = useQuery({
-    queryKey: ['public-usage-metrics', business.owner_id],
+    queryKey: ['public-booking-metrics', business.slug],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_usage_metrics', { target_user_id: business.owner_id });
+      const { data, error } = await supabase.rpc('get_public_booking_metrics', {
+        p_slug: business.slug,
+      });
       if (error) return null;
       return data as { appointments_used: number, current_plan: string };
     },
-    enabled: !!business.owner_id
+    enabled: !!business.slug
   });
 
   const currentPlan = usageMetrics?.current_plan || 'free';
