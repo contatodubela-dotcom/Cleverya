@@ -85,7 +85,7 @@ create table if not exists public.whatsapp_outbox (
 
 create index if not exists whatsapp_outbox_dispatch_idx
   on public.whatsapp_outbox (status, next_attempt_at, created_at)
-  where status in ('queued','failed');
+  where status in ('queued','failed','processing');
 
 create index if not exists whatsapp_outbox_business_idx
   on public.whatsapp_outbox (business_id, created_at desc);
@@ -125,7 +125,7 @@ returns setof public.whatsapp_outbox
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $
+as $wa1a$
 begin
   if p_limit is null or p_limit < 1 or p_limit > 100 then
     raise exception 'WHATSAPP_CLAIM_LIMIT_INVALID' using errcode = '22023';
@@ -135,11 +135,11 @@ begin
   with candidates as (
     select o.id
     from public.whatsapp_outbox o
-    where o.status in ('queued','failed')
+    where o.status in ('queued','failed','processing')
       and o.attempts < o.max_attempts
       and o.next_attempt_at <= now()
       and (
-        o.status <> 'failed'
+        o.status <> 'processing'
         or o.claimed_at is null
         or o.claimed_at < now() - interval '5 minutes'
       )
@@ -161,7 +161,7 @@ begin
   )
   select * from claimed;
 end;
-$;
+$wa1a$;
 
 revoke all on function public.claim_whatsapp_outbox(integer) from public;
 revoke all on function public.claim_whatsapp_outbox(integer) from anon;
@@ -184,7 +184,6 @@ revoke all on table public.whatsapp_delivery_events from public, anon, authentic
 grant select on table public.whatsapp_connections to authenticated;
 grant select, insert, update on table public.whatsapp_automation_settings to authenticated;
 grant select on table public.whatsapp_outbox to authenticated;
-grant select on table public.whatsapp_delivery_events to authenticated;
 
 grant select, insert, update, delete
   on table public.whatsapp_connections,
@@ -240,12 +239,9 @@ using (public.is_business_member(business_id));
 
 drop policy if exists whatsapp_delivery_members_select
   on public.whatsapp_delivery_events;
-create policy whatsapp_delivery_members_select
-on public.whatsapp_delivery_events
-for select
-to authenticated
-using (public.is_business_member(business_id));
 
+-- whatsapp_delivery_events fica service_role-only na WA1A.
+-- O painel futuro devera usar RPC/view sanitizada.
 -- whatsapp_credentials intencionalmente NAO possui policy para usuarios.
 -- Apenas service_role recebe privilegio direto.
 
