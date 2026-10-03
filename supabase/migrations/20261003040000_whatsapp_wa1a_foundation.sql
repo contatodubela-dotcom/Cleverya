@@ -101,6 +101,7 @@ create table if not exists public.whatsapp_delivery_events (
   outbox_id uuid
     references public.whatsapp_outbox(id) on delete set null,
   provider_message_id text,
+  dedupe_key text not null unique,
   event_type text not null
     check (event_type in ('accepted','sent','delivered','read','failed')),
   event_at timestamptz,
@@ -115,6 +116,57 @@ create index if not exists whatsapp_delivery_events_message_idx
 
 create index if not exists whatsapp_delivery_events_business_idx
   on public.whatsapp_delivery_events (business_id, created_at desc);
+
+-- Claim atomico do outbox. O dispatcher recebe itens ja marcados como processing.
+create or replace function public.claim_whatsapp_outbox(
+  p_limit integer default 20
+)
+returns setof public.whatsapp_outbox
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $
+begin
+  if p_limit is null or p_limit < 1 or p_limit > 100 then
+    raise exception 'WHATSAPP_CLAIM_LIMIT_INVALID' using errcode = '22023';
+  end if;
+
+  return query
+  with candidates as (
+    select o.id
+    from public.whatsapp_outbox o
+    where o.status in ('queued','failed')
+      and o.attempts < o.max_attempts
+      and o.next_attempt_at <= now()
+      and (
+        o.status <> 'failed'
+        or o.claimed_at is null
+        or o.claimed_at < now() - interval '5 minutes'
+      )
+    order by o.next_attempt_at asc, o.created_at asc
+    for update skip locked
+    limit p_limit
+  ),
+  claimed as (
+    update public.whatsapp_outbox o
+    set
+      status = 'processing',
+      attempts = o.attempts + 1,
+      claimed_at = now(),
+      claim_token = gen_random_uuid(),
+      updated_at = now()
+    from candidates c
+    where o.id = c.id
+    returning o.*
+  )
+  select * from claimed;
+end;
+$;
+
+revoke all on function public.claim_whatsapp_outbox(integer) from public;
+revoke all on function public.claim_whatsapp_outbox(integer) from anon;
+revoke all on function public.claim_whatsapp_outbox(integer) from authenticated;
+grant execute on function public.claim_whatsapp_outbox(integer) to service_role;
 
 alter table public.whatsapp_connections enable row level security;
 alter table public.whatsapp_credentials enable row level security;
