@@ -28,6 +28,15 @@ function getEnv(name: string): string {
   return value;
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let index = 0; index < a.length; index += 1) {
+    result |= a.charCodeAt(index) ^ b.charCodeAt(index);
+  }
+  return result === 0;
+}
+
 function normalizePhone(value: string, defaultCountryCallingCode: string): string {
   const raw = value.trim();
   let digits = raw.replace(/\D/g, "");
@@ -88,7 +97,7 @@ serve(async (req: Request) => {
     const dispatchSecret = getEnv("WHATSAPP_DISPATCH_SECRET");
     const receivedSecret = req.headers.get("x-cleverya-dispatch-secret");
 
-    if (!receivedSecret || receivedSecret !== dispatchSecret) {
+    if (!receivedSecret || !timingSafeEqual(receivedSecret, dispatchSecret)) {
       return new Response("Unauthorized", { status: 401 });
     }
 
