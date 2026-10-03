@@ -294,3 +294,21 @@ Qualquer nova função deve preservar:
 5. compatibilidade com agenda existente;
 6. ausência de secrets no frontend;
 7. falha de integração externa sem corromper estado da agenda.
+
+
+## 18. Internacionalização e idioma
+
+A Cleverya é bilíngue e está preparada para operar em:
+- Português (pt-BR);
+- Inglês (en).
+
+O dashboard e a experiência pública de agendamento já utilizam i18n no frontend.
+
+Qualquer automação futura deve preservar essa característica. Para WhatsApp:
+- cada empresa poderá ter um idioma padrão;
+- o evento/outbox deve registrar explicitamente o idioma/template usado;
+- templates de WhatsApp devem existir por idioma;
+- mensagens automáticas não devem depender do idioma visual atual do navegador;
+- a escolha de idioma deve ser determinística e auditável.
+
+Na WA1A, `whatsapp_automation_settings.default_language` começa com `pt_BR`, mas o modelo deve aceitar pelo menos `pt_BR` e `en_US`.
