@@ -40,7 +40,7 @@ exact_groups as (
   group by professional_id, appointment_date, appointment_time
   having count(*) > 1
 ),
-overlaps as (
+overlap_pairs as (
   select
     a.id as appointment_a,
     b.id as appointment_b,
@@ -111,7 +111,7 @@ select
       'service', o.service_b
     )
   )
-from overlaps o
+from overlap_pairs o
 
 union all
 
